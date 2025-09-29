@@ -1049,3 +1049,83 @@ footer span {
     width: fit-content;
   }
 }
+
+/* ===================================
+   CERTIFICATIONS SECTION MOBILE FIX
+   Add this to your main CSS
+   =================================== */
+
+/* Base mobile styles for certifications */
+#certification {
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 10rem;
+}
+
+.certification-images {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3rem;
+  margin-top: 3rem;
+  width: 100%;
+}
+
+.certification-images a {
+  display: block;
+  width: 100%;
+  max-width: 200px;
+  text-align: center;
+}
+
+.certification-images img {
+  width: 100%;
+  max-width: 200px;
+  height: auto;
+  transition: transform 0.3s ease;
+}
+
+.certification-images img:hover {
+  transform: scale(1.05);
+}
+
+/* Tablet (720px+) */
+@media screen and (min-width: 720px) {
+  .certification-images {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 4rem;
+  }
+
+  .certification-images a {
+    max-width: 220px;
+  }
+
+  .certification-images img {
+    max-width: 220px;
+  }
+}
+
+/* Desktop (1024px+) */
+@media screen and (min-width: 1024px) {
+  .certification-images {
+    flex-wrap: nowrap;
+    gap: 5rem;
+  }
+
+  .certification-images a {
+    max-width: 250px;
+  }
+
+  .certification-images img {
+    max-width: 250px;
+  }
+}
+
+/* Large desktop (1280px+) */
+@media screen and (min-width: 1280px) {
+  .certification-images {
+    gap: 7%;
+  }
+}

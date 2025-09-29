@@ -56,27 +56,37 @@ article ul li strong {
     color: rgb(29, 228, 255);
 }
 
-/* Furniture icon grid - mobile (stacked in 2 columns) */
+/* Furniture icon grid container */
 article section > div[style*="display: flex"][style*="gap: 20px"] {
     display: grid !important;
     grid-template-columns: repeat(2, 1fr) !important;
     gap: 1.5rem !important;
     justify-items: center !important;
-    margin: 2rem 0 !important;
+    margin: 1.5rem 0 !important;
+    padding: 0 !important;
 }
 
-article section > div[style*="display: flex"] > div[style*="text-align: center"] {
-    width: 100% !important;
-    max-width: 120px;
+/* Individual furniture item */
+article section > div[style*="display: flex"] > div {
+    width: auto !important;
+    max-width: 150px !important;
+    text-align: center !important;
 }
 
-article section > div[style*="display: flex"] > div img {
+/* Furniture images */
+article section > div[style*="display: flex"] img {
     width: 80px !important;
     height: 80px !important;
+    border-radius: 8px !important;
+    object-fit: contain !important;
+    background-color: #ffffff !important;
 }
 
+/* Furniture labels */
 article section > div[style*="display: flex"] > div > div {
-    font-size: 1.3rem !important;
+    margin-top: 8px !important;
+    font-size: 1.2rem !important;
+    color: rgb(208, 212, 212);
 }
 
 /* Figure/image styling */
@@ -89,7 +99,7 @@ article figure {
 article figure img {
     max-width: 100% !important;
     width: 100% !important;
-    height: auto;
+    height: auto !important;
     border: 1px solid #ccc;
 }
 
@@ -97,7 +107,7 @@ article figure img {
 article figure video {
     max-width: 100% !important;
     width: 100% !important;
-    height: auto;
+    height: auto !important;
     border: 1px solid #ccc;
 }
 
@@ -126,19 +136,19 @@ article figcaption {
         font-size: 1.6rem;
     }
 
-    /* 3 columns for furniture grid on tablet */
+    /* 3 columns for furniture grid */
     article section > div[style*="display: flex"][style*="gap: 20px"] {
         grid-template-columns: repeat(3, 1fr) !important;
         gap: 2rem !important;
     }
 
-    article section > div[style*="display: flex"] > div img {
-        width: 100px !important;
-        height: 100px !important;
+    article section > div[style*="display: flex"] img {
+        width: 90px !important;
+        height: 90px !important;
     }
 
     article section > div[style*="display: flex"] > div > div {
-        font-size: 1.4rem !important;
+        font-size: 1.3rem !important;
     }
 
     article figure img,
@@ -165,9 +175,18 @@ article figcaption {
         font-size: 1.65rem;
     }
 
-    /* 5 columns for furniture grid on desktop */
+    /* 5 columns for furniture grid */
     article section > div[style*="display: flex"][style*="gap: 20px"] {
         grid-template-columns: repeat(5, 1fr) !important;
+    }
+
+    article section > div[style*="display: flex"] img {
+        width: 100px !important;
+        height: 100px !important;
+    }
+
+    article section > div[style*="display: flex"] > div > div {
+        font-size: 1.4rem !important;
     }
 
     article figcaption {

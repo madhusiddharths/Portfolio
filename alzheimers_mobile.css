@@ -51,7 +51,7 @@ article figure {
 article figure img {
     max-width: 100% !important;
     width: 100% !important;
-    height: auto;
+    height: auto !important;
     border: 1px solid #ccc;
 }
 
@@ -61,29 +61,29 @@ article figcaption {
     margin-top: 0.5rem;
 }
 
-/* Two-column image layout (Figure 4a, 4b) */
-article section > div[style*="display: flex"][style*="gap: 2rem"] {
+/* Two-column image layout (Figure 4a, 4b) - Target by flex and gap: 2rem */
+article div[style*="flex"][style*="gap: 2rem"] {
     display: flex !important;
     flex-direction: column !important;
     gap: 2rem !important;
     margin: 2rem 0 !important;
 }
 
-article section > div[style*="display: flex"][style*="gap: 2rem"] figure {
-    flex: 1 1 100% !important;
+article div[style*="flex"][style*="gap: 2rem"] figure {
+    flex: none !important;
     max-width: 100%;
 }
 
-/* Four-column image layout (Figure 5a-5d progression images) */
-article section > div[style*="display: flex"][style*="gap: 1rem"] {
+/* Four-column image layout (Figure 5a-5d) - Target by flex and gap: 1rem */
+article div[style*="flex"][style*="space-between"][style*="gap: 1rem"] {
     display: flex !important;
     flex-direction: column !important;
     gap: 1.5rem !important;
     margin: 2rem 0 !important;
 }
 
-article section > div[style*="display: flex"][style*="gap: 1rem"] figure {
-    flex: 1 1 100% !important;
+article div[style*="flex"][style*="space-between"][style*="gap: 1rem"] figure {
+    flex: none !important;
     max-width: 100%;
 }
 
@@ -103,22 +103,22 @@ article section > div[style*="display: flex"][style*="gap: 1rem"] figure {
     }
 
     /* Two-column layout for dual images */
-    article section > div[style*="display: flex"][style*="gap: 2rem"] {
+    article div[style*="flex"][style*="gap: 2rem"] {
         flex-direction: row !important;
     }
 
-    article section > div[style*="display: flex"][style*="gap: 2rem"] figure {
-        flex: 1 1 48% !important;
+    article div[style*="flex"][style*="gap: 2rem"] figure {
+        flex: 1 !important;
     }
 
     /* Two-column grid for four progression images */
-    article section > div[style*="display: flex"][style*="gap: 1rem"] {
+    article div[style*="flex"][style*="space-between"][style*="gap: 1rem"] {
         flex-direction: row !important;
         flex-wrap: wrap !important;
     }
 
-    article section > div[style*="display: flex"][style*="gap: 1rem"] figure {
-        flex: 1 1 48% !important;
+    article div[style*="flex"][style*="space-between"][style*="gap: 1rem"] figure {
+        flex: 0 0 48% !important;
     }
 }
 
@@ -141,12 +141,12 @@ article section > div[style*="display: flex"][style*="gap: 1rem"] figure {
     }
 
     /* Four-column layout for progression images */
-    article section > div[style*="display: flex"][style*="gap: 1rem"] {
+    article div[style*="flex"][style*="space-between"][style*="gap: 1rem"] {
         flex-wrap: nowrap !important;
     }
 
-    article section > div[style*="display: flex"][style*="gap: 1rem"] figure {
-        flex: 1 1 23% !important;
+    article div[style*="flex"][style*="space-between"][style*="gap: 1rem"] figure {
+        flex: 1 !important;
     }
 }
 
