@@ -1,0 +1,134 @@
+/* ===================================
+   MOBILE RESPONSIVE ADDITIONS
+   Add this at the end of your CSS file
+   =================================== */
+
+/* Base mobile styles (for screens under 720px) */
+article {
+    width: 100%;
+    max-width: 100%;
+}
+
+article section {
+    width: 100% !important;
+    padding: 0 1rem;
+    margin: 2rem auto !important;
+}
+
+article h2 {
+    font-size: 2.2rem;
+    margin-bottom: 1.5rem;
+}
+
+article p {
+    font-size: 1.5rem;
+    line-height: 1.7;
+    text-align: left;
+}
+
+article ol {
+    padding-left: 2rem;
+    margin: 1rem 0;
+}
+
+article ol li {
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+}
+
+/* Figure container for images */
+article section > div[style*="display: flex"] {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 2rem !important;
+    margin: 2rem 0 !important;
+}
+
+article figure {
+    flex: 1 1 100% !important;
+    max-width: 100%;
+}
+
+article figure img {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    border: 1px solid #ccc;
+}
+
+article figcaption {
+    font-size: 1.3rem;
+    padding: 0 0.5rem;
+}
+
+/* Button styling for mobile */
+article a[style*="inline-block"] {
+    display: inline-block !important;
+    padding: 1rem 1.5rem !important;
+    font-size: 1.4rem !important;
+    text-align: center;
+    margin: 1rem 0;
+}
+
+/* Tablet and up (720px+) */
+@media screen and (min-width: 720px) {
+    article section {
+        max-width: 90%;
+        padding: 0 2rem;
+    }
+
+    article h2 {
+        font-size: 2.6rem;
+    }
+
+    article p {
+        font-size: 1.6rem;
+    }
+
+    /* Two-column layout for figures on tablet */
+    article section > div[style*="display: flex"] {
+        flex-direction: row !important;
+        gap: 2rem !important;
+    }
+
+    article figure {
+        flex: 1 1 48% !important;
+    }
+}
+
+/* Desktop (1024px+) */
+@media screen and (min-width: 1024px) {
+    article section {
+        max-width: 85%;
+    }
+
+    article h2 {
+        font-size: 3rem;
+    }
+
+    article p {
+        font-size: 1.65rem;
+    }
+
+    article figcaption {
+        font-size: 1.4rem;
+    }
+}
+
+/* Large desktop (1280px+) */
+@media screen and (min-width: 1280px) {
+    article section {
+        max-width: 80%;
+    }
+
+    article h2 {
+        font-size: 3.2rem;
+    }
+}
+
+/* Extra large screens (1440px+) */
+@media screen and (min-width: 1440px) {
+    article section {
+        max-width: 103rem;
+    }
+}

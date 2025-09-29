@@ -1,0 +1,194 @@
+/* ===================================
+   SATURDAE PAGE MOBILE RESPONSIVE
+   Add this as a separate CSS file
+   =================================== */
+
+/* Base mobile styles (for screens under 720px) */
+article {
+    width: 100%;
+    max-width: 100%;
+}
+
+article section {
+    width: 100% !important;
+    padding: 0 1rem;
+    margin: 2rem auto !important;
+}
+
+article h2 {
+    font-size: 2.2rem;
+    margin-bottom: 1.5rem;
+}
+
+article p {
+    font-size: 1.5rem;
+    line-height: 1.7;
+    text-align: left;
+}
+
+article p strong {
+    font-weight: 700;
+    color: rgb(29, 228, 255);
+}
+
+article p a {
+    color: #0077cc;
+    text-decoration: underline;
+}
+
+article p a:hover {
+    color: rgba(24, 185, 207, 0.9);
+}
+
+/* List styling */
+article ul {
+    padding-left: 2rem;
+    margin: 1rem 0;
+}
+
+article ul li {
+    margin-bottom: 1rem;
+    line-height: 1.6;
+}
+
+article ul li strong {
+    font-weight: 700;
+    color: rgb(29, 228, 255);
+}
+
+/* Furniture icon grid - mobile (stacked in 2 columns) */
+article section > div[style*="display: flex"][style*="gap: 20px"] {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 1.5rem !important;
+    justify-items: center !important;
+    margin: 2rem 0 !important;
+}
+
+article section > div[style*="display: flex"] > div[style*="text-align: center"] {
+    width: 100% !important;
+    max-width: 120px;
+}
+
+article section > div[style*="display: flex"] > div img {
+    width: 80px !important;
+    height: 80px !important;
+}
+
+article section > div[style*="display: flex"] > div > div {
+    font-size: 1.3rem !important;
+}
+
+/* Figure/image styling */
+article figure {
+    margin: 2rem 0 !important;
+    text-align: center;
+    max-width: 100%;
+}
+
+article figure img {
+    max-width: 100% !important;
+    width: 100% !important;
+    height: auto;
+    border: 1px solid #ccc;
+}
+
+/* Video styling */
+article figure video {
+    max-width: 100% !important;
+    width: 100% !important;
+    height: auto;
+    border: 1px solid #ccc;
+}
+
+article figcaption {
+    font-size: 1.3rem;
+    padding: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+/* Tablet (720px+) */
+@media screen and (min-width: 720px) {
+    article section {
+        max-width: 90%;
+        padding: 0 2rem;
+    }
+
+    article h2 {
+        font-size: 2.6rem;
+    }
+
+    article p {
+        font-size: 1.6rem;
+    }
+
+    article ul li {
+        font-size: 1.6rem;
+    }
+
+    /* 3 columns for furniture grid on tablet */
+    article section > div[style*="display: flex"][style*="gap: 20px"] {
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 2rem !important;
+    }
+
+    article section > div[style*="display: flex"] > div img {
+        width: 100px !important;
+        height: 100px !important;
+    }
+
+    article section > div[style*="display: flex"] > div > div {
+        font-size: 1.4rem !important;
+    }
+
+    article figure img,
+    article figure video {
+        max-width: 600px !important;
+    }
+}
+
+/* Desktop (1024px+) */
+@media screen and (min-width: 1024px) {
+    article section {
+        max-width: 85%;
+    }
+
+    article h2 {
+        font-size: 3rem;
+    }
+
+    article p {
+        font-size: 1.65rem;
+    }
+
+    article ul li {
+        font-size: 1.65rem;
+    }
+
+    /* 5 columns for furniture grid on desktop */
+    article section > div[style*="display: flex"][style*="gap: 20px"] {
+        grid-template-columns: repeat(5, 1fr) !important;
+    }
+
+    article figcaption {
+        font-size: 1.4rem;
+    }
+}
+
+/* Large desktop (1280px+) */
+@media screen and (min-width: 1280px) {
+    article section {
+        max-width: 80%;
+    }
+
+    article h2 {
+        font-size: 3.2rem;
+    }
+}
+
+/* Extra large screens (1440px+) */
+@media screen and (min-width: 1440px) {
+    article section {
+        max-width: 103rem;
+    }
+}
