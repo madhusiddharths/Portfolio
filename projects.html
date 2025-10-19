@@ -4,232 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Projects</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            background: #000000;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            padding: 40px 20px;
-            min-height: 100vh;
-        }
-
-        .page-heading {
-            text-align: center;
-            margin-bottom: 60px;
-        }
-
-        .page-heading h1 {
-            font-size: 64px;
-            font-weight: 700;
-            margin: 0;
-        }
-
-        .name-highlight {
-            background: -webkit-linear-gradient(
-                    top right,
-                    rgba(18, 55, 246, 1),
-                    rgba(9, 244, 244, 1)
-            );
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 30px;
-            padding: 0 60px;
-        }
-
-        .card {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 24px;
-            padding: 30px;
-            position: relative;
-            overflow: hidden;
-            backdrop-filter: blur(10px);
-            display: grid;
-            grid-template-rows: auto auto 1fr auto;
-        }
-
-        .card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-        }
-
-        .image-space {
-            width: 100%;
-            height: 200px;
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 16px;
-            margin-bottom: 24px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .image-space img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 16px;
-        }
-
-        .header {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            margin-bottom: 20px;
-            min-height: 80px;
-        }
-
-        .project-title {
-            font-size: 32px;
-            font-weight: 700;
-            color: #fff;
-            flex: 1;
-        }
-
-        .github-icon {
-            width: 40px;
-            height: 40px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .github-icon:hover {
-            background: rgba(255, 255, 255, 0.1);
-            transform: translateY(-2px);
-        }
-
-        .description {
-            color: rgba(255, 255, 255, 0.6);
-            font-size: 16px;
-            line-height: 1.6;
-            margin-bottom: 30px;
-        }
-
-        .footer {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .tech-stack {
-            display: flex;
-            gap: -8px;
-        }
-
-        .tech-stack .tech-icon {
-            margin-left: -8px;
-        }
-
-        .tech-stack .tech-icon:first-child {
-            margin-left: 0;
-        }
-
-        .tech-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.15);
-            border: 2px solid #000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            transition: all 0.3s;
-            position: relative;
-            z-index: 1;
-        }
-
-        .tech-icon img {
-            width: 70%;
-            height: 70%;
-            object-fit: contain;
-        }
-
-        .tech-icon:hover {
-            z-index: 2;
-        }
-
-        .check-out-link {
-            color: #00d4ff;
-            text-decoration: none;
-            font-size: 16px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.3s;
-            position: relative;
-        }
-
-        .check-out-link::after {
-            content: '';
-            position: absolute;
-            bottom: -2px;
-            left: 0;
-            width: 0;
-            height: 2px;
-            background: linear-gradient(90deg, #00d4ff, #00ff88);
-            transition: width 0.3s ease;
-        }
-
-        .check-out-link:hover {
-            color: #00ff88;
-            transform: translateX(4px);
-        }
-
-        .check-out-link:hover::after {
-            width: 100%;
-        }
-
-        .arrow {
-            font-size: 24px;
-        }
-
-        .github-icon img {
-            width: 70%;
-            height: 70%;
-            object-fit: contain;
-        }
-
-        @media (max-width: 1024px) {
-            .container {
-                grid-template-columns: 1fr;
-            }
-
-            .project-title {
-                font-size: 32px;
-            }
-
-            .footer {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 20px;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="css/projects.css">
 </head>
 <body>
 <div class="page-heading">
@@ -245,13 +20,15 @@
 
         <div class="header">
             <h2 class="project-title">Alzheimer's Progression</h2>
-            <div class="github-icon">
-                <img src="img/color_images/github_white.png" alt="GitHub">
-            </div>
+            <a href="https://github.com/Dodhon/CS584-Project" target="_blank" rel="noopener noreferrer">
+                <div class="github-icon">
+                    <img src="img/color_images/github_white.png" alt="GitHub">
+                </div>
+            </a>
         </div>
 
         <p class="description">
-            This project uses deep learning, image processing, and GANs to predict and model the progression of Alzheimer’s disease from MRI scans.
+            This project uses deep learning, image processing, and GANs to predict and model the progression of Alzheimer's disease from MRI scans.
         </p>
 
         <div class="footer">
@@ -263,7 +40,7 @@
                 <div class="tech-icon"><img src="img/color_images/Flask.png" alt="Tech 5"></div>
             </div>
 
-            <a href="#" class="check-out-link">
+            <a href="alzheimers.html" class="check-out-link">
                 Check it out
                 <span class="arrow">→</span>
             </a>
@@ -278,9 +55,11 @@
 
         <div class="header">
             <h2 class="project-title">Galaxy Explorer</h2>
-            <div class="github-icon">
-                <img src="img/color_images/github_white.png" alt="GitHub">
-            </div>
+            <a href="https://github.com/madhusiddharths/galaxy_explorer" target="_blank" rel="noopener noreferrer">
+                <div class="github-icon">
+                    <img src="img/color_images/github_white.png" alt="GitHub">
+                </div>
+            </a>
         </div>
 
         <p class="description">
@@ -296,7 +75,7 @@
                 <div class="tech-icon"><img src="img/color_images/scikit-learn.png" alt="Tech 5"></div>
             </div>
 
-            <a href="#" class="check-out-link">
+            <a href="galaxy.html" class="check-out-link">
                 Check it out
                 <span class="arrow">→</span>
             </a>
@@ -311,13 +90,15 @@
 
         <div class="header">
             <h2 class="project-title">AI-counselling</h2>
-            <div class="github-icon">
-                <img src="img/color_images/github_white.png" alt="GitHub">
-            </div>
+            <a href="https://github.com/siddgawad/ai-counselling" target="_blank" rel="noopener noreferrer">
+                <div class="github-icon">
+                    <img src="img/color_images/github_white.png" alt="GitHub">
+                </div>
+            </a>
         </div>
 
         <p class="description">
-            An AI-powered chatbot that analyzes a person’s video, audio, and tone to assess their mental state and provide personalized counseling.
+            An AI-powered chatbot that analyzes a person's video, audio, and tone to assess their mental state and provide personalized counseling.
         </p>
 
         <div class="footer">
@@ -344,9 +125,11 @@
 
         <div class="header">
             <h2 class="project-title">Traffic Prediction</h2>
-            <div class="github-icon">
-                <img src="img/color_images/github_white.png" alt="GitHub">
-            </div>
+            <a href="https://github.com/madhusiddharths/Traffic-Prediction" target="_blank" rel="noopener noreferrer">
+                <div class="github-icon">
+                    <img src="img/color_images/github_white.png" alt="GitHub">
+                </div>
+            </a>
         </div>
 
         <p class="description">
@@ -362,7 +145,7 @@
                 <div class="tech-icon"><img src="img/color_images/Matplotlib.png" alt="Tech 5"></div>
             </div>
 
-            <a href="#" class="check-out-link">
+            <a href="trafficprediction.html" class="check-out-link">
                 Check it out
                 <span class="arrow">→</span>
             </a>
@@ -377,9 +160,11 @@
 
         <div class="header">
             <h2 class="project-title">SATURDAE</h2>
-            <div class="github-icon">
-                <img src="img/color_images/github_white.png" alt="GitHub">
-            </div>
+            <a href="https://github.com/madhusiddharths/SATURDAE" target="_blank" rel="noopener noreferrer">
+                <div class="github-icon">
+                    <img src="img/color_images/github_white.png" alt="GitHub">
+                </div>
+            </a>
         </div>
 
         <p class="description">
@@ -393,7 +178,7 @@
                 <div class="tech-icon"><img src="img/color_images/PyCharm.png" alt="Tech 3"></div>
             </div>
 
-            <a href="#" class="check-out-link">
+            <a href="saturdae.html" class="check-out-link">
                 Check it out
                 <span class="arrow">→</span>
             </a>
@@ -408,9 +193,11 @@
 
         <div class="header">
             <h2 class="project-title">SymptoScan</h2>
-            <div class="github-icon">
-                <img src="img/color_images/github_white.png" alt="GitHub">
-            </div>
+            <a href="https://github.com/madhusiddharths/SymptoScan" target="_blank" rel="noopener noreferrer">
+                <div class="github-icon">
+                    <img src="img/color_images/github_white.png" alt="GitHub">
+                </div>
+            </a>
         </div>
 
         <p class="description">
@@ -441,13 +228,15 @@
 
         <div class="header">
             <h2 class="project-title">Hotspot</h2>
-            <div class="github-icon">
-                <img src="img/color_images/github_white.png" alt="GitHub">
-            </div>
+            <a href="https://github.com/madhusiddharths/hotspot" target="_blank" rel="noopener noreferrer">
+                <div class="github-icon">
+                    <img src="img/color_images/github_white.png" alt="GitHub">
+                </div>
+            </a>
         </div>
 
         <p class="description">
-            This dashboard monitors disease outbreaks across the state and uses recent travel history to estimate an individual’s infection risk, offering timely and personalized health insights.
+            This dashboard monitors disease outbreaks across the state and uses recent travel history to estimate an individual's infection risk, offering timely and personalized health insights.
         </p>
 
         <div class="footer">
@@ -473,9 +262,11 @@
 
         <div class="header">
             <h2 class="project-title">Image Classifier</h2>
-            <div class="github-icon">
-                <img src="img/color_images/github_white.png" alt="GitHub">
-            </div>
+            <a href="https://github.com/madhusiddharths/VGG19-Trannsfer-learning" target="_blank" rel="noopener noreferrer">
+                <div class="github-icon">
+                    <img src="img/color_images/github_white.png" alt="GitHub">
+                </div>
+            </a>
         </div>
 
         <p class="description">
