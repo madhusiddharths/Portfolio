@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Image Retrieval</title>
+  <link rel="stylesheet" href="css/normalize.css" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="./css/font-root-styles/general-sans.css" />
+  <link rel="stylesheet" href="./css/font-root-styles/okinesans.css" />
+  <link rel="stylesheet" href="./css/font-root-styles/satoshi.css" />
+  <link rel="stylesheet" href="css/alzheimers_mobile.css" />
+</head>
+<body>
+
+<header>
+  <h1>Image Retrieval</h1>
+  <div class="separator"></div>
+</header>
+
+<main>
+  <article>
+    <section style="width: 100%; margin: 0 auto;">
+      <h2>Overview</h2>
+      <p>This project implements an AI-based image retrieval system that enables fast and accurate similarity searches
+        using deep learning and vector indexing. Images are first processed through a ResNet-50 convolutional neural
+        network, which extracts high-dimensional feature embeddings representing their visual content. These embeddings
+        are then indexed using FAISS (Facebook AI Similarity Search), a powerful library optimized for efficient
+        similarity search in large datasets. By combining deep feature extraction with vector-based retrieval, the
+        system can quickly identify and return images that are visually similar to a query image, making it suitable
+        for applications such as content-based image search, duplicate detection, and visual recommendation systems.</p>
+    </section>
+
+    <section style="width: 100%; margin: 0 auto;">
+      <h2>Dataset</h2>
+      <p>
+        The Caltech101 dataset is a widely used benchmark in computer vision that contains over 9,000 images across 101
+        object categories plus one background class. Each category includes between 40 and 800 images, featuring a
+        variety of objects such as animals, vehicles, instruments, and household items. The images are of medium
+        resolution and primarily centered objects, making the dataset ideal for tasks like image classification,
+        object recognition, and feature extraction.
+      </p>
+    </section>
+
+    <section style="width: 100%; margin: 0 auto;">
+      <h2>Data Preprocessing</h2>
+      <p>
+        All images from the <strong>Caltech101 dataset</strong> undergo a structured preprocessing pipeline
+        to ensure consistency and robustness during training. Each image is resized to a fixed input dimension (224×224) and
+        converted to RGB format. During training, extensive data augmentation is applied—including random cropping,
+        horizontal flipping, rotation, color jittering, affine transformations, and random erasing—to increase data
+        diversity and reduce overfitting. The validation images are only resized and normalized using ImageNet mean and
+        standard deviation values, matching the input expectations of ResNet-50.
+      </p>
+    </section>
+
+    <section style="width: 100%; margin: 0 auto;">
+      <h2>Architecture</h2>
+      <p>The architecture is based on a transfer learning approach using a pre-trained
+        <strong>ResNet-50</strong> network. The convolutional backbone is initially frozen to preserve pre-learned low-level
+        visual features, while deeper layers are progressively unfrozen during training to allow fine-tuning. The fully
+        connected classification layer of ResNet-50 is replaced with a custom embedding module consisting of a linear
+        projection layer reducing 2048-dimensional ResNet features to 512 dimensions, followed by batch normalization,
+        ReLU activation, and dropout (50%) for improved stability and generalization. A final linear layer produces a
+        128-dimensional feature embedding used for both classification and retrieval. A lightweight classifier head maps
+        these embeddings to 101 output classes corresponding to the Caltech101 object categories. Label smoothing is
+        applied during training to enhance model calibration and reduce overconfidence.</p>
+    </section>
+
+    <section style="width: 100%; margin: 0 auto;">
+      <h2>Performance</h2>
+      <p>
+        The model is trained using the AdamW optimizer with cosine annealing learning rate
+        scheduling and progressive layer unfreezing to ensure stable convergence. After 30 epochs of training, the
+        ResNet-50 transfer learning model achieved an impressive <strong>96.95% validation accuracy</strong>, demonstrating
+        strong generalization across diverse object categories. The trained model not only performs accurate classification
+        but also provides normalized embeddings suitable for efficient image similarity search using FAISS, enabling
+        high-speed retrieval of visually similar images from large datasets.
+      </p>
+    </section>
+
+    <section style="width: 100%; margin: 0 auto;">
+      <h2>FAISS Vector Indexing</h2>
+      <p>
+        The system uses <strong>FAISS</strong> (Facebook AI Similarity Search) for fast, large-scale image retrieval.
+        After extracting normalized feature embeddings from the trained ResNet-50 model, these vectors are stored
+        in a FAISS index. When a query image is given, its embedding is compared to all indexed vectors using
+        <strong>cosine similarity</strong>, efficiently returning the top matches. This enables real-time
+        retrieval of visually similar images, even across large datasets.
+      </p>
+    </section>
+
+    <section style="width: 100%; margin: 0 auto;">
+      <div style="display: flex; justify-content: center; gap: 2rem; margin: 2rem 0;">
+        <figure style="flex: 1; text-align: center;">
+          <img src="img/image_retrieval_img/img_1.png" alt="Opening page"
+               style="max-width: 100%; height: auto; border: 1px solid #ccc;" />
+          <figcaption style="font-style: italic; color: #666; margin-top: 0.5rem;">
+            Figure 1a: Opening page.
+          </figcaption>
+        </figure>
+        <figure style="flex: 1; text-align: center;">
+          <img src="img/image_retrieval_img/img_2.png" alt="Image retrieval"
+               style="max-width: 100%; height: auto; border: 1px solid #ccc;" />
+          <figcaption style="font-style: italic; color: #666; margin-top: 0.5rem;">
+            Figure 1b: Image retrieval.
+          </figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section style="width: 100%; margin: 0 auto;">
+      <h2>Conclusion</h2>
+      <p>
+        This project enhanced my understanding of <strong>transfer learning</strong>,
+        <strong>feature extraction</strong>, and <strong>image similarity retrieval</strong>.
+        Using a pre-trained <strong>ResNet-50</strong> with <strong>FAISS</strong> indexing,
+        I learned how to build an efficient and scalable AI system for visual search.
+        The process improved my skills in model fine-tuning, data preprocessing, and performance evaluation,
+        resulting in a strong <strong>96.95% validation accuracy</strong>.
+        Overall, this work provided valuable experience in applying deep learning to real-world computer vision tasks.
+      </p>
+    </section>
+  </article>
+</main>
+<footer>
+  <p>Designed and Developed by <span>Madhu Siddharth Suthagar</span></p>
+</footer>
+<script type="text/javascript" src="js/main.js"></script>
+</body>
+</html>
