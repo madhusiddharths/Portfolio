@@ -27,14 +27,12 @@ body {
 }
 
 body {
-  /* background-color: rgb(34, 40, 49); */
   background-color: rgb(0, 0, 0);
   background: radial-gradient(circle at center, #020617 0%, #000 80%);
   font-family: "Satoshi 400";
   font-size: 1.5rem;
   font-weight: 300;
   line-height: 1.5;
-  /* color: rgb(204, 213, 243); */
   color: rgb(208, 212, 212);
 }
 
@@ -98,9 +96,9 @@ h4 {
 
 .logo {
   background: -webkit-linear-gradient(
-    top right,
-    rgba(18, 55, 246, 1),
-    rgba(9, 244, 244, 1)
+          top right,
+          rgba(18, 55, 246, 1),
+          rgba(9, 244, 244, 1)
   );
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -109,9 +107,9 @@ h4 {
 
 .featured-projects-box h3 {
   background: -webkit-linear-gradient(
-    90.98deg,
-    rgba(24, 185, 207, 0.9) -2.14%,
-    #6688ff 103.54%
+          90.98deg,
+          rgba(24, 185, 207, 0.9) -2.14%,
+          #6688ff 103.54%
   );
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -151,11 +149,12 @@ nav img {
   z-index: 2;
 }
 
+/* --- MOBILE MENU DEFAULT STYLES --- */
 .nav-menu {
   position: fixed;
   display: flex;
-  top: -2rem;
-  right: -200vh;
+  top: 0; /* Align to top */
+  right: -200vh; /* Hidden */
   height: 100vh;
   width: 75vw;
   list-style: none;
@@ -167,14 +166,13 @@ nav img {
   gap: 2.5rem;
   background: #131313;
   transition: all 0.5s ease-in-out;
-  z-index: 1000; /* CHANGED from z-index: 2 */
+  z-index: 1000;
 }
 
 .nav-menu.is-active {
-  top: 0;
   right: 0;
   margin: 0;
-  box-shadow: 0 1rem 5rem 0 #131313;
+  box-shadow: -5px 0 15px rgba(0,0,0,0.5);
 }
 
 .hamburger {
@@ -186,15 +184,15 @@ nav img {
   outline: none;
   background: none;
   cursor: pointer;
-  z-index: 1001; /* CHANGED from z-index: 2 */
+  z-index: 1001;
 }
 
 .hamburger.is-active {
   position: fixed;
   top: 2.3rem;
   right: 2rem;
-  background: #131313;
-  z-index: 1001; /* ADD this line */
+  background: transparent; /* Changed from #131313 to allow click through if needed */
+  z-index: 1001;
 }
 
 .menu-bar {
@@ -316,9 +314,9 @@ main {
 
 .name-highlight {
   background: -webkit-linear-gradient(
-    top right,
-    rgba(18, 55, 246, 1),
-    rgba(9, 244, 244, 1)
+          top right,
+          rgba(18, 55, 246, 1),
+          rgba(9, 244, 244, 1)
   );
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -349,9 +347,9 @@ main {
   padding: 1rem 1.5rem;
   border-radius: 1rem;
   background: linear-gradient(
-    99.41deg,
-    #002cc7 -39.51%,
-    rgba(24, 185, 207, 0.9) 116.85%
+          99.41deg,
+          #002cc7 -39.51%,
+          rgba(24, 185, 207, 0.9) 116.85%
   );
 
   text-align: center;
@@ -433,9 +431,9 @@ main {
   border-radius: 1.8rem;
   height: max-content;
   background: linear-gradient(
-    99.41deg,
-    #002cc7 -39.51%,
-    rgba(24, 185, 207, 0.9) 116.85%
+          99.41deg,
+          #002cc7 -39.51%,
+          rgba(24, 185, 207, 0.9) 116.85%
   );
 }
 
@@ -644,10 +642,6 @@ body {
 }
 
 /* PROJECTS SECTION STYLING */
-/* Add these styles to your style.css file */
-
-/* PROJECT SECTION - CARD GRID LAYOUT */
-/* PROJECTS SECTION - REPLICATED FROM PROJECTS.CSS */
 
 #projects {
   padding-bottom: 10rem;
@@ -1077,9 +1071,9 @@ body {
   font-family: "Satoshi 500";
   font-size: 1.6rem;
   background: -webkit-linear-gradient(
-    90.98deg,
-    rgba(24, 185, 207, 0.9) -2.14%,
-    #6688ff 103.54%
+          90.98deg,
+          rgba(24, 185, 207, 0.9) -2.14%,
+          #6688ff 103.54%
   );
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -1115,9 +1109,9 @@ footer {
 
 footer span {
   background: -webkit-linear-gradient(
-    90.98deg,
-    rgba(24, 185, 207, 0.9) -2.14%,
-    #6688ff 103.54%
+          90.98deg,
+          rgba(24, 185, 207, 0.9) -2.14%,
+          #6688ff 103.54%
   );
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -1207,6 +1201,8 @@ footer span {
   }
 }
 
+/* === MODIFIED MEDIA QUERY: LAPTOP FIX === */
+/* Changed min-width from 1280px to 1024px for Navigation */
 @media screen and (min-width: 1024px) {
   body > * {
     width: 70vw;
@@ -1220,6 +1216,32 @@ footer span {
   main section {
     width: 100%;
   }
+
+  /* NAV FIX START */
+  .hamburger {
+    display: none; /* Hide hamburger on laptop */
+    z-index: 1001;
+  }
+
+  nav {
+    justify-content: space-between;
+  }
+
+  nav > a {
+    display: block;
+  }
+
+  .nav-menu {
+    position: static;
+    width: 60%;
+    height: auto;
+    justify-self: flex-end;
+    flex-direction: row;
+    gap: 5.5rem;
+    background: none;
+    z-index: 1000;
+  }
+  /* NAV FIX END */
 
   h1 {
     font-size: 5.5rem;
@@ -1251,7 +1273,6 @@ footer span {
 
   .separator ~ .project:nth-child(odd) {
     flex-direction: row-reverse;
-
     text-align: right;
   }
 
@@ -1372,6 +1393,7 @@ footer span {
   }
 }
 
+/* === CLEANED UP 1280px QUERY (Nav styles moved up) === */
 @media screen and (min-width: 1280px) {
   body > * {
     width: 80vw;
@@ -1382,29 +1404,7 @@ footer span {
     padding: 2rem 5.5rem;
   }
 
-  nav {
-    justify-content: space-between;
-  }
-
-  nav > a {
-    display: block;
-  }
-
-  .nav-menu {
-    position: static;
-    width: 60%;
-    height: auto;
-    justify-self: flex-end;
-    flex-direction: row;
-    gap: 5.5rem;
-    background: none;
-    z-index: 1000; /* ADD THIS LINE */
-  }
-
-  .hamburger {
-    display: none;
-    z-index: 1001; /* ADD THIS LINE just to be safe */
-  }
+  /* Nav styles removed here as they are now in 1024px */
 
   main > section {
     width: 60rem;
@@ -1476,55 +1476,5 @@ footer span {
 
   .cta2 {
     width: fit-content;
-  }
-}
-
-/* CERTIFICATION SECTION STYLING */
-#certification {
-  display: flex;
-  flex-direction: column;
-  padding-bottom: 10rem;
-}
-
-.certification-images {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3rem;
-  margin-top: 3rem;
-  width: 100%;
-}
-
-.certification-images a {
-  display: block;
-  width: 100%;
-  max-width: 200px;
-  text-align: center;
-}
-
-.certification-images img {
-  width: 100%;
-  max-width: 200px;
-  height: auto;
-  transition: transform 0.3s ease;
-}
-
-.certification-images img:hover {
-  transform: scale(1.05);
-}
-
-@media screen and (min-width: 720px) {
-  .certification-images {
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 4rem;
-  }
-}
-
-@media screen and (min-width: 1024px) {
-  .certification-images {
-    flex-wrap: nowrap;
-    gap: 5rem;
   }
 }
