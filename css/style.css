@@ -1140,14 +1140,15 @@ footer span {
   }
 
   main {
-    min-height: 90vh;
-    width: 90vw;
+    min-height: 85vh;
+    width: 90%;
 
     justify-content: space-between;
   }
 
+  /* --- FIX: Changed from fixed 47rem to fluid width --- */
   main section {
-    width: 47rem;
+    width: 80%; /* Was 47rem; allows expansion in tablet view */
   }
 
   h1,
@@ -1178,8 +1179,9 @@ footer span {
     width: 100%;
   }
 
+  /* --- FIX: Changed from 55vw to 80% to match --- */
   #about .separator + div {
-    width: 55vw;
+    width: 80%; /* Was 55vw; */
   }
 
   .featured-projects-box {
@@ -1195,8 +1197,9 @@ footer span {
     gap: 2.5rem;
   }
 
+  /* --- FIX: Changed from 55vw to 80% to match --- */
   #contact div {
-    width: 55vw;
+    width: 80%; /* Was 55vw; */
     padding: 2.5rem;
   }
 }
@@ -1205,7 +1208,7 @@ footer span {
 /* Changed min-width from 1280px to 1024px for Navigation */
 @media screen and (min-width: 1024px) {
   body > * {
-    width: 70vw;
+    width: 80%;
   }
 
   header {
@@ -1214,7 +1217,7 @@ footer span {
   }
 
   main section {
-    width: 100%;
+    width: 80%;
   }
 
   /* NAV FIX START */
@@ -1396,7 +1399,7 @@ footer span {
 /* === CLEANED UP 1280px QUERY (Nav styles moved up) === */
 @media screen and (min-width: 1280px) {
   body > * {
-    width: 80vw;
+    width: 80%;
   }
 
   header {
@@ -1407,7 +1410,7 @@ footer span {
   /* Nav styles removed here as they are now in 1024px */
 
   main > section {
-    width: 60rem;
+    width: 80%;
   }
 
   main .cta2 {
