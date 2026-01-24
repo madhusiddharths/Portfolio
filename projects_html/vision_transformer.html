@@ -4,12 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Vision Transformer Implementation</title>
-  <link rel="stylesheet" href="css/normalize.css" />
-  <link rel="stylesheet" href="css/style.css" />
-  <link rel="stylesheet" href="./css/font-root-styles/general-sans.css" />
-  <link rel="stylesheet" href="./css/font-root-styles/okinesans.css" />
-  <link rel="stylesheet" href="./css/font-root-styles/satoshi.css" />
-  <link rel="stylesheet" href="css/vit_mobile.css" />
+  <link rel="stylesheet" href="../css/normalize.css" />
+  <link rel="stylesheet" href="../css/style.css" />
+  <link rel="stylesheet" href="../css/font-root-styles/general-sans.css" />
+  <link rel="stylesheet" href="../css/font-root-styles/okinesans.css" />
+  <link rel="stylesheet" href="../css/font-root-styles/satoshi.css" />
+  <link rel="stylesheet" href="../css/vit_mobile.css" />
   <style>
     /* Utility for code blocks to match the clean aesthetic */
     .code-container {
@@ -80,7 +80,7 @@
 
     <section style="width: 100%; margin: 0 auto;">
       <figure style="margin: 2rem 0; text-align: center;">
-        <img src="img/vision_transformer/entire_architecture.jpeg" alt="Vision Transformer Architecture"
+        <img src="../img/vision_transformer/entire_architecture.jpeg" alt="Vision Transformer Architecture"
              style="max-width:600px; width: 100%; height:auto; border:1px solid #ccc; margin-bottom: 1.5rem;" />
         <figcaption style="font-style: italic; color: #666; margin-top: 0.5rem;">
           Figure 1: The Vision Transformer workflow. Image patches are linearly embedded, prepended with a class token, and processed by a Transformer encoder.
@@ -125,7 +125,7 @@ def forward(self, x):
       <p>The core is a standard Transformer encoder using a <strong>Pre-Norm</strong> architecture (LayerNorm applied <em>before</em> attention/MLP). It relies on Multi-Head Self-Attention (MSA) to model relationships between all patches simultaneously.</p>
 
       <figure style="margin: 2rem auto; text-align: center; width: 100%;">
-        <img src="img/vision_transformer/transformer_encoder.jpg" alt="Transformer Encoder Block"
+        <img src="../img/vision_transformer/transformer_encoder.jpg" alt="Transformer Encoder Block"
              style="max-height: 350px; width: auto; max-width: 200px; border:1px solid #ccc;" />
         <figcaption style="font-style: italic; color: #666; margin-top: 0.5rem; font-size: 0.9rem;">
           Figure 2: Encoder block with Residuals.
@@ -246,7 +246,7 @@ def predict(model, image, device):
 
       <div style="display: flex; justify-content: center; gap: 2rem; margin: 2rem 0; flex-wrap: wrap;">
         <figure style="flex: 1; text-align: center; min-width: 300px;">
-          <img src="img/vision_transformer/training_curves.jpeg" alt="Training Curves"
+          <img src="../img/vision_transformer/training_curves.jpeg" alt="Training Curves"
                style="max-width: 100%; height: auto; border: 1px solid #ccc;" />
           <figcaption style="font-style: italic; color: #666; margin-top: 0.5rem;">
             Figure 3: Training/Validation Loss and Accuracy over 20 epochs.
@@ -259,7 +259,7 @@ def predict(model, image, device):
       </p>
 
       <figure style="margin: 2rem 0; text-align: center;">
-        <img src="img/vision_transformer/model_predictions.jpeg" alt="Model Predictions"
+        <img src="../img/vision_transformer/model_predictions.jpeg" alt="Model Predictions"
              style="max-width:600px; width: 100%; height:auto; border:1px solid #ccc; margin-bottom: 1.5rem;" />
         <figcaption style="font-style: italic; color: #666; margin-top: 0.5rem;">
           Figure 4: Sample predictions on CIFAR-10 test images.
@@ -296,6 +296,6 @@ def predict(model, image, device):
 <footer>
   <p>Designed and Developed by <span>Madhu Siddharth Suthagar</span></p>
 </footer>
-<script type="text/javascript" src="js/main.js"></script>
+<script type="text/javascript" src="../js/main.js"></script>
 </body>
 </html>

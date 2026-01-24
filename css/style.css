@@ -62,7 +62,7 @@ main,
 main ~ section,
 footer {
   position: relative;
-  z-index: 2;
+  z-index: 1;
 }
 
 h1,
@@ -1052,6 +1052,19 @@ body {
   height: auto;
 }
 
+/* Mobile view for certifications */
+@media (max-width: 768px) {
+  .certification-images {
+    flex-direction: column;
+    gap: 2rem; /* smaller gap */
+    align-items: center;
+  }
+
+  .certification-images img {
+    width: 140px; /* scale down images for small screens */
+  }
+}
+
 /* CONTACT SECTION STYLING */
 #contact {
   display: flex;
@@ -1479,5 +1492,68 @@ footer span {
 
   .cta2 {
     width: fit-content;
+  }
+}
+
+/* Ensure hamburger shows only on mobile */
+@media (max-width: 1024px) {
+  .hamburger {
+    display: block;
+    position: fixed;
+    top: 2rem;
+    right: 2rem;
+    z-index: 9999;
+  }
+
+  .nav-menu {
+    position: fixed;
+    top: 0;
+    right: -100%; /* off-screen initially */
+    width: 75vw;
+    height: 100vh;
+    background: #131313;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 2rem;
+    transition: right 0.5s ease-in-out;
+    z-index: 1000;
+    overflow-y: auto; /* allow scrolling if content is taller than screen */
+  }
+
+  .nav-menu.is-active {
+    right: 0; /* slide in */
+  }
+}
+
+@media (max-width: 768px) {
+  /* 1. Dynamic Main Section */
+  main {
+    /* dvh adapts to mobile URL bars appearing/disappearing */
+    min-height: 100dvh;
+
+    /* This vertically centers the content */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+
+    /* Protects content from being hidden behind the fixed header on very small screens */
+    padding-top: 8rem;
+    padding-bottom: 2rem;
+
+    /* Removes fixed margins so the centering logic takes over */
+    margin: 0;
+  }
+
+  /* 2. Responsive spacing for Contact */
+  #contact {
+    /* Uses viewport height (vh) instead of fixed units */
+    /* This will be larger on long phones and smaller on short phones */
+    margin-top: 15vh;
+  }
+
+  /* Optional: Responsive padding for certification */
+  #certification {
+    padding-bottom: 5vh;
   }
 }
