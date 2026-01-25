@@ -334,36 +334,53 @@ main {
   margin-top: 4rem;
 }
 
-.cta,
-.cta1 {
-  font-family: "Satoshi 700";
-}
-
+/* CTA BUTTON (Get in Touch) - Exact Resume Button Replica */
 .cta {
+  position: relative;
   display: inline-block;
-  width: 12rem;
-  margin: 0.5rem 1.8rem;
-  margin-left: 0;
-  padding: 1rem 1.5rem;
-  border-radius: 1rem;
-  background: linear-gradient(
-          99.41deg,
-          #002cc7 -39.51%,
-          rgba(24, 185, 207, 0.9) 116.85%
-  );
 
+  /* Desktop Width: Fits text */
+  width: fit-content;
+
+  margin: 0.5rem 0;
+  /* Matches Resume button padding logic */
+  padding: 1rem 2.5rem;
+
+  /* Dark background (same as Resume) */
+  background: rgb(34, 40, 49);
+  border-radius: 1rem;
+
+  /* Text Styles */
+  color: rgb(204, 213, 243);
+  font-family: "Satoshi 700";
   text-align: center;
   text-decoration: none;
-  color: rgb(208, 212, 212);
-}
-
-.cta1 {
   text-transform: uppercase;
   font-weight: 500;
+
+  z-index: 1; /* Ensures text stays on top of the border */
+}
+
+/* The Gradient Border (Exact match to Resume button) */
+.cta::after {
+  position: absolute;
+  content: "";
+
+  /* Specific offsets from your Resume button CSS */
+  top: -1.8px;
+  bottom: -1.8px;
+  left: -1.8px;
+  right: -1.8px;
+
+  /* Exact Gradient */
+  background: linear-gradient(180deg, rgba(24, 185, 207, 0.9) 0%, #3b53a8 100%);
+
+  z-index: -1; /* Sits behind the button */
+  border-radius: 1.5rem; /* Slightly rounded corners for the border */
 }
 
 .cta:hover {
-  transform: scale(1.05);
+  transform: scale(1.08); /* Matches your nav-link hover scale */
   transition: transform 0.4s ease-in-out;
 }
 
@@ -1063,17 +1080,24 @@ body {
   .certification-images img {
     width: 140px; /* scale down images for small screens */
   }
+
+  .cta {
+    width: 50%;
+    min-width: 200px;
+  }
 }
 
-/* CONTACT SECTION STYLING */
+/* CONTACT SECTION STYLES */
 #contact {
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   padding-bottom: 10rem;
-
   text-align: center;
+
+  /* DYNAMIC SPACING: 15% of the viewport height */
+  margin-top: 15vh;
 }
 
 #contact > div {
@@ -1527,33 +1551,48 @@ footer span {
 }
 
 @media (max-width: 768px) {
-  /* 1. Dynamic Main Section */
+  /* 1. Dynamic Main Section Fix */
   main {
-    /* dvh adapts to mobile URL bars appearing/disappearing */
-    min-height: 100dvh;
+    /* 90vh ensures Header + Main fills the screen */
+    min-height: 90vh;
 
-    /* This vertically centers the content */
     display: flex;
     flex-direction: column;
+
+    /* VERTICAL: Centers the content block vertically */
     justify-content: center;
 
-    /* Protects content from being hidden behind the fixed header on very small screens */
-    padding-top: 8rem;
-    padding-bottom: 2rem;
+    /* HORIZONTAL: Centers the SECTION DIV itself in the middle of the screen */
+    align-items: center;
 
-    /* Removes fixed margins so the centering logic takes over */
+    padding-top: 0;
+
+    /* OPTICAL ADJUSTMENT: Keeps the "lifted" look you liked */
+    padding-bottom: 15vh;
+
     margin: 0;
   }
 
-  /* 2. Responsive spacing for Contact */
-  #contact {
-    /* Uses viewport height (vh) instead of fixed units */
-    /* This will be larger on long phones and smaller on short phones */
-    margin-top: 15vh;
+  /* 2. Text Container Styling */
+  main section {
+    /* TEXT ALIGNMENT: Restored to Left */
+    text-align: left;
+
+    /* CONTAINER WIDTH: Keeps the div centered but responsive */
+    width: 100%;
+    padding: 0 2rem; /* Adds breathing room on the sides */
   }
 
-  /* Optional: Responsive padding for certification */
-  #certification {
-    padding-bottom: 5vh;
+  /* 3. Paragraph Specifics */
+  main p {
+    /* Ensures text inside stays left (or justified if you prefer) */
+    text-align: left !important;
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  /* Optional: Ensure the Heading doesn't look weird if it wraps */
+  main h1 {
+    text-align: left;
   }
 }

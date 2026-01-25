@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Federated IoT Intrusion Detection</title>
+  <link rel="stylesheet" href="../css/normalize.css" />
+  <link rel="stylesheet" href="../css/style.css" />
+  <link rel="stylesheet" href="../css/font-root-styles/general-sans.css" />
+  <link rel="stylesheet" href="../css/font-root-styles/okinesans.css" />
+  <link rel="stylesheet" href="../css/font-root-styles/satoshi.css" />
+  <link rel="stylesheet" href="../css/federated_iot_mobile.css" />
+</head>
+<body>
+
+<header>
+  <h1>Federated IoT Security</h1>
+  <div class="separator"></div>
+</header>
+
+<main>
+  <article>
+    <section class="content-section" style="text-align: center; margin-bottom: 3rem;">
+      <p style="font-style: italic; color: #888; margin-bottom: 1.5rem;">
+        Published in the 5th IEEE International Conference on AI in Cybersecurity (ICAIC), 2026.
+      </p>
+      <a href="../papers/hybrid_transformer_xgboost_iot.pdf" target="_blank" class="paper-btn">
+        Read the Full IEEE Paper <span class="arrow">→</span>
+      </a>
+    </section>
+
+    <section class="content-section">
+      <h2>Overview</h2>
+      <p>
+        The rapid expansion of Internet of Things (IoT) devices has introduced massive scale and complexity to network traffic, making centralized intrusion detection privacy-invasive and computationally expensive.
+      </p>
+      <p>
+        This project introduces a <strong>Hybrid Federated Learning Architecture</strong> that combines a deep <strong>Transformer</strong> backbone with an <strong>XGBoost</strong> specialist. By utilizing <strong>Low-Rank Adaptation (LoRA)</strong>, we achieved a communication-efficient system that reduces data transmission by <strong>89.5%</strong> while maintaining <strong>97.98%</strong> global accuracy on the CICIoT2023 dataset.
+      </p>
+    </section>
+
+    <section class="content-section">
+      <h2>Dataset & Preparation</h2>
+      <p>
+        We utilized the <strong>CICIoT2023</strong> dataset, a massive collection of real-world IoT traffic covering over 80 attack subtypes. To handle the extreme class imbalance and heterogeneity inherent in IoT networks, we implemented a rigorous preprocessing pipeline:
+      </p>
+      <ul>
+        <li><strong>Column Pruning:</strong> Removed redundant fields (e.g., <code>Srate</code>, <code>LLC</code>).</li>
+        <li><strong>Stratified Partitioning:</strong> Data was divided into four federated clients preserving label proportions to mitigate non-IID effects.</li>
+        <li><strong>Balancing Strategy:</strong> Applied a mix of oversampling for minority attacks (e.g., Mirai) and downsampling for dominant benign traffic.</li>
+        <li><strong>Class Weighting:</strong> Inverse-frequency weights were computed and applied to the Cross-Entropy loss function.</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h2>System Architecture</h2>
+      <p>
+        The system addresses the "Heterogeneous Feature" problem by fusing two distinct modalities. Each local client trains a dual-model pipeline:
+      </p>
+      <figure>
+        <img src="../img/fed_iot/ieee_architecture.png" alt="Hybrid Federated Architecture Diagram" />
+        <figcaption>Figure 1: Hybrid Architecture integrating Transformer-LoRA, XGBoost, and Fusion Head.</figcaption>
+      </figure>
+
+      <h3>1. Transformer Backbone (with LoRA)</h3>
+      <p>
+        A tabular Transformer encoder processes features using multi-head self-attention to capture complex dependencies. To ensure the model is light enough for IoT edge training, we inject <strong>LoRA (Low-Rank Adaptation)</strong> adapters. Instead of updating the full weight matrix, we only learn rank-decomposition matrices.
+      </p>
+
+      <h3>2. XGBoost Specialist</h3>
+      <p>
+        Parallel to the Transformer, an XGBoost model captures tree-based decision boundaries on structured fields (packet counts, flags), excelling at detecting volumetric attacks where deep learning sometimes struggles.
+      </p>
+
+      <h3>3. Learnable Fusion Head</h3>
+      <p>
+        A Multi-Layer Perceptron (MLP) acts as a fusion gate. It takes the probability vectors from both models and learns a weighted combination, outputting the final prediction logits.
+      </p>
+    </section>
+
+    <section class="content-section">
+      <h2>Federated Methodology</h2>
+      <p>
+        Traditional Federated Learning (FedAvg) transmits full model parameters, saturating bandwidth. Our approach freezes the backbone and XGBoost parameters.
+      </p>
+      <div class="highlight-box">
+        <p><strong>Communication Efficiency:</strong> Only the LoRA adapter updates (&Delta;W) are transmitted to the central server.</p>
+        <p>This reduces the payload from <strong>468 KB</strong> (Full Model) to just <strong>49 KB</strong> per round.</p>
+      </div>
+      <p>
+        The server aggregates these lightweight updates using weighted averaging based on the client's sample size (<i>n<sub>k</sub></i>), ensuring fairness across heterogeneous devices.
+      </p>
+    </section>
+
+    <section class="content-section">
+      <h2>Experimental Results</h2>
+      <p>
+        After 4 communication rounds, the global model achieved an overall accuracy of <strong>97.98%</strong> across 2.4 million test samples.
+      </p>
+
+      <h3>Attack-Specific Performance</h3>
+      <p>
+        The model excelled at volumetric attacks while maintaining competitive performance on stealthier vectors.
+      </p>
+
+      <div class="table-container">
+        <table>
+          <thead>
+          <tr>
+            <th>Attack Class</th>
+            <th>Precision</th>
+            <th>Recall</th>
+            <th>F1-Score</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td><strong>DDoS-ICMP_Flood</strong></td>
+            <td>1.0000</td>
+            <td>1.0000</td>
+            <td>1.0000</td>
+          </tr>
+          <tr>
+            <td><strong>Mirai-udpplain</strong></td>
+            <td>0.9999</td>
+            <td>0.9999</td>
+            <td>0.9999</td>
+          </tr>
+          <tr>
+            <td><strong>Uploading_Attack</strong></td>
+            <td>0.9556</td>
+            <td>0.9919</td>
+            <td>0.9734</td>
+          </tr>
+          <tr>
+            <td><strong>SqlInjection</strong></td>
+            <td>0.7105</td>
+            <td>0.8788</td>
+            <td>0.7857</td>
+          </tr>
+          <tr>
+            <td><strong>Recon-OSScan</strong></td>
+            <td>0.5961</td>
+            <td>0.6668</td>
+            <td>0.6294</td>
+          </tr>
+          <tr style="background: rgba(29, 228, 255, 0.1);">
+            <td><strong>Weighted Average</strong></td>
+            <td><strong>0.9815</strong></td>
+            <td><strong>0.9798</strong></td>
+            <td><strong>0.9803</strong></td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="font-size: 0.9rem; color: #888; margin-top: 0.5rem;">*Table I: Selected performance metrics from Round 4.</p>
+    </section>
+
+    <section class="content-section">
+      <h2>Communication Analysis</h2>
+      <p>
+        By exchanging only low-rank matrices, we achieved massive compression, enabling deployment on constrained networks like LoRaWAN or LTE-M.
+      </p>
+      <div class="table-container">
+        <table>
+          <thead>
+          <tr>
+            <th>Method</th>
+            <th>Trainable Params</th>
+            <th>Payload Size</th>
+            <th>Reduction</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td>Standard FedAvg</td>
+            <td>117,248</td>
+            <td>~468 KB</td>
+            <td>0%</td>
+          </tr>
+          <tr style="background: rgba(0, 255, 136, 0.1);">
+            <td><strong>Proposed LoRA</strong></td>
+            <td><strong>12,288</strong></td>
+            <td><strong>~49 KB</strong></td>
+            <td><strong>89.52%</strong></td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="content-section">
+      <h2>Conclusion</h2>
+      <p>
+        This work represents the first integration of hybrid ensemble learning with parameter-efficient LoRA updates in federated IoT security. By fusing Deep Learning with Tree-based models and optimizing for communication, we created a robust system capable of defending edge networks against complex cyber threats.
+      </p>
+    </section>
+  </article>
+</main>
+<footer>
+  <p>Designed and Developed by <span>Madhu Siddharth Suthagar</span></p>
+</footer>
+<script type="text/javascript" src="../js/main.js"></script>
+</body>
+</html>

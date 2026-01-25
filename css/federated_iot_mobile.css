@@ -1,0 +1,213 @@
+/* ===================================
+   FEDERATED IOT PAGE STYLES
+   =================================== */
+
+/* --- Base Mobile Styles (Screens < 720px) --- */
+
+article {
+    width: 100%;
+    max-width: 100%;
+}
+
+article section.content-section {
+    width: 100%;
+    padding: 0 1rem;
+    margin: 2rem auto;
+}
+
+article h2 {
+    font-size: 2.2rem;
+    margin-bottom: 0.5rem;
+    margin-top: 0;
+}
+
+article h3 {
+    font-size: 1.8rem;
+    margin-bottom: 0.5rem;
+    margin-top: 2rem;
+    color: rgb(29, 228, 255); /* Theme Blue */
+}
+
+article p {
+    font-size: 1.5rem;
+    line-height: 1.7;
+    text-align: left;
+    margin-top: 0;
+}
+
+article ul {
+    padding-left: 2rem;
+    margin: 1rem 0;
+}
+
+article ul li {
+    margin-bottom: 1rem;
+    line-height: 1.6;
+    font-size: 1.5rem;
+}
+
+article li strong {
+    color: rgb(29, 228, 255);
+}
+
+/* --- Paper Link Button --- */
+.paper-btn {
+    display: inline-block;
+    background: rgba(29, 228, 255, 0.1);
+    border: 1px solid rgb(29, 228, 255);
+    color: rgb(29, 228, 255);
+    padding: 1rem 2rem;
+    border-radius: 30px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1.4rem;
+    transition: all 0.3s ease;
+}
+
+.paper-btn:hover {
+    background: rgb(29, 228, 255);
+    color: #000;
+    transform: translateY(-2px);
+}
+
+.paper-btn .arrow {
+    margin-left: 5px;
+}
+
+/* --- Highlight Box (for Stats) --- */
+.highlight-box {
+    background: rgba(255, 255, 255, 0.05);
+    border-left: 4px solid rgb(29, 228, 255);
+    padding: 1.5rem;
+    margin: 2rem 0;
+    border-radius: 4px;
+}
+
+.highlight-box p {
+    margin: 0.5rem 0;
+}
+
+/* --- Table Styling --- */
+.table-container {
+    overflow-x: auto; /* Allows table to scroll on mobile */
+    margin: 2rem 0;
+    border-radius: 8px;
+    border: 1px solid #333;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 1.4rem;
+    min-width: 500px; /* Forces scroll on small screens */
+}
+
+thead {
+    background: #1e1e1e;
+}
+
+th {
+    text-align: left;
+    padding: 1rem;
+    color: rgb(29, 228, 255);
+    border-bottom: 2px solid #444;
+}
+
+td {
+    padding: 1rem;
+    border-bottom: 1px solid #333;
+    color: #ddd;
+}
+
+tr:last-child td {
+    border-bottom: none;
+}
+
+/* --- Image Styling --- */
+article figure {
+    margin: 2rem 0;
+    text-align: center;
+    max-width: 100%;
+}
+
+article figure img {
+    max-width: 100%;
+    width: 100%;
+    height: auto;
+    border: 1px solid #333;
+    border-radius: 4px;
+}
+
+article figcaption {
+    font-size: 1.3rem;
+    padding: 0.5rem;
+    margin-top: 0.5rem;
+    font-style: italic;
+    color: #666;
+}
+
+/* ===================================
+   MEDIA QUERIES (Larger Screens)
+   =================================== */
+
+/* Tablet (720px+) */
+@media screen and (min-width: 720px) {
+    article section.content-section {
+        max-width: 90%;
+        padding: 0 2rem;
+    }
+
+    article h2 {
+        font-size: 2.6rem;
+    }
+
+    article h3 {
+        font-size: 2rem;
+    }
+
+    article p,
+    article ul li {
+        font-size: 1.6rem;
+    }
+
+    article figure img {
+        max-width: 700px;
+    }
+}
+
+/* Desktop (1024px+) */
+@media screen and (min-width: 1024px) {
+    article section.content-section {
+        max-width: 85%;
+    }
+
+    article h2 {
+        font-size: 3rem;
+    }
+
+    article p {
+        font-size: 1.65rem;
+    }
+
+    article figcaption {
+        font-size: 1.4rem;
+    }
+}
+
+/* Large Desktop (1280px+) */
+@media screen and (min-width: 1280px) {
+    article section.content-section {
+        max-width: 80%;
+    }
+
+    article h2 {
+        font-size: 3.2rem;
+    }
+}
+
+/* Extra Large Screens (1440px+) */
+@media screen and (min-width: 1440px) {
+    article section.content-section {
+        max-width: 103rem;
+    }
+}
