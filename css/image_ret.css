@@ -1,5 +1,5 @@
 /* ===================================
-   GALAXY EXPLORER PAGE STYLES
+   IMAGE RETRIEVAL PAGE STYLES
    =================================== */
 
 /* --- Base Mobile Styles (Screens < 720px) --- */
@@ -28,45 +28,25 @@ article p {
     margin-top: 0; /* Reduced gap */
 }
 
-/* Sub-titles inside sections */
-.subsection-title {
+/* Accented Bold Text */
+article p strong {
     font-weight: 700;
-    font-size: 1.1em;
-    margin-bottom: 0.5em;
-    margin-top: 1.5rem; /* Adds space before new subsection */
-    color: rgb(29, 228, 255); /* Matches your theme accent */
+    color: rgb(29, 228, 255);
 }
 
-article ol {
-    padding-left: 2rem;
-    margin: 1rem 0;
-}
+/* --- Image & Figure Styling --- */
 
-article ol li {
-    margin-bottom: 1.5rem;
-    line-height: 1.6;
-}
-
-/* --- Image Grid & Figures --- */
-
-.image-grid {
-    display: flex;
-    flex-direction: column; /* Stacked on mobile */
-    gap: 2rem;
+article figure {
     margin: 2rem 0;
-}
-
-.image-grid figure {
-    flex: 1 1 100%;
-    margin: 0;
     text-align: center;
+    max-width: 100%;
 }
 
 article figure img {
-    width: 100%;
     max-width: 100%;
+    width: 100%;
     height: auto;
-    border: 1px solid #ccc;
+    border: 1px solid #ccc; /* Or #333 if you prefer dark borders */
     border-radius: 4px;
 }
 
@@ -75,31 +55,27 @@ article figcaption {
     padding: 0.5rem;
     margin-top: 0.5rem;
     font-style: italic;
-    color: #888;
+    color: #666;
 }
 
-/* --- Launch Button Styling --- */
-.btn-launch {
-    display: inline-block;
-    padding: 0.75rem 1.5rem;
-    background: linear-gradient(135deg, #00c6ff, #0072ff);
-    color: #ffffff;
-    text-decoration: none;
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 1.4rem;
-    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4);
-    transition: all 0.3s ease-in-out;
-    margin: 1.5rem 0;
+/* --- Grid Systems --- */
+
+/* Container for the side-by-side images */
+.image-grid {
+    display: flex;
+    flex-direction: column; /* Stack vertically on mobile */
+    gap: 1.5rem;
+    margin: 2rem 0;
 }
 
-.btn-launch:hover {
-    transform: scale(1.05);
-    box-shadow: 0 6px 16px rgba(0, 123, 255, 0.6);
+.image-grid figure {
+    margin: 0; /* Reset margins inside grid */
+    flex: none;
+    max-width: 100%;
 }
 
 /* ===================================
-   MEDIA QUERIES
+   MEDIA QUERIES (Larger Screens)
    =================================== */
 
 /* Tablet (720px+) */
@@ -117,13 +93,12 @@ article figcaption {
         font-size: 1.6rem;
     }
 
-    /* Grid becomes 2 columns */
+    /* 2-Column Layout for Tablet/Desktop */
     .grid-2 {
         flex-direction: row;
     }
-
     .grid-2 figure {
-        flex: 1 1 48%;
+        flex: 1; /* Both images take equal width */
     }
 }
 

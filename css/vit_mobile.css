@@ -1,94 +1,142 @@
 /* ===================================
-   ALZHEIMER'S PAGE MOBILE RESPONSIVE
-   Add this as a separate CSS file
+   VISION TRANSFORMER PAGE STYLES
    =================================== */
 
-/* Base mobile styles (for screens under 720px) */
+/* --- Base Mobile Styles (Screens < 720px) --- */
+
 article {
     width: 100%;
     max-width: 100%;
 }
 
-article section {
-    width: 100% !important;
+article section.content-section {
+    width: 100%;
     padding: 0 1rem;
-    margin: 2rem auto !important;
+    margin: 2rem auto;
 }
 
+/* Reduced gap between headers and text */
 article h2 {
     font-size: 2.2rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 0.5rem;
+    margin-top: 0;
+}
+
+article h3 {
+    font-size: 1.8rem;
+    margin-bottom: 0.5rem;
+    margin-top: 2rem;
+    color: rgb(29, 228, 255); /* Matches theme accent */
+}
+
+article h4 {
+    font-size: 1.5rem;
+    margin: 0 0 0.5rem 0; /* Reset default margins */
+    color: #fff;
 }
 
 article p {
     font-size: 1.5rem;
     line-height: 1.7;
     text-align: left;
+    margin-top: 0;
 }
 
-article ol {
+/* --- List Styling --- */
+article ul, article ol {
     padding-left: 2rem;
     margin: 1rem 0;
 }
 
-article ol li {
-    margin-bottom: 1.5rem;
+article ul li, article ol li {
+    margin-bottom: 0.8rem;
     line-height: 1.6;
+    font-size: 1.5rem;
 }
 
-article ol li strong {
-    display: block;
-    margin-bottom: 0.5rem;
+article li strong {
+    color: rgb(29, 228, 255);
 }
 
-/* Single figure/image styling */
+/* --- Code Block Styling --- */
+/* Overrides inline styles from HTML to ensure responsiveness */
+.code-container {
+    background: #1e1e1e !important; /* Dark mode code background */
+    color: #d4d4d4;
+    padding: 1rem;
+    border-radius: 6px;
+    border: 1px solid #333;
+    /* CHANGE 2: Increased margin from 1.5rem to 3rem for distinct separation */
+    margin: 3rem 0;
+    overflow-x: auto; /* Allows scrolling on small screens */
+    font-family: 'Courier New', Courier, monospace;
+}
+
+.code-container pre {
+    margin: 0;
+    font-size: 0.85rem; /* Smaller font for mobile */
+    white-space: pre;   /* Keeps formatting */
+}
+
+/* Inline code highlight */
+code {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.9em;
+    color: #ce9178; /* Soft orange/red for code text */
+}
+
+/* --- Experimental Setup Grid --- */
+/* Target the specific flex container in your HTML */
+article div[style*="display: flex"][style*="flex-wrap: wrap"] {
+    display: flex !important; /* Ensure it stays flex */
+    flex-direction: column;   /* Stack vertically on mobile */
+    gap: 2rem;
+    margin-bottom: 1rem;
+}
+
+/* --- Image & Figure Styling --- */
 article figure {
-    margin: 2rem 0 !important;
+    margin: 2rem 0;
     text-align: center;
     max-width: 100%;
 }
 
+/* Default image style (full width) */
 article figure img {
-    max-width: 100% !important;
-    height: auto !important;
-    border: 1px solid #ccc;
+    max-width: 100%;
+    width: 100%;
+    height: auto;
+    border: 1px solid #333; /* Darker border for dark mode */
+    border-radius: 4px;
 }
+
+/* CHANGE 1: Specific style for the smaller encoder diagram */
+article figure.small-figure img {
+    width: auto; /* Don't force 100% width */
+    max-width: 85%; /* Restrict width on mobile */
+    max-height: 400px; /* Ensure it doesn't get too tall */
+    margin: 0 auto;
+}
+
 
 article figcaption {
     font-size: 1.3rem;
     padding: 0.5rem;
     margin-top: 0.5rem;
+    font-style: italic;
+    color: #888;
 }
 
-/* Two-column image layout (Figure 4a, 4b) - Target by flex and gap: 2rem */
-article div[style*="flex"][style*="gap: 2rem"] {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 2rem !important;
-    margin: 2rem 0 !important;
-}
-
-article div[style*="flex"][style*="gap: 2rem"] figure {
-    flex: none !important;
-    max-width: 100%;
-}
-
-/* Four-column image layout (Figure 5a-5d) - Target by flex and gap: 1rem */
-article div[style*="flex"][style*="space-between"][style*="gap: 1rem"] {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 1.5rem !important;
-    margin: 2rem 0 !important;
-}
-
-article div[style*="flex"][style*="space-between"][style*="gap: 1rem"] figure {
-    flex: none !important;
-    max-width: 100%;
-}
+/* ===================================
+   MEDIA QUERIES
+   =================================== */
 
 /* Tablet (720px+) */
 @media screen and (min-width: 720px) {
-    article section {
+    article section.content-section {
         max-width: 90%;
         padding: 0 2rem;
     }
@@ -97,33 +145,40 @@ article div[style*="flex"][style*="space-between"][style*="gap: 1rem"] figure {
         font-size: 2.6rem;
     }
 
-    article p {
+    article h3 {
+        font-size: 2rem;
+    }
+
+    article p,
+    article ul li,
+    article ol li {
         font-size: 1.6rem;
     }
 
-    /* Two-column layout for dual images */
-    article div[style*="flex"][style*="gap: 2rem"] {
-        flex-direction: row !important;
+    /* Code blocks get slightly larger font */
+    .code-container pre {
+        font-size: 1rem;
     }
 
-    article div[style*="flex"][style*="gap: 2rem"] figure {
-        flex: 1 !important;
+    /* Experimental Setup becomes 2 columns */
+    article div[style*="display: flex"][style*="flex-wrap: wrap"] {
+        flex-direction: row;
     }
 
-    /* Two-column grid for four progression images */
-    article div[style*="flex"][style*="space-between"][style*="gap: 1rem"] {
-        flex-direction: row !important;
-        flex-wrap: wrap !important;
+    /* Standard images get a max width */
+    article figure img {
+        max-width: 700px;
     }
 
-    article div[style*="flex"][style*="space-between"][style*="gap: 1rem"] figure {
-        flex: 0 0 48% !important;
+    /* CHANGE 1 (Cont): Further restrict the small diagram on larger screens */
+    article figure.small-figure img {
+        max-width: 400px;
     }
 }
 
 /* Desktop (1024px+) */
 @media screen and (min-width: 1024px) {
-    article section {
+    article section.content-section {
         max-width: 85%;
     }
 
@@ -131,27 +186,19 @@ article div[style*="flex"][style*="space-between"][style*="gap: 1rem"] figure {
         font-size: 3rem;
     }
 
-    article p {
+    article p,
+    article ul li {
         font-size: 1.65rem;
     }
 
     article figcaption {
         font-size: 1.4rem;
     }
-
-    /* Four-column layout for progression images */
-    article div[style*="flex"][style*="space-between"][style*="gap: 1rem"] {
-        flex-wrap: nowrap !important;
-    }
-
-    article div[style*="flex"][style*="space-between"][style*="gap: 1rem"] figure {
-        flex: 1 !important;
-    }
 }
 
-/* Large desktop (1280px+) */
+/* Large Desktop (1280px+) */
 @media screen and (min-width: 1280px) {
-    article section {
+    article section.content-section {
         max-width: 80%;
     }
 
@@ -160,9 +207,9 @@ article div[style*="flex"][style*="space-between"][style*="gap: 1rem"] figure {
     }
 }
 
-/* Extra large screens (1440px+) */
+/* Extra Large Screens (1440px+) */
 @media screen and (min-width: 1440px) {
-    article section {
+    article section.content-section {
         max-width: 103rem;
     }
 }

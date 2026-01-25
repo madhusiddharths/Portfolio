@@ -1,37 +1,43 @@
 /* ===================================
-   TRAFFIC PREDICTION PAGE MOBILE RESPONSIVE
-   Add this as a separate CSS file
+   TRAFFIC PREDICTION PAGE STYLES
    =================================== */
 
-/* Base mobile styles (for screens under 720px) */
+/* --- Base Mobile Styles (Screens < 720px) --- */
+
 article {
     width: 100%;
     max-width: 100%;
 }
 
-article section {
-    width: 100% !important;
+article section.content-section {
+    width: 100%;
     padding: 0 1rem;
-    margin: 2rem auto !important;
+    margin: 2rem auto;
 }
 
 article h2 {
     font-size: 2.2rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 0.5rem; /* Reduced gap */
+    margin-top: 0;
 }
 
 article p {
     font-size: 1.5rem;
     line-height: 1.7;
     text-align: left;
+    margin-top: 0; /* Reduced gap */
 }
 
-article p strong {
+/* Bold accents */
+article p strong,
+article ul li strong {
     font-weight: 700;
     color: rgb(29, 228, 255);
 }
 
-article p code {
+/* Code block styling */
+article p code,
+article ul li code {
     background: rgba(255, 255, 255, 0.1);
     padding: 0.2rem 0.5rem;
     border-radius: 0.3rem;
@@ -39,7 +45,7 @@ article p code {
     font-size: 1.4rem;
 }
 
-/* List styling */
+/* List Styling */
 article ul {
     padding-left: 2rem;
     margin: 1rem 0;
@@ -50,47 +56,41 @@ article ul li {
     line-height: 1.6;
 }
 
-article ul li strong {
-    font-weight: 700;
-    color: rgb(29, 228, 255);
-}
-
 article ul li em {
     font-style: italic;
     color: rgba(24, 185, 207, 0.9);
 }
 
-article ul li code {
-    background: rgba(255, 255, 255, 0.1);
-    padding: 0.2rem 0.5rem;
-    border-radius: 0.3rem;
-    font-family: monospace;
-    font-size: 1.4rem;
-}
-
-/* Figure/image styling */
+/* Figure & Image Styling */
 article figure {
-    margin: 2rem 0 !important;
+    margin: 2rem 0;
     text-align: center;
     max-width: 100%;
 }
 
 article figure img {
-    max-width: 100% !important;
-    width: 100% !important;
+    max-width: 100%;
+    width: 100%;
     height: auto;
     border: 1px solid #ccc;
+    border-radius: 4px; /* Optional rounding */
 }
 
 article figcaption {
     font-size: 1.3rem;
     padding: 0.5rem;
     margin-top: 0.5rem;
+    font-style: italic;
+    color: #666;
 }
+
+/* ===================================
+   MEDIA QUERIES
+   =================================== */
 
 /* Tablet (720px+) */
 @media screen and (min-width: 720px) {
-    article section {
+    article section.content-section {
         max-width: 90%;
         padding: 0 2rem;
     }
@@ -99,10 +99,7 @@ article figcaption {
         font-size: 2.6rem;
     }
 
-    article p {
-        font-size: 1.6rem;
-    }
-
+    article p,
     article ul li {
         font-size: 1.6rem;
     }
@@ -113,13 +110,13 @@ article figcaption {
     }
 
     article figure img {
-        max-width: 600px !important;
+        max-width: 600px; /* Constrain image size on larger screens */
     }
 }
 
 /* Desktop (1024px+) */
 @media screen and (min-width: 1024px) {
-    article section {
+    article section.content-section {
         max-width: 85%;
     }
 
@@ -127,10 +124,7 @@ article figcaption {
         font-size: 3rem;
     }
 
-    article p {
-        font-size: 1.65rem;
-    }
-
+    article p,
     article ul li {
         font-size: 1.65rem;
     }
@@ -140,9 +134,9 @@ article figcaption {
     }
 }
 
-/* Large desktop (1280px+) */
+/* Large Desktop (1280px+) */
 @media screen and (min-width: 1280px) {
-    article section {
+    article section.content-section {
         max-width: 80%;
     }
 
@@ -151,9 +145,9 @@ article figcaption {
     }
 }
 
-/* Extra large screens (1440px+) */
+/* Extra Large Screens (1440px+) */
 @media screen and (min-width: 1440px) {
-    article section {
+    article section.content-section {
         max-width: 103rem;
     }
 }

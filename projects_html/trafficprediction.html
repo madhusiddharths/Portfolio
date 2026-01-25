@@ -20,7 +20,7 @@
 
 <main>
     <article>
-        <section style="width: 100%; margin: 0 auto;">
+        <section class="content-section">
             <h2>Overview</h2>
             <p>This project forecasts traffic conditions and generates optimized travel routes
                 using a Random Forest Regressor for prediction and Dijkstra’s algorithm for route
@@ -29,7 +29,7 @@
                 Soup library. Interactive route visualizations are created with Folium.</p>
         </section>
 
-        <section style="width: 100%; margin: 0 auto;">
+        <section class="content-section">
             <h2>Data Preprocessing</h2>
             <p>The dataset used in this project was the <strong>CalTrans traffic dataset</strong> for the city of San Francisco. Key steps in preprocessing included:</p>
             <ul>
@@ -42,33 +42,27 @@
             </ul>
         </section>
 
-        <section style="width: 100%; margin: 0 auto;">
-            <figure style="margin: 2rem 0; text-align: center;">
-                <img src="../img/traffic/dailytraffic.png" alt="Traffic sensor map of San Francisco"
-                     style="max-width:600px; width: 100%; height:auto; border:1px solid #ccc; margin-bottom: 1.5rem;" />
-                <figcaption style="font-style: italic; color: #666; margin-top: 0.5rem;">
-                    Figure 1: Daily traffic in San Francisco.
-                </figcaption>
+        <section class="content-section">
+            <figure>
+                <img src="../img/traffic/dailytraffic.png" alt="Traffic sensor map of San Francisco" />
+                <figcaption>Figure 1: Daily traffic in San Francisco.</figcaption>
             </figure>
             <p>This image illustrates the daily traffic patterns in San Francisco. Dates highlighted in red represent
                 Sundays. The data reveals a consistent trend across all days: traffic volume increases in the morning,
                 peaks around midday, and gradually declines afterward — regardless of whether it’s a weekday or weekend.</p>
         </section>
 
-        <section style="width: 100%; margin: 0 auto;">
-            <figure style="margin: 2rem 0; text-align: center;">
-                <img src="../img/traffic/hourlytraffic.png" alt="Timeline of sensor activity"
-                     style="max-width:600px; width: 100%; height:auto; border:1px solid #ccc; margin-bottom: 1.5rem;" />
-                <figcaption style="font-style: italic; color: #666; margin-top: 0.5rem;">
-                    Figure 2: Hourly traffic on a particular day.
-                </figcaption>
+        <section class="content-section">
+            <figure>
+                <img src="../img/traffic/hourlytraffic.png" alt="Timeline of sensor activity" />
+                <figcaption>Figure 2: Hourly traffic on a particular day.</figcaption>
             </figure>
             <p>This image displays the hourly traffic volume across different lanes. The graph shows two distinct peaks —
                 one in the morning and another in the evening — reflecting typical commute times during standard
                 working hours.</p>
         </section>
 
-        <section style="width: 100%; margin: 0 auto;">
+        <section class="content-section">
             <h2>Approach</h2>
             <p>
                 We began by experimenting with <strong>ARIMA models</strong>, which are well-suited for capturing patterns in time series data. However, due to the high frequency and complexity of the dataset, even advanced ARIMA configurations struggled to accurately model the traffic trends.
@@ -89,13 +83,10 @@
             </p>
         </section>
 
-        <section style="width: 100%; margin: 0 auto;">
-            <figure style="margin: 2rem 0; text-align: center;">
-                <img src="../img/traffic/prediction.png" alt="Timeline of sensor activity"
-                     style="max-width:600px; width: 100%; height:auto; border:1px solid #ccc; margin-bottom: 1.5rem;" />
-                <figcaption style="font-style: italic; color: #666; margin-top: 0.5rem;">
-                    Figure 3: Random Forest regressor prediction.
-                </figcaption>
+        <section class="content-section">
+            <figure>
+                <img src="../img/traffic/prediction.png" alt="Timeline of sensor activity" />
+                <figcaption>Figure 3: Random Forest regressor prediction.</figcaption>
             </figure>
             <p> As shown in the image, the predicted values closely align with the actual traffic data. While the model slightly
                 overfits in certain regions, it still struggles to predict extreme values accurately. These outliers were not removed,
@@ -103,7 +94,7 @@
                 such contextual factors as additional features to improve the model's performance. </p>
         </section>
 
-        <section style="width: 100%; margin: 0 auto;">
+        <section class="content-section">
             <h2>Web Scraping</h2>
             <p>
                 To account for external factors that could impact traffic patterns — such as city events, road closures,
@@ -112,7 +103,7 @@
             </p>
         </section>
 
-        <section style="width: 100%; margin: 0 auto;">
+        <section class="content-section">
             <h2>Maps</h2>
             <p>
                 We integrated the model predictions and event data from web scraping into a weighted graph network, where edge weights reflect traffic conditions. This network allows us to compute the most efficient routes across the city.
@@ -128,17 +119,14 @@
             </p>
         </section>
 
-        <section style="width: 100%; margin: 0 auto;">
-            <figure style="margin: 2rem 0; text-align: center;">
-                <img src="../img/traffic/traffic_map.png" alt="Traffic sensor map of San Francisco"
-                     style="max-width:600px; width: 100%; height:auto; border:1px solid #ccc; margin-bottom: 1.5rem;" />
-                <figcaption style="font-style: italic; color: #666; margin-top: 0.5rem;">
-                    Figure 4: Predicted Route.
-                </figcaption>
+        <section class="content-section">
+            <figure>
+                <img src="../img/traffic/traffic_map.png" alt="Traffic sensor map of San Francisco" />
+                <figcaption>Figure 4: Predicted Route.</figcaption>
             </figure>
         </section>
 
-        <section style="width: 100%; margin: 0 auto;">
+        <section class="content-section">
             <h2>Conclusion</h2>
             <p>
                 This project provided valuable hands-on experience in preprocessing and modeling time series data,

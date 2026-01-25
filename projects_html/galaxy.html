@@ -20,7 +20,7 @@
 
 <main>
   <article>
-    <section style="width: 100%; margin: 0 auto;">
+    <section class="content-section">
       <h2>Overview</h2>
       <p>
         A star-gazing application using Streamlit, Polars, and Plotly that displays visible stars based on
@@ -33,9 +33,9 @@
       </p>
     </section>
 
-    <section style="width: 100%; margin: 0 auto;">
+    <section class="content-section">
       <h2>Data Preprocessing</h2>
-      <p style="font-weight: bold; font-size: 1.1em; margin-bottom: 0.5em;">Dataset Overview</p>
+      <p class="subsection-title">Dataset Overview</p>
       <p>
         The project uses the Gaia DR-3 dataset, which contains records of over 1.8 billion stars and more than 150
         features. The dataset is distributed across 3,386 files using Healpix level 12 partitioning, occupying over
@@ -43,21 +43,21 @@
         metrics, and derived attributes.
       </p>
 
-      <p style="font-weight: bold; font-size: 1.1em; margin-bottom: 0.5em;">Initial Preprocessing</p>
+      <p class="subsection-title">Initial Preprocessing</p>
       <p>
         To manage the data effectively, an initial preprocessing step was performed. This involved dropping unnecessary
         columns and repartitioning the data using Healpix level 2, resulting in 192 Parquet files totaling approximately
         500 GB. This made the dataset more manageable and optimized for further processing.
       </p>
 
-      <p style="font-weight: bold; font-size: 1.1em; margin-bottom: 0.5em;">Phase 1: Visible Stars Pipeline</p>
+      <p class="subsection-title">Phase 1: Visible Stars Pipeline</p>
       <p>
         The first pipeline focused on identifying stars visible to the naked eye from Earth. Stars were filtered based
         on brightness and distance, and additional irrelevant columns were removed. The cleaned data was then merged
         into a single Parquet file for efficient access and real-time usage in the star-gazing application.
       </p>
 
-      <p style="font-weight: bold; font-size: 1.1em; margin-bottom: 0.5em;">Phase 2: Scientific Star Pipeline</p>
+      <p class="subsection-title">Phase 2: Scientific Star Pipeline</p>
       <p>
         The second pipeline aimed for scientific precision. It applied stricter filtering criteria as recommended by the
         Gaia DR-3 documentation to extract a subset of approximately 650 million scientifically reliable stars.
@@ -67,8 +67,7 @@
       </p>
     </section>
 
-
-    <section style="width: 100%; margin: 0 auto;">
+    <section class="content-section">
       <h2>Night Sky Explorer</h2>
       <p>
         The Night Sky Explorer offers users an accurate, real-time view of the night sky based on their geographic
@@ -80,41 +79,21 @@
         visibility conditions.
       </p>
       <p>
-        <a href="https://nightsky.streamlit.app" target="_blank"
-           style="
-       display: inline-block;
-       padding: 0.75rem 1.5rem;
-       background: linear-gradient(135deg, #00c6ff, #0072ff);
-       color: #ffffff;
-       text-decoration: none;
-       border-radius: 8px;
-       font-weight: 600;
-       font-size: 1rem;
-       box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4);
-       transition: all 0.3s ease-in-out;
-     "
-           onmouseover="this.style.transform='scale(1.05)'"
-           onmouseout="this.style.transform='scale(1)'">
+        <a href="https://nightsky.streamlit.app" target="_blank" class="btn-launch">
           🚀 Launch Night Sky Explorer
         </a>
       </p>
     </section>
 
-    <section style="width: 100%; margin: 0 auto;">
-      <div style="display: flex; justify-content: center; gap: 2rem; margin: 2rem 0;">
-        <figure style="flex: 1; text-align: center;">
-          <img src="../img/galaxy/stars_ui.png" alt="Night Sky Explorer UI"
-               style="max-width: 100%; height: auto; border: 1px solid #ccc;" />
-          <figcaption style="font-style: italic; color: #666; margin-top: 0.5rem;">
-            Figure 1a: Night Sky Explorer UI.
-          </figcaption>
+    <section class="content-section">
+      <div class="image-grid grid-2">
+        <figure>
+          <img src="../img/galaxy/stars_ui.png" alt="Night Sky Explorer UI" />
+          <figcaption>Figure 1a: Night Sky Explorer UI.</figcaption>
         </figure>
-        <figure style="flex: 1; text-align: center;">
-          <img src="../img/galaxy/stars_op.png" alt="Night Sky Explorer Output"
-               style="max-width: 100%; height: auto; border: 1px solid #ccc;" />
-          <figcaption style="font-style: italic; color: #666; margin-top: 0.5rem;">
-            Figure 1b: Night Sky Explorer Output.
-          </figcaption>
+        <figure>
+          <img src="../img/galaxy/stars_op.png" alt="Night Sky Explorer Output" />
+          <figcaption>Figure 1b: Night Sky Explorer Output.</figcaption>
         </figure>
       </div>
       <p>
@@ -124,7 +103,7 @@
       </p>
     </section>
 
-    <section style="width: 100%; margin: 0 auto;">
+    <section class="content-section">
       <h2>Galaxy Explorer</h2>
       <p>
         The Galaxy Explorer is a data-driven celestial analysis tool that identifies stars from which past Earth
@@ -137,21 +116,15 @@
       </p>
     </section>
 
-    <section style="width: 100%; margin: 0 auto;">
-      <div style="display: flex; justify-content: center; gap: 2rem; margin: 2rem 0;">
-        <figure style="flex: 1; text-align: center;">
-          <img src="../img/galaxy/galaxy_ui.png" alt="Galaxy Explorer UI"
-               style="max-width: 100%; height: auto; border: 1px solid #ccc;" />
-          <figcaption style="font-style: italic; color: #666; margin-top: 0.5rem;">
-            Figure 2a: Galaxy Explorer UI.
-          </figcaption>
+    <section class="content-section">
+      <div class="image-grid grid-2">
+        <figure>
+          <img src="../img/galaxy/galaxy_ui.png" alt="Galaxy Explorer UI" />
+          <figcaption>Figure 2a: Galaxy Explorer UI.</figcaption>
         </figure>
-        <figure style="flex: 1; text-align: center;">
-          <img src="../.png" alt="Galaxy Explorer Output"
-               style="max-width: 100%; height: auto; border: 1px solid #ccc;" />
-          <figcaption style="font-style: italic; color: #666; margin-top: 0.5rem;">
-            Figure 2b: Galaxy Explorer Output.
-          </figcaption>
+        <figure>
+          <img src="../img/galaxy/galaxy_op.png" alt="Galaxy Explorer Output" />
+          <figcaption>Figure 2b: Galaxy Explorer Output.</figcaption>
         </figure>
       </div>
       <p>
@@ -161,8 +134,7 @@
       </p>
     </section>
 
-
-    <section style="width: 100%; margin: 0 auto;">
+    <section class="content-section">
       <h2>Challenges</h2>
       <p>
         The project faced several challenges, with three key hurdles standing out:
@@ -186,8 +158,7 @@
       </ol>
     </section>
 
-
-    <section style="width: 100%; margin: 0 auto;">
+    <section class="content-section">
       <h2>Conclusion</h2>
       <p>
         This project deepened my understanding of the complexities involved in large-scale data preprocessing,

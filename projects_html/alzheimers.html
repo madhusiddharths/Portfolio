@@ -20,7 +20,7 @@
 
 <main>
   <article>
-    <section style="width: 100%; margin: 0 auto;">
+    <section class="content-section">
       <h2>Overview</h2>
       <p>This project focuses on predicting the progression stages of Alzheimer’s disease using MRI scans. It leverages
         a transfer learning approach based on the VGG19 convolutional neural network to classify the stages of the
@@ -30,7 +30,7 @@
         accessible and scalable interaction with the model.</p>
     </section>
 
-    <section style="width: 100%; margin: 0 auto;">
+    <section class="content-section">
       <h2>Data Preprocessing</h2>
       <p>
         The dataset used for this project is the OASIS MRI dataset, which contains brain scan images categorized
@@ -46,30 +46,23 @@
       </p>
     </section>
 
-
-    <section style="width: 100%; margin: 0 auto;">
-      <figure style="margin: 2rem 0; text-align: center;">
-        <img src="../img/alzheimers/brain_diff.png" alt="Difference in mean images between stages"
-             style="max-width:600px; width: 100%; height:auto; border:1px solid #ccc; margin-bottom: 1.5rem;" />
-        <figcaption style="font-style: italic; color: #666; margin-top: 0.5rem;">
-          Figure 1: Difference in mean images between stages.
-        </figcaption>
+    <section class="content-section">
+      <figure>
+        <img src="../img/alzheimers/brain_diff.png" alt="Difference in mean images between stages" />
+        <figcaption>Figure 1: Difference in mean images between stages.</figcaption>
       </figure>
       <p>This image highlights the brain regions most affected as Alzheimer’s progresses, based on differences between
         mean MRI images at each stage. These spatial patterns reveal structural changes—such as cortical thinning and
         ventricular enlargement—that are consistent across patients. By analyzing these differences, we can better
         understand where the disease manifests in the brain. This information can help guide our model’s architecture,
         such as focusing attention on high-variation regions or refining preprocessing steps to emphasize critical areas
-        of degeneration./p>
+        of degeneration.</p>
     </section>
 
-    <section style="width: 100%; margin: 0 auto;">
-      <figure style="margin: 2rem 0; text-align: center;">
-        <img src="../img/alzheimers/hist_analysis.png" alt="Pixel Intensity Distribution"
-             style="max-width:600px; width: 100%; height:auto; border:1px solid #ccc; margin-bottom: 1.5rem;" />
-        <figcaption style="font-style: italic; color: #666; margin-top: 0.5rem;">
-          Figure 2: Pixel Intensity distribution.
-        </figcaption>
+    <section class="content-section">
+      <figure>
+        <img src="../img/alzheimers/hist_analysis.png" alt="Pixel Intensity Distribution" />
+        <figcaption>Figure 2: Pixel Intensity distribution.</figcaption>
       </figure>
       <p>The CycleGAN architecture relies on pixel-level transformations to generate future-stage brain images.
         However, variations in contrast or brightness across the dataset can lead the model to focus on intensity
@@ -81,7 +74,7 @@
         superficial intensity variations.</p>
     </section>
 
-    <section style="width: 100%; margin: 0 auto;">
+    <section class="content-section">
       <h2>Architecture</h2>
       <p>The first stage of the pipeline involves data preprocessing, where input MRI images are resized and converted
         to RGB format to match the input requirements of the model. These preprocessed images are then passed to a
@@ -93,20 +86,17 @@
         evolve through successive stages of the disease.</p>
     </section>
 
-    <section style="width: 100%; margin: 0 auto;">
-      <figure style="margin: 2rem 0; text-align: center;">
-        <img src="../img/alzheimers/architecture.png" alt="Model architecture"
-             style="max-width:600px; width: 100%; height:auto; border:1px solid #ccc; margin-bottom: 1.5rem;" />
-        <figcaption style="font-style: italic; color: #666; margin-top: 0.5rem;">
-          Figure 3: Model architecture.
-        </figcaption>
+    <section class="content-section">
+      <figure>
+        <img src="../img/alzheimers/architecture.png" alt="Model architecture" />
+        <figcaption>Figure 3: Model architecture.</figcaption>
       </figure>
       <p>The final output includes both the predicted current stage of Alzheimer’s and a series of synthesized MRI
         images illustrating how the brain is expected to progress through the subsequent stages.</p>
     </section>
 
-    <section style="width: 100%; margin: 0 auto;">
-      <h2>VGG19 based classification model.</h2>
+    <section class="content-section">
+      <h2>VGG19 based classification model</h2>
       <p>
         This architecture uses a pre-trained VGG19 model without its top layers to extract deep image features, with
         the base model’s weights frozen to retain learned patterns. After feature extraction, a global average pooling
@@ -118,21 +108,15 @@
       </p>
     </section>
 
-    <section style="width: 100%; margin: 0 auto;">
-      <div style="display: flex; justify-content: center; gap: 2rem; margin: 2rem 0;">
-        <figure style="flex: 1; text-align: center;">
-          <img src="../img/alzheimers/tloss.png" alt="Training and Validation loss"
-               style="max-width: 100%; height: auto; border: 1px solid #ccc;" />
-          <figcaption style="font-style: italic; color: #666; margin-top: 0.5rem;">
-            Figure 4a: Training and Validation loss.
-          </figcaption>
+    <section class="content-section">
+      <div class="image-grid grid-2">
+        <figure>
+          <img src="../img/alzheimers/tloss.png" alt="Training and Validation loss" />
+          <figcaption>Figure 4a: Training and Validation loss.</figcaption>
         </figure>
-        <figure style="flex: 1; text-align: center;">
-          <img src="../img/alzheimers/cl_report.png" alt="Classification report"
-               style="max-width: 100%; height: auto; border: 1px solid #ccc;" />
-          <figcaption style="font-style: italic; color: #666; margin-top: 0.5rem;">
-            Figure 4b: Classification report.
-          </figcaption>
+        <figure>
+          <img src="../img/alzheimers/cl_report.png" alt="Classification report" />
+          <figcaption>Figure 4b: Classification report.</figcaption>
         </figure>
       </div>
       <p>
@@ -142,7 +126,7 @@
       </p>
     </section>
 
-    <section style="width: 100%; margin: 0 auto;">
+    <section class="content-section">
       <h2>Generative Adversarial Networks (GANs)</h2>
       <p>The architecture incorporates three GANs, each responsible for modeling progression between Alzheimer’s stages:
         from no Alzheimer’s to very mild (no → vmild), very mild to mild (vmild → mild), and mild to moderate (mild →
@@ -168,40 +152,28 @@
         progressively improved image generation quality.</p>
     </section>
 
-    <section style="width: 100%; margin: 0 auto;">
-      <div style="display: flex; justify-content: space-between; gap: 1rem; margin: 2rem 0;">
-        <figure style="flex: 1; text-align: center;">
-          <img src="../img/alzheimers/input_none.png" alt="No Alzheimer's input"
-               style="width: 100%; height: auto; border: 1px solid #ccc;" />
-          <figcaption style="font-style: italic; color: #666; margin-top: 0.5rem;">
-            Figure 5a: Input (No Alzheimer's).
-          </figcaption>
+    <section class="content-section">
+      <div class="image-grid grid-4">
+        <figure>
+          <img src="../img/alzheimers/input_none.png" alt="No Alzheimer's input" />
+          <figcaption>Figure 5a: Input (No Alzheimer's).</figcaption>
         </figure>
-        <figure style="flex: 1; text-align: center;">
-          <img src="../img/alzheimers/predicted_very_mild_dementia.png" alt="Very Mild Alzheimer's"
-               style="width: 100%; height: auto; border: 1px solid #ccc;" />
-          <figcaption style="font-style: italic; color: #666; margin-top: 0.5rem;">
-            Figure 5b: Very Mild.
-          </figcaption>
+        <figure>
+          <img src="../img/alzheimers/predicted_very_mild_dementia.png" alt="Very Mild Alzheimer's" />
+          <figcaption>Figure 5b: Very Mild.</figcaption>
         </figure>
-        <figure style="flex: 1; text-align: center;">
-          <img src="../img/alzheimers/predicted_mild_dementia.png" alt="Mild Alzheimer's"
-               style="width: 100%; height: auto; border: 1px solid #ccc;" />
-          <figcaption style="font-style: italic; color: #666; margin-top: 0.5rem;">
-            Figure 5c: Mild.
-          </figcaption>
+        <figure>
+          <img src="../img/alzheimers/predicted_mild_dementia.png" alt="Mild Alzheimer's" />
+          <figcaption>Figure 5c: Mild.</figcaption>
         </figure>
-        <figure style="flex: 1; text-align: center;">
-          <img src="../img/alzheimers/predicted_moderate_dementia.png" alt="Moderate Alzheimer's"
-               style="width: 100%; height: auto; border: 1px solid #ccc;" />
-          <figcaption style="font-style: italic; color: #666; margin-top: 0.5rem;">
-            Figure 5d: Moderate.
-          </figcaption>
+        <figure>
+          <img src="../img/alzheimers/predicted_moderate_dementia.png" alt="Moderate Alzheimer's" />
+          <figcaption>Figure 5d: Moderate.</figcaption>
         </figure>
       </div>
     </section>
 
-    <section style="width: 100%; margin: 0 auto;">
+    <section class="content-section">
       <h2>Region Of Interest (ROI)</h2>
       <p>To further enhance the accuracy of the predicted images, we introduced the concept of Region of Interest (ROI).
         By focusing on specific, clinically relevant areas of the brain, we implemented a region-based discriminator
@@ -210,23 +182,17 @@
         generation.</p>
     </section>
 
-    <section style="width: 100%; margin: 0 auto;">
-      <figure style="margin: 2rem 0; text-align: center;">
-        <img src="../img/alzheimers/roi.png" alt="Outline of the brain to crop ROI for each image."
-             style="max-width:600px; width: 100%; height:auto; border:1px solid #ccc; margin-bottom: 1.5rem;" />
-        <figcaption style="font-style: italic; color: #666; margin-top: 0.5rem;">
-          Figure 6: Outline of the brain to crop ROI for each image.
-        </figcaption>
+    <section class="content-section">
+      <figure>
+        <img src="../img/alzheimers/roi.png" alt="Outline of the brain to crop ROI for each image." />
+        <figcaption>Figure 6: Outline of the brain to crop ROI for each image.</figcaption>
       </figure>
     </section>
 
-    <section style="width: 100%; margin: 0 auto;">
-      <figure style="margin: 2rem 0; text-align: center;">
-        <img src="../img/alzheimers/roi_generated.png" alt="Images generated by ROI."
-             style="max-width:600px; width: 100%; height:auto; border:1px solid #ccc; margin-bottom: 1.5rem;" />
-        <figcaption style="font-style: italic; color: #666; margin-top: 0.5rem;">
-          Figure 7: Images generated by ROI.
-        </figcaption>
+    <section class="content-section">
+      <figure>
+        <img src="../img/alzheimers/roi_generated.png" alt="Images generated by ROI." />
+        <figcaption>Figure 7: Images generated by ROI.</figcaption>
       </figure>
       <p>At epoch 15, the CycleGAN model trained with ROI (Region of Interest) guidance for the very mild to mild
         Alzheimer's stage transition outperformed the version without ROI. It achieved lower average MSE (0.0326 vs.
@@ -235,7 +201,7 @@
         FID (30.94 vs. 39.99), indicating sharper and more realistic outputs when ROI information was used.</p>
     </section>
 
-    <section style="width: 100%; margin: 0 auto;">
+    <section class="content-section">
       <h2>Conclusion</h2>
       <p>This project offered deep insights into the workings of Generative Adversarial Networks (GANs), transfer
         learning, and web deployment using Django. The key technologies used were TensorFlow for building the

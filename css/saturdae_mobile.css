@@ -1,29 +1,35 @@
 /* ===================================
    SATURDAE PAGE MOBILE RESPONSIVE
-   Add this as a separate CSS file
    =================================== */
 
-/* Base mobile styles (for screens under 720px) */
+/* --- Base Mobile Styles (Screens < 720px) --- */
+
 article {
     width: 100%;
     max-width: 100%;
 }
 
 article section {
-    width: 100% !important;
+    width: 100%;
     padding: 0 1rem;
-    margin: 2rem auto !important;
+    margin: 2rem auto;
+    /* Overrides main style.css width */
 }
 
 article h2 {
     font-size: 2.2rem;
-    margin-bottom: 1.5rem;
+    /* REDUCED GAP: Changed from 1.5rem to 0.5rem */
+    margin-bottom: 0.5rem;
+    /* Optional: Ensure no top margin pushes it down */
+    margin-top: 0;
 }
 
 article p {
     font-size: 1.5rem;
     line-height: 1.7;
     text-align: justify;
+    /* ADDED: Removes default top spacing from the paragraph */
+    margin-top: 0;
 }
 
 article p strong {
@@ -40,7 +46,7 @@ article p a:hover {
     color: rgba(24, 185, 207, 0.9);
 }
 
-/* List styling */
+/* List Styling */
 article ul {
     padding-left: 2rem;
     margin: 1rem 0;
@@ -56,61 +62,70 @@ article ul li strong {
     color: rgb(29, 228, 255);
 }
 
-/* Furniture icon grid - mobile (stacked in 2 columns) */
-article section > div[style*="display: flex"][style*="gap: 20px"] {
-    display: grid !important;
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 1.5rem !important;
-    justify-items: center !important;
-    margin: 2rem 0 !important;
-}
+/* --- Furniture Grid System --- */
 
-/* Replace brittle attribute selectors with class selectors */
+/* Container for all 10 icons */
 .furniture-row {
-    display: grid !important;
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 1.5rem !important;
-    justify-items: center !important;
-    justify-content: center !important;
-    margin: 2rem auto !important;
+    display: grid;
+    /* Mobile: 2 columns side-by-side */
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
     width: 100%;
+    margin: 2rem 0;
+    justify-items: center; /* Centers items horizontally in their grid cell */
 }
 
 .furniture-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     text-align: center;
-    width: 100% !important;
+    width: 100%;
     max-width: 120px;
 }
 
 .furniture-item img {
-    width: 80px !important;
-    height: 80px !important;
+    width: 80px;
+    height: 80px;
+    object-fit: contain; /* Ensures icons don't stretch weirdly */
+    display: block;
 }
 
-.furniture-item div {
-    font-size: 1.3rem !important;
+/* Replaces inline style="margin-top: 8px; font-size: 14px;" */
+.furniture-label {
+    margin-top: 0.8rem;
+    font-size: 1.3rem;
+    color: inherit;
 }
 
-article figure img {
-    max-width: 100% !important;
-    width: 100% !important;
-    height: auto;
-    border: 1px solid #ccc;
+/* --- Media / Images / Video --- */
+
+article figure {
+    margin: 2rem 0;
+    text-align: center;
 }
 
-/* Video styling */
+article figure img,
 article figure video {
-    max-width: 100% !important;
-    width: 100% !important;
+    width: 100%;
+    max-width: 100%;
     height: auto;
     border: 1px solid #ccc;
+    border-radius: 4px; /* Optional: adds slight rounding */
 }
 
 article figcaption {
     font-size: 1.3rem;
+    font-style: italic;
+    color: #666;
     padding: 0.5rem;
     margin-top: 0.5rem;
 }
+
+
+/* ===================================
+   MEDIA QUERIES (Larger Screens)
+   =================================== */
 
 /* Tablet (720px+) */
 @media screen and (min-width: 720px) {
@@ -123,69 +138,65 @@ article figcaption {
         font-size: 2.6rem;
     }
 
-    article p {
-        font-size: 1.6rem;
-    }
-
+    article p,
     article ul li {
         font-size: 1.6rem;
     }
 
+    /* Grid becomes 3 columns on tablet */
     .furniture-row {
-        grid-template-columns: repeat(3, 1fr) !important;
-        gap: 2rem !important;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 2rem;
     }
 
     .furniture-item img {
-        width: 100px !important;
-        height: 100px !important;
+        width: 100px;
+        height: 100px;
     }
 
-    .furniture-item div {
-        font-size: 1.4rem !important;
+    .furniture-label {
+        font-size: 1.4rem;
     }
 
     article figure img,
     article figure video {
-        max-width: 600px !important;
+        max-width: 600px;
     }
-    }
+}
+
 /* Desktop (1024px+) */
 @media screen and (min-width: 1024px) {
     article section {
         max-width: 80%;
     }
+
     article h2 {
         font-size: 3rem;
     }
-    article p {
-        font-size: 1.65rem;
-    }
+
+    article p,
     article ul li {
         font-size: 1.65rem;
     }
+
+    /* Grid becomes 5 columns (perfect for 10 items: 2 rows of 5) */
     .furniture-row {
-        grid-template-columns: repeat(5, 1fr) !important;
-        justify-content: center !important;  /* keep centered */
-        width: 100%;                          /* span full section */
+        grid-template-columns: repeat(5, 1fr);
     }
+
     article figcaption {
         font-size: 1.4rem;
     }
 }
 
-/* Large desktop (1280px+) */
+/* Large Desktop (1280px+) */
 @media screen and (min-width: 1280px) {
-    article section {
-        max-width: 80%;
-    }
-
     article h2 {
         font-size: 3.2rem;
     }
 }
 
-/* Extra large screens (1440px+) */
+/* Extra Large Screens (1440px+) */
 @media screen and (min-width: 1440px) {
     article section {
         max-width: 103rem;

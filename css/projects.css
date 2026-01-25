@@ -360,3 +360,62 @@ body {
         height: 36px;
     }
 }
+
+/* BACK HOME BUTTON STYLES */
+.back-home-btn {
+    position: absolute;
+    top: 40px;
+    left: 40px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: rgba(255, 255, 255, 0.6);
+    text-decoration: none;
+    font-size: 1.1rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    z-index: 100;
+    padding: 10px 20px;
+    border-radius: 30px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(5px);
+}
+
+.back-home-btn:hover {
+    color: #00d4ff;
+    border-color: rgba(0, 212, 255, 0.3);
+    background: rgba(0, 212, 255, 0.1);
+    transform: translateX(-5px);
+}
+
+.back-home-btn .arrow {
+    font-size: 1.4rem;
+    line-height: 1;
+}
+
+/* RESPONSIVE ADJUSTMENTS */
+@media (max-width: 768px) {
+    /* Hide the text */
+    .back-home-btn .btn-text {
+        display: none;
+    }
+
+    /* Turn button into a circle for just the arrow */
+    .back-home-btn {
+        top: 20px;
+        left: 20px;
+        padding: 0;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        justify-content: center; /* Center the arrow horizontally */
+        gap: 0;
+    }
+
+    /* Ensure arrow stays centered */
+    .back-home-btn .arrow {
+        font-size: 1.6rem;
+        margin-top: -2px; /* Visual tweak to center arrow perfectly */
+    }
+}

@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="../css/font-root-styles/general-sans.css" />
   <link rel="stylesheet" href="../css/font-root-styles/okinesans.css" />
   <link rel="stylesheet" href="../css/font-root-styles/satoshi.css" />
-  <link rel="stylesheet" href="../css/alzheimers_mobile.css" />
+  <link rel="stylesheet" href="../css/image_ret.css" />
 </head>
 <body>
 
@@ -20,7 +20,7 @@
 
 <main>
   <article>
-    <section style="width: 100%; margin: 0 auto;">
+    <section class="content-section">
       <h2>Overview</h2>
       <p>This project implements an AI-based image retrieval system that enables fast and accurate similarity searches
         using deep learning and vector indexing. Images are first processed through a ResNet-50 convolutional neural
@@ -31,7 +31,7 @@
         for applications such as content-based image search, duplicate detection, and visual recommendation systems.</p>
     </section>
 
-    <section style="width: 100%; margin: 0 auto;">
+    <section class="content-section">
       <h2>Dataset</h2>
       <p>
         The Caltech101 dataset is a widely used benchmark in computer vision that contains over 9,000 images across 101
@@ -42,7 +42,7 @@
       </p>
     </section>
 
-    <section style="width: 100%; margin: 0 auto;">
+    <section class="content-section">
       <h2>Data Preprocessing</h2>
       <p>
         All images from the <strong>Caltech101 dataset</strong> undergo a structured preprocessing pipeline
@@ -54,7 +54,7 @@
       </p>
     </section>
 
-    <section style="width: 100%; margin: 0 auto;">
+    <section class="content-section">
       <h2>Architecture</h2>
       <p>The architecture is based on a transfer learning approach using a pre-trained
         <strong>ResNet-50</strong> network. The convolutional backbone is initially frozen to preserve pre-learned low-level
@@ -67,7 +67,7 @@
         applied during training to enhance model calibration and reduce overconfidence.</p>
     </section>
 
-    <section style="width: 100%; margin: 0 auto;">
+    <section class="content-section">
       <h2>Performance</h2>
       <p>
         The model is trained using the AdamW optimizer with cosine annealing learning rate
@@ -79,7 +79,7 @@
       </p>
     </section>
 
-    <section style="width: 100%; margin: 0 auto;">
+    <section class="content-section">
       <h2>FAISS Vector Indexing</h2>
       <p>
         The system uses <strong>FAISS</strong> (Facebook AI Similarity Search) for fast, large-scale image retrieval.
@@ -90,26 +90,20 @@
       </p>
     </section>
 
-    <section style="width: 100%; margin: 0 auto;">
-      <div style="display: flex; justify-content: center; gap: 2rem; margin: 2rem 0;">
-        <figure style="flex: 1; text-align: center;">
-          <img src="../img/image_retrieval_img/img_1.png" alt="Opening page"
-               style="max-width: 100%; height: auto; border: 1px solid #ccc;" />
-          <figcaption style="font-style: italic; color: #666; margin-top: 0.5rem;">
-            Figure 1a: Opening page.
-          </figcaption>
+    <section class="content-section">
+      <div class="image-grid grid-2">
+        <figure>
+          <img src="../img/image_retrieval_img/img_1.png" alt="Opening page" />
+          <figcaption>Figure 1a: Opening page.</figcaption>
         </figure>
-        <figure style="flex: 1; text-align: center;">
-          <img src="../img/image_retrieval_img/img_2.png" alt="Image retrieval"
-               style="max-width: 100%; height: auto; border: 1px solid #ccc;" />
-          <figcaption style="font-style: italic; color: #666; margin-top: 0.5rem;">
-            Figure 1b: Image retrieval.
-          </figcaption>
+        <figure>
+          <img src="../img/image_retrieval_img/img_2.png" alt="Image retrieval" />
+          <figcaption>Figure 1b: Image retrieval.</figcaption>
         </figure>
       </div>
     </section>
 
-    <section style="width: 100%; margin: 0 auto;">
+    <section class="content-section">
       <h2>Conclusion</h2>
       <p>
         This project enhanced my understanding of <strong>transfer learning</strong>,
