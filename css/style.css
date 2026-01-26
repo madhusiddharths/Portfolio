@@ -1088,14 +1088,38 @@ body {
 
 /* Mobile view for certifications */
 @media (max-width: 768px) {
+
+  /* === MODIFIED CERTIFICATION SECTION FOR 2x2 GRID === */
   .certification-images {
-    flex-direction: column;
-    gap: 2rem; /* smaller gap */
+    /* Switch to Grid layout */
+    display: grid;
+    /* Create exactly two columns of equal width */
+    grid-template-columns: repeat(2, 1fr);
+    /* Spacing between rows and columns */
+    gap: 2rem;
+    /* Center the items within their grid cells */
+    justify-items: center;
     align-items: center;
+
+    /* Optional constraint to keep the grid tidy on larger phones/tablets */
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* Ensure the anchor tags centering works */
+  .certification-images a {
+    display: flex;
+    justify-content: center;
+    width: 100%;
   }
 
   .certification-images img {
-    width: 140px; /* scale down images for small screens */
+    /* Make images responsive to fill their grid cell */
+    width: 100%;
+    /* Set a max width so they don't get too ridiculously big on tablets */
+    max-width: 160px;
+    height: auto;
   }
 
   .cta {
