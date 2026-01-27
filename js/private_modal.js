@@ -1,5 +1,5 @@
 (function() {
-    // 1. INJECT CSS
+    // 1. INJECT CSS (White Theme + Pixel Units)
     const modalStyles = `
         /* The backdrop */
         .modal-overlay {
@@ -11,24 +11,25 @@
             width: 100%;
             height: 100%;
             overflow: auto;
-            background-color: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(4px);
-            -webkit-backdrop-filter: blur(4px);
+            background-color: rgba(0, 0, 0, 0.6); /* Slightly lighter backdrop for white theme */
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
             animation: fadeIn 0.3s ease-out;
         }
 
-        /* The Modal Box */
+        /* The Modal Box - WHITE THEME */
         .modal-content {
-            background-color: #ffffff;
+            background-color: #ffffff !important; /* Force White */
             margin: 15% auto;
-            padding: 2rem;
+            /* Fixed PX padding for consistency */
+            padding: 40px 30px; 
             border: 1px solid #e0e0e0;
-            border-radius: 12px;
+            border-radius: 20px;
             width: 90%;
-            max-width: 450px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            max-width: 500px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
             position: relative;
-            font-family: 'General Sans', sans-serif; /* Fallback to sans-serif if not loaded */
+            font-family: 'Satoshi', sans-serif;
             text-align: center;
             animation: slideUp 0.3s ease-out;
         }
@@ -37,31 +38,39 @@
         .close-modal-btn {
             color: #aaa;
             position: absolute;
-            top: 10px;
-            right: 15px;
-            font-size: 28px;
+            top: 15px;
+            right: 20px;
+            font-size: 30px;
             font-weight: bold;
             cursor: pointer;
             transition: color 0.2s;
             line-height: 1;
         }
-        .close-modal-btn:hover { color: #000; }
+        .close-modal-btn:hover { color: #000; } /* Black on hover */
 
-        /* Text Styling */
+        /* Header */
         .modal-header {
             margin-top: 0;
-            color: #333;
-            font-size: 1.25rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
+            /* Fixed px size */
+            font-size: 26px; 
+            font-weight: 700;
+            margin-bottom: 15px;
+            
+            /* Keep the Gradient Text (Brand) or change to color: #000; for plain black */
+            background: -webkit-linear-gradient(90.98deg, rgba(24, 185, 207, 0.9) -2.14%, #6688ff 103.54%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
+
+        /* Body Text */
         .modal-body {
-            color: #555;
-            font-size: 1rem;
+            color: #333333; /* Dark Grey/Black Text */
+            /* Fixed px size */
+            font-size: 16px; 
             line-height: 1.6;
         }
 
-        /* Animations */
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     `;
@@ -72,8 +81,10 @@
     document.head.appendChild(styleSheet);
 
 
-    // 2. INJECT HTML (Wait for DOM)
+    // 2. INJECT HTML
     document.addEventListener("DOMContentLoaded", function() {
+        if (document.getElementById("privateRepoModal")) return;
+
         const modalHTML = `
             <div id="privateRepoModal" class="modal-overlay">
               <div class="modal-content">
@@ -94,7 +105,6 @@
         const closeBtn = document.querySelector(".close-modal-btn");
         const links = document.querySelectorAll(".private-link");
 
-        // Handle Link Clicks
         links.forEach(link => {
             link.addEventListener('click', function(e) {
                 e.preventDefault();
@@ -102,7 +112,6 @@
             });
         });
 
-        // Close Logic
         closeBtn.onclick = () => modal.style.display = "none";
         window.onclick = (e) => {
             if (e.target == modal) modal.style.display = "none";
