@@ -43,7 +43,13 @@ body {
   line-height: 1.5;
   color: rgb(208, 212, 212);
 
-  /* Push content down to account for fixed header */
+  /* REMOVED GLOBAL PADDING-TOP here.
+     Now handled by .home-page class below */
+}
+
+/* === HOME PAGE SPECIFIC FIX === */
+/* Only the home page gets pushed down */
+.home-page {
   padding-top: var(--header-height);
 }
 
@@ -86,20 +92,26 @@ a > img:hover {
 /* =========================================
    3. HEADER & NAVIGATION
    ========================================= */
+
+/* DEFAULT HEADER (For all pages except Home) */
 header {
+  position: relative; /* Normal flow */
+  width: 100%;
+  padding: 1.5rem 2.5rem;
+  z-index: 1100;
+}
+
+/* FIXED HEADER (Only for Home Page) */
+.home-page header {
   position: fixed; /* Sticks to top */
   top: 0;
   left: 0;
-  width: 100%;
-  padding: 1.5rem 2.5rem;
 
-  /* Glassmorphism Effect */
+  /* Glassmorphism Effect - Only on Home */
   background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-
-  z-index: 1100; /* Highest priority */
 }
 
 nav {
@@ -279,11 +291,16 @@ nav img {
    4. MAIN HERO SECTION
    ========================================= */
 main {
-  /* Takes up full view height minus the header to center perfectly */
-  min-height: calc(100vh - var(--header-height));
+  /* Default min-height */
+  min-height: 90vh;
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+/* Home Page specific main sizing (accounts for header) */
+.home-page main {
+  min-height: calc(100vh - var(--header-height));
 }
 
 h1, .declaration {
@@ -327,12 +344,12 @@ h1, .declaration {
   margin: 0;
 }
 
-/* === STANDARDIZED SECTION HEADINGS (THE FIX) === */
+/* === STANDARDIZED SECTION HEADINGS === */
 .separator {
   position: relative;
-  /* Space after the whole heading block before content */
+  /* Space after the whole heading block */
   margin-bottom: 4rem;
-  /* THE GAP: This enforces exactly 1.5rem space between text and line on ALL devices */
+  /* THE GAP: Enforces space between text and line on ALL devices */
   padding-bottom: 1.5rem;
 }
 
@@ -872,7 +889,6 @@ footer span {
 
   /* Tablet separation alignment */
   .separator {
-    /* Inherits standardized padding-bottom */
     width: 100%;
   }
 
@@ -982,7 +998,6 @@ footer span {
 }
 
 @media (max-width: 768px) {
-  /* FIX: Increased Padding on Containers */
 
   #projects .separator { margin-bottom: 40px; }
   #projects .page-heading { margin-bottom: 40px; }
@@ -1028,7 +1043,6 @@ footer span {
   /* Main Section Alignment Fix */
   main {
     min-height: 90vh; /* Fallback */
-    min-height: calc(100vh - var(--header-height));
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -1036,6 +1050,11 @@ footer span {
     padding-top: 0;
     padding-bottom: 15vh;
     margin: 0;
+  }
+
+  /* Use specific calc for home page on mobile */
+  .home-page main {
+    min-height: calc(100vh - var(--header-height));
   }
 
   main section {
