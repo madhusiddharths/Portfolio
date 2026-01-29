@@ -1,0 +1,179 @@
+/* ===================================
+   RETAIL ETL PAGE STYLES
+   =================================== */
+
+/* --- Base Mobile Styles (Screens < 720px) --- */
+
+article {
+    width: 100%;
+    max-width: 100%;
+}
+
+article section.content-section {
+    width: 100%;
+    padding: 0 1rem;
+    margin: 2rem auto;
+}
+
+article h2 {
+    font-size: 2.2rem;
+    margin-bottom: 0.5rem;
+    margin-top: 0;
+}
+
+article p {
+    font-size: 1.5rem;
+    line-height: 1.7;
+    text-align: left;
+    margin-top: 0;
+}
+
+/* Accented Bold Text (Matches your Image Retrieval theme) */
+article p strong {
+    font-weight: 700;
+    color: rgb(29, 228, 255);
+}
+
+/* --- List Styling (For ETL Steps) --- */
+article ul {
+    font-size: 1.5rem;
+    line-height: 1.7;
+    margin-top: 0.5rem;
+    padding-left: 1.5rem; /* Indent lists */
+}
+
+article li {
+    margin-bottom: 0.5rem;
+}
+
+/* --- Image & Figure Styling --- */
+
+article figure {
+    margin: 2rem 0;
+    text-align: center;
+    max-width: 100%;
+}
+
+article figure img {
+    max-width: 100%;
+    width: 100%;
+    height: auto;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1); /* Added subtle shadow for depth */
+}
+
+article figcaption {
+    font-size: 1.3rem;
+    padding: 0.5rem;
+    margin-top: 0.5rem;
+    font-style: italic;
+    color: #666;
+}
+
+/* --- Dashboard Button Styling (New) --- */
+
+.dashboard-link-container {
+    margin-top: 2rem;
+    text-align: left; /* Aligns with paragraph text */
+}
+
+.btn-dashboard {
+    display: inline-block;
+    padding: 12px 28px;
+    background-color: #000;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 4px;
+    font-size: 1.4rem;
+    font-weight: 700;
+    transition: all 0.3s ease;
+    border: 1px solid transparent;
+}
+
+.btn-dashboard:hover {
+    background-color: #333;
+    border-color: rgb(29, 228, 255); /* Hover effect using your accent color */
+    color: rgb(29, 228, 255);
+    transform: translateY(-2px);
+}
+
+/* --- Grid Systems --- */
+
+.image-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin: 2rem 0;
+}
+
+.image-grid figure {
+    margin: 0;
+    flex: none;
+    max-width: 100%;
+}
+
+/* ===================================
+   MEDIA QUERIES (Larger Screens)
+   =================================== */
+
+/* Tablet (720px+) */
+@media screen and (min-width: 720px) {
+    article section.content-section {
+        max-width: 90%;
+        padding: 0 2rem;
+    }
+
+    article h2 {
+        font-size: 2.6rem;
+    }
+
+    article p, article ul {
+        font-size: 1.6rem;
+    }
+
+    /* Grid Layouts */
+    .grid-2 {
+        flex-direction: row;
+    }
+    .grid-2 figure {
+        flex: 1;
+    }
+}
+
+/* Desktop (1024px+) */
+@media screen and (min-width: 1024px) {
+    article section.content-section {
+        max-width: 85%;
+    }
+
+    article h2 {
+        font-size: 3rem;
+    }
+
+    article p, article ul {
+        font-size: 1.65rem;
+    }
+
+    article figcaption {
+        font-size: 1.4rem;
+    }
+}
+
+/* Large Desktop (1280px+) */
+@media screen and (min-width: 1280px) {
+    article section.content-section {
+        max-width: 80%;
+    }
+
+    article h2 {
+        font-size: 3.2rem;
+    }
+}
+
+/* Extra Large Screens (1440px+) */
+@media screen and (min-width: 1440px) {
+    article section.content-section {
+        max-width: 103rem;
+    }
+}
