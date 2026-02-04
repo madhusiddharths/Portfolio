@@ -1,0 +1,143 @@
+/* ===================================
+   AI-COUNSELLING PAGE STYLES
+   =================================== */
+
+/* --- Base Mobile Styles (Screens < 720px) --- */
+
+article {
+    width: 100%;
+    max-width: 100%;
+}
+
+article section {
+    width: 100%;
+    padding: 0 1rem;
+    margin: 2rem auto;
+}
+
+article h2 {
+    font-size: 2.2rem;
+    margin-bottom: 0.5rem;
+    margin-top: 0;
+}
+
+article p {
+    font-size: 1.5rem;
+    line-height: 1.7;
+    text-align: left;
+    margin-top: 0;
+}
+
+/* Accented Bold Text (Consistent with previous project) */
+article p strong,
+article li strong {
+    font-weight: 700;
+    color: rgb(29, 228, 255); /* Cyan accent */
+}
+
+/* --- List Styling (Enhanced for Tech Stack & API) --- */
+article ul {
+    font-size: 1.5rem;
+    line-height: 1.7;
+    margin-top: 1rem;
+    padding-left: 1.5rem;
+    list-style-type: disc; /* standard bullets */
+}
+
+article li {
+    margin-bottom: 0.8rem;
+}
+
+/* Code styling for API endpoints */
+code {
+    background-color: #f4f4f4;
+    color: #333;
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.9em;
+}
+
+/* --- Image & Figure Styling --- */
+
+article figure {
+    margin: 2rem 0;
+    text-align: center;
+    max-width: 100%;
+}
+
+article figure img {
+    max-width: 100%;
+    width: 100%;
+    height: auto;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+article figcaption {
+    font-size: 1.3rem;
+    padding: 0.5rem;
+    margin-top: 0.5rem;
+    font-style: italic;
+    color: #666;
+}
+
+/* ===================================
+   MEDIA QUERIES (Larger Screens)
+   =================================== */
+
+/* Tablet (720px+) */
+@media screen and (min-width: 720px) {
+    article section {
+        max-width: 90%;
+        padding: 0 2rem;
+    }
+
+    article h2 {
+        font-size: 2.6rem;
+    }
+
+    article p,
+    article ul {
+        font-size: 1.6rem;
+    }
+}
+
+/* Desktop (1024px+) */
+@media screen and (min-width: 1024px) {
+    article section {
+        max-width: 85%;
+    }
+
+    article h2 {
+        font-size: 3rem;
+    }
+
+    article p,
+    article ul {
+        font-size: 1.65rem;
+    }
+
+    article figcaption {
+        font-size: 1.4rem;
+    }
+}
+
+/* Large Desktop (1280px+) */
+@media screen and (min-width: 1280px) {
+    article section {
+        max-width: 80%;
+    }
+
+    article h2 {
+        font-size: 3.2rem;
+    }
+}
+
+/* Extra Large Screens (1440px+) */
+@media screen and (min-width: 1440px) {
+    article section {
+        max-width: 103rem;
+    }
+}
