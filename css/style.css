@@ -325,6 +325,41 @@ h1, .declaration {
 .main-social-links {
   display: none; /* Hidden on mobile */
 }
+/* Resume Download Text */
+.resume-download {
+  margin-top: 2rem;
+  font-size: 1.6rem;
+  color: rgba(255, 255, 255, 0.6); /* Matches your project descriptions */
+}
+
+/* The Link Itself */
+.download-link {
+  color: #00d4ff; /* Matches your 'Check it out' and 'Show More' links */
+  font-weight: 600;
+  text-decoration: none;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+/* Underline Effect on Hover (Matches your existing buttons) */
+.download-link::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #00d4ff, #00ff88);
+  transition: width 0.3s ease;
+}
+
+.download-link:hover {
+  color: #00ff88; /* Turns green/teal on hover like your other links */
+}
+
+.download-link:hover::after {
+  width: 100%;
+}
 
 /* =========================================
    5. PROJECTS SECTION & SECTION HEADINGS
