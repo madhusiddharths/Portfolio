@@ -17,7 +17,8 @@ article section.content-section {
 
 article h2 {
     font-size: 2.2rem;
-    margin-bottom: 0.5rem; /* Reduced gap */
+    margin-bottom: 0.5rem;
+    /* Reduced gap */
     margin-top: 0;
 }
 
@@ -25,7 +26,8 @@ article p {
     font-size: 1.5rem;
     line-height: 1.7;
     text-align: left;
-    margin-top: 0; /* Reduced gap */
+    margin-top: 0;
+    /* Reduced gap */
 }
 
 /* Accented Bold Text */
@@ -46,7 +48,8 @@ article figure img {
     max-width: 100%;
     width: 100%;
     height: auto;
-    border: 1px solid #ccc; /* Or #333 if you prefer dark borders */
+    border: 1px solid #ccc;
+    /* Or #333 if you prefer dark borders */
     border-radius: 4px;
 }
 
@@ -63,15 +66,89 @@ article figcaption {
 /* Container for the side-by-side images */
 .image-grid {
     display: flex;
-    flex-direction: column; /* Stack vertically on mobile */
+    flex-direction: column;
+    /* Stack vertically on mobile */
     gap: 1.5rem;
     margin: 2rem 0;
 }
 
 .image-grid figure {
-    margin: 0; /* Reset margins inside grid */
+    margin: 0;
+    /* Reset margins inside grid */
     flex: none;
     max-width: 100%;
+}
+
+/* --- Live Demo Button (Matches .cta style) --- */
+.demo-container {
+    display: flex;
+    justify-content: flex-start;
+    margin: 3rem 0;
+}
+
+.btn-demo {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    width: fit-content;
+    padding: 1rem 2.5rem;
+
+    background: rgb(34, 40, 49);
+    /* Dark Grey Box */
+    border-radius: 1rem;
+
+    color: rgb(204, 213, 243);
+    font-family: "Satoshi 700", sans-serif;
+    font-size: 1.6rem;
+    /* Standard size */
+    text-align: center;
+    text-decoration: none;
+    text-transform: uppercase;
+    font-weight: 500;
+
+    z-index: 1;
+    transition: all 0.4s ease-in-out;
+    border: none;
+    /* Reset border */
+    box-shadow: none;
+    /* Reset shadow */
+}
+
+.btn-demo::after {
+    position: absolute;
+    content: "";
+    top: -1.8px;
+    bottom: -1.8px;
+    left: -1.8px;
+    right: -1.8px;
+    background: linear-gradient(180deg, rgba(24, 185, 207, 0.9) 0%, #3b53a8 100%);
+    z-index: -1;
+    border-radius: 1.5rem;
+    transition: all 0.4s ease-in-out;
+    opacity: 1;
+}
+
+.btn-demo:hover {
+    transform: scale(1.08);
+    /* slight grow */
+    background: linear-gradient(180deg, rgba(24, 185, 207, 0.9) 0%, #3b53a8 100%);
+    color: #ffffff;
+    box-shadow: none;
+}
+
+.btn-demo:hover::after {
+    opacity: 0;
+}
+
+.btn-demo .arrow {
+    font-size: 1.4rem;
+    transition: transform 0.3s ease;
+}
+
+.btn-demo:hover .arrow {
+    transform: translateX(3px);
 }
 
 /* ===================================
@@ -97,8 +174,10 @@ article figcaption {
     .grid-2 {
         flex-direction: row;
     }
+
     .grid-2 figure {
-        flex: 1; /* Both images take equal width */
+        flex: 1;
+        /* Both images take equal width */
     }
 }
 
