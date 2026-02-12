@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -9,128 +10,139 @@
     <link rel="stylesheet" href="../css/font-root-styles/general-sans.css" />
     <link rel="stylesheet" href="../css/font-root-styles/okinesans.css" />
     <link rel="stylesheet" href="../css/font-root-styles/satoshi.css" />
-    <link rel="stylesheet" href="../css/image_ret.css" />
-    <style>
-        /* Inline style for the dashboard button, move to CSS file if preferred */
-        .dashboard-link-container {
-            margin-top: 20px;
-        }
-        .btn-dashboard {
-            display: inline-block;
-            padding: 12px 24px;
-            background-color: #000; /* or your theme color */
-            color: #fff;
-            text-decoration: none;
-            border-radius: 5px;
-            font-weight: bold;
-            transition: background 0.3s;
-        }
-        .btn-dashboard:hover {
-            background-color: #333;
-        }
-    </style>
+    <link rel="stylesheet" href="../css/online_retail_mobile.css" />
 </head>
+
 <body>
 
-<header>
-    <h1>Retail Data Pipeline: Snowflake to BigQuery</h1>
-    <div class="separator"></div>
-</header>
+    <header>
+        <h1>Retail Data Pipeline: Snowflake to BigQuery</h1>
+        <div class="separator"></div>
+    </header>
 
-<main>
-    <article>
-        <section class="content-section">
-            <h2>Overview</h2>
-            <p>
-                This project implements a high-performance ETL (Extract, Transform, Load) pipeline designed to process
-                large-scale online retail data. The system extracts raw transaction logs from <strong>Snowflake</strong>,
-                processes them using <strong>Polars</strong> for high-speed in-memory transformation, and loads the cleaned data into
-                <strong>Google BigQuery</strong>. The final output powers an interactive <strong>Looker Studio</strong> dashboard
-                that tracks critical KPIs such as total revenue, order volume, and customer retention. This architecture ensures
-                data consistency, scalability, and near real-time analytics readiness.
-            </p>
-        </section>
-
-        <section class="content-section">
-            <h2>Data Extraction & Architecture</h2>
-            <p>
-                The pipeline begins by establishing a secure connection to a Snowflake data warehouse using a custom python client.
-                Raw data—containing invoicing details, stock codes, and customer information—is fetched and immediately converted
-                into <strong>Polars DataFrames</strong>. This choice of technology is crucial; Polars offers multithreaded query execution,
-                making it significantly faster than traditional Pandas workflows for the heavy lifting required in the transformation phase.
-            </p>
-        </section>
-
-        <section class="content-section">
-            <h2>Transformation: The Star Schema</h2>
-            <p>
-                To optimize the data for analytical querying, the raw dataset is transformed into a <strong>Star Schema</strong> model
-                within the <code>clean_data.py</code> module. This process involves:
-            </p>
-            <ul>
-                <li><strong>Data Cleaning:</strong> Standardizing timestamps, casting types (Int64/Float64), and handling null values for customer integrity.</li>
-                <li><strong>Logic Segregation:</strong> Splitting the raw stream into two distinct Fact tables: <code>fact_sales</code> (completed transactions) and <code>fact_returns</code> (cancellations and refunds).</li>
-                <li><strong>Dimensional Modeling:</strong> creating distinct Dimension tables:
-                    <ul>
-                        <li><code>dim_products</code>: Unique stock codes and descriptions.</li>
-                        <li><code>dim_customers</code>: Customer IDs and country mapping.</li>
-                        <li><code>dim_date</code>: A comprehensive date dimension breaking down invoices by year, month, day, and week.</li>
-                    </ul>
-                </li>
-            </ul>
-            </p>
-        </section>
-
-        <section class="content-section">
-            <h2>Cloud Integration (BigQuery)</h2>
-            <p>
-                Once transformed, the pipeline utilizes the <code>google.cloud.bigquery</code> library to upload the datasets.
-                The system employs a <strong>WRITE_TRUNCATE</strong> strategy, ensuring that the analytical tables in BigQuery
-                always reflect the most up-to-date state of the transformed data without duplication. This seamless integration
-                bridges the gap between raw python processing and enterprise-grade data warehousing.
-            </p>
-        </section>
-
-        <section class="content-section">
-            <h2>Dashboard & Insights</h2>
-            <p>
-                The processed data feeds into a Looker Studio dashboard, providing a comprehensive view of business performance.
-                Key metrics visualized include a <strong>Total Sales volume of 8.9M</strong> and <strong>18,532 distinct orders</strong>.
-                The dashboard features trend lines for revenue over time, comparative bar charts for customer lifetime value,
-                and a breakdown of revenue per product.
-            </p>
-
-            <div class="dashboard-link-container">
-                <a href="https://lookerstudio.google.com/reporting/ec4c8755-2932-417a-be4d-14d03c93b6a6" target="_blank" class="btn-dashboard">View Live Dashboard</a>
+    <main>
+        <article>
+            <div class="project-demo-container">
+                <a href="https://lookerstudio.google.com/reporting/ec4c8755-2932-417a-be4d-14d03c93b6a6"
+                    class="project-demo-btn" target="_blank">
+                    <span class="btn-text">View Live Dashboard</span>
+                    <span class="btn-icon">🚀</span>
+                </a>
             </div>
-        </section>
 
-        <section class="content-section">
-            <div class="image-grid grid-1">
-                <figure>
-                    <img src="../img/online_retail/dashboard.png" alt="Retail Analytics Dashboard" />
-                    <figcaption>Figure 1: Full Retail Analytics Dashboard showing Sales, Returns, and Customer metrics.</figcaption>
-                </figure>
-            </div>
-        </section>
+            <section class="content-section">
+                <h2>Overview</h2>
+                <p>
+                    This project implements a high-performance ETL (Extract, Transform, Load) pipeline designed to
+                    process
+                    large-scale online retail data. The system extracts raw transaction logs from
+                    <strong>Snowflake</strong>,
+                    processes them using <strong>Polars</strong> for high-speed in-memory transformation, and loads the
+                    cleaned data into
+                    <strong>Google BigQuery</strong>. The final output powers an interactive <strong>Looker
+                        Studio</strong> dashboard
+                    that tracks critical KPIs such as total revenue, order volume, and customer retention. This
+                    architecture ensures
+                    data consistency, scalability, and near real-time analytics readiness.
+                </p>
+            </section>
 
-        <section class="content-section">
-            <h2>Conclusion</h2>
-            <p>
-                Building this pipeline reinforced my expertise in modern <strong>Data Engineering</strong> practices.
-                By integrating <strong>Snowflake</strong>, <strong>Polars</strong>, and <strong>BigQuery</strong>,
-                I created a solution that is both robust and scalable. The project demonstrates the ability to take raw,
-                unstructured logs and convert them into actionable business intelligence, highlighting proficiency in
-                schema design, cloud infrastructure, and data visualization.
-            </p>
-        </section>
-    </article>
-</main>
+            <section class="content-section">
+                <h2>Data Extraction & Architecture</h2>
+                <p>
+                    The pipeline begins by establishing a secure connection to a Snowflake data warehouse using a custom
+                    python client.
+                    Raw data—containing invoicing details, stock codes, and customer information—is fetched and
+                    immediately converted
+                    into <strong>Polars DataFrames</strong>. This choice of technology is crucial; Polars offers
+                    multithreaded query execution,
+                    making it significantly faster than traditional Pandas workflows for the heavy lifting required in
+                    the transformation phase.
+                </p>
+            </section>
 
-<footer>
-    <p>Designed and Developed by <span>Madhu Siddharth Suthagar</span></p>
-</footer>
+            <section class="content-section">
+                <h2>Transformation: The Star Schema</h2>
+                <p>
+                    To optimize the data for analytical querying, the raw dataset is transformed into a <strong>Star
+                        Schema</strong> model
+                    within the <code>clean_data.py</code> module. This process involves:
+                </p>
+                <ul>
+                    <li><strong>Data Cleaning:</strong> Standardizing timestamps, casting types (Int64/Float64), and
+                        handling null values for customer integrity.</li>
+                    <li><strong>Logic Segregation:</strong> Splitting the raw stream into two distinct Fact tables:
+                        <code>fact_sales</code> (completed transactions) and <code>fact_returns</code> (cancellations
+                        and refunds).</li>
+                    <li><strong>Dimensional Modeling:</strong> creating distinct Dimension tables:
+                        <ul>
+                            <li><code>dim_products</code>: Unique stock codes and descriptions.</li>
+                            <li><code>dim_customers</code>: Customer IDs and country mapping.</li>
+                            <li><code>dim_date</code>: A comprehensive date dimension breaking down invoices by year,
+                                month, day, and week.</li>
+                        </ul>
+                    </li>
+                </ul>
+                </p>
+            </section>
 
-<script type="text/javascript" src="../js/main.js"></script>
+            <section class="content-section">
+                <h2>Cloud Integration (BigQuery)</h2>
+                <p>
+                    Once transformed, the pipeline utilizes the <code>google.cloud.bigquery</code> library to upload the
+                    datasets.
+                    The system employs a <strong>WRITE_TRUNCATE</strong> strategy, ensuring that the analytical tables
+                    in BigQuery
+                    always reflect the most up-to-date state of the transformed data without duplication. This seamless
+                    integration
+                    bridges the gap between raw python processing and enterprise-grade data warehousing.
+                </p>
+            </section>
+
+            <section class="content-section">
+                <h2>Dashboard & Insights</h2>
+                <p>
+                    The processed data feeds into a Looker Studio dashboard, providing a comprehensive view of business
+                    performance.
+                    Key metrics visualized include a <strong>Total Sales volume of 8.9M</strong> and <strong>18,532
+                        distinct orders</strong>.
+                    The dashboard features trend lines for revenue over time, comparative bar charts for customer
+                    lifetime value,
+                    and a breakdown of revenue per product.
+                </p>
+            </section>
+
+            <section class="content-section">
+                <div class="image-grid grid-1">
+                    <figure>
+                        <img src="../img/online_retail/dashboard.png" alt="Retail Analytics Dashboard" />
+                        <figcaption>Figure 1: Full Retail Analytics Dashboard showing Sales, Returns, and Customer
+                            metrics.</figcaption>
+                    </figure>
+                </div>
+            </section>
+
+            <section class="content-section">
+                <h2>Conclusion</h2>
+                <p>
+                    Building this pipeline reinforced my expertise in modern <strong>Data Engineering</strong>
+                    practices.
+                    By integrating <strong>Snowflake</strong>, <strong>Polars</strong>, and <strong>BigQuery</strong>,
+                    I created a solution that is both robust and scalable. The project demonstrates the ability to take
+                    raw,
+                    unstructured logs and convert them into actionable business intelligence, highlighting proficiency
+                    in
+                    schema design, cloud infrastructure, and data visualization.
+                </p>
+            </section>
+        </article>
+    </main>
+
+    <footer>
+        <p>Designed and Developed by <span>Madhu Siddharth Suthagar</span></p>
+    </footer>
+
+    <script type="text/javascript" src="../js/main.js"></script>
 </body>
+
 </html>

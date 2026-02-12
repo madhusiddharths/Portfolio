@@ -39,7 +39,8 @@ article ul {
     font-size: 1.5rem;
     line-height: 1.7;
     margin-top: 0.5rem;
-    padding-left: 1.5rem; /* Indent lists */
+    padding-left: 1.5rem;
+    /* Indent lists */
 }
 
 article li {
@@ -60,7 +61,8 @@ article figure img {
     height: auto;
     border: 1px solid #ccc;
     border-radius: 4px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1); /* Added subtle shadow for depth */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    /* Added subtle shadow for depth */
 }
 
 article figcaption {
@@ -73,30 +75,7 @@ article figcaption {
 
 /* --- Dashboard Button Styling (New) --- */
 
-.dashboard-link-container {
-    margin-top: 2rem;
-    text-align: left; /* Aligns with paragraph text */
-}
 
-.btn-dashboard {
-    display: inline-block;
-    padding: 12px 28px;
-    background-color: #000;
-    color: #fff;
-    text-decoration: none;
-    border-radius: 4px;
-    font-size: 1.4rem;
-    font-weight: 700;
-    transition: all 0.3s ease;
-    border: 1px solid transparent;
-}
-
-.btn-dashboard:hover {
-    background-color: #333;
-    border-color: rgb(29, 228, 255); /* Hover effect using your accent color */
-    color: rgb(29, 228, 255);
-    transform: translateY(-2px);
-}
 
 /* --- Grid Systems --- */
 
@@ -128,7 +107,8 @@ article figcaption {
         font-size: 2.6rem;
     }
 
-    article p, article ul {
+    article p,
+    article ul {
         font-size: 1.6rem;
     }
 
@@ -136,6 +116,7 @@ article figcaption {
     .grid-2 {
         flex-direction: row;
     }
+
     .grid-2 figure {
         flex: 1;
     }
@@ -151,7 +132,8 @@ article figcaption {
         font-size: 3rem;
     }
 
-    article p, article ul {
+    article p,
+    article ul {
         font-size: 1.65rem;
     }
 
@@ -176,4 +158,62 @@ article figcaption {
     article section.content-section {
         max-width: 103rem;
     }
+}
+
+/* =========================================
+   PROJECT DEMO BUTTON
+   ========================================= */
+.project-demo-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 3rem 0 4rem;
+    width: 100%;
+}
+
+.project-demo-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.2rem;
+    padding: 1.5rem 3.5rem;
+    background: rgba(24, 185, 207, 0.1);
+    border: 1px solid rgba(24, 185, 207, 0.5);
+    border-radius: 50px;
+    color: #fff;
+    font-family: "Satoshi 700", sans-serif;
+    /* Matches site font */
+    font-size: 1.8rem;
+    text-decoration: none;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(10px);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 0 20px rgba(24, 185, 207, 0.15);
+    z-index: 10;
+}
+
+.project-demo-btn:hover {
+    transform: translateY(-4px) scale(1.02);
+    background: rgba(24, 185, 207, 0.2);
+    border-color: rgba(255, 255, 255, 0.8);
+    box-shadow: 0 10px 30px rgba(24, 185, 207, 0.3);
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+}
+
+.project-demo-btn .btn-text {
+    background: linear-gradient(90deg, #fff, #bfeaf0);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 700;
+}
+
+.project-demo-btn .btn-icon {
+    font-size: 2.2rem;
+    transition: transform 0.4s ease;
+}
+
+.project-demo-btn:hover .btn-icon {
+    transform: rotate(15deg) scale(1.2);
 }
