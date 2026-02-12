@@ -17,7 +17,8 @@ article section.content-section {
 
 article h2 {
     font-size: 2.2rem;
-    margin-bottom: 0.5rem; /* Reduced gap */
+    margin-bottom: 0.5rem;
+    /* Reduced gap */
     margin-top: 0;
 }
 
@@ -25,7 +26,8 @@ article p {
     font-size: 1.5rem;
     line-height: 1.7;
     text-align: left;
-    margin-top: 0; /* Reduced gap */
+    margin-top: 0;
+    /* Reduced gap */
 }
 
 article ol {
@@ -72,13 +74,15 @@ article figcaption {
 /* Base grid container */
 .image-grid {
     display: flex;
-    flex-direction: column; /* Stack vertically on mobile */
+    flex-direction: column;
+    /* Stack vertically on mobile */
     gap: 1.5rem;
     margin: 2rem 0;
 }
 
 .image-grid figure {
-    margin: 0; /* Remove default figure margins inside grids */
+    margin: 0;
+    /* Remove default figure margins inside grids */
     flex: none;
     max-width: 100%;
 }
@@ -111,6 +115,7 @@ article figcaption {
     .grid-2 {
         flex-direction: row;
     }
+
     .grid-2 figure {
         flex: 1;
     }
@@ -120,8 +125,10 @@ article figcaption {
         flex-direction: row;
         flex-wrap: wrap;
     }
+
     .grid-4 figure {
-        flex: 0 0 48%; /* 2 items per row */
+        flex: 0 0 48%;
+        /* 2 items per row */
     }
 }
 
@@ -147,6 +154,7 @@ article figcaption {
     .grid-4 {
         flex-wrap: nowrap;
     }
+
     .grid-4 figure {
         flex: 1;
     }
@@ -168,4 +176,63 @@ article figcaption {
     article section.content-section {
         max-width: 103rem;
     }
+}
+
+
+/* =========================================
+   8. PROJECT DEMO BUTTON
+   ========================================= */
+.project-demo-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 3rem 0 4rem;
+    width: 100%;
+}
+
+.project-demo-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.2rem;
+    padding: 1.5rem 3.5rem;
+    background: rgba(24, 185, 207, 0.1);
+    border: 1px solid rgba(24, 185, 207, 0.5);
+    border-radius: 50px;
+    color: #fff;
+    font-family: "Satoshi 700", sans-serif;
+    /* Matches site font */
+    font-size: 1.8rem;
+    text-decoration: none;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(10px);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 0 20px rgba(24, 185, 207, 0.15);
+    z-index: 10;
+}
+
+.project-demo-btn:hover {
+    transform: translateY(-4px) scale(1.02);
+    background: rgba(24, 185, 207, 0.2);
+    border-color: rgba(255, 255, 255, 0.8);
+    box-shadow: 0 10px 30px rgba(24, 185, 207, 0.3);
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+}
+
+.project-demo-btn .btn-text {
+    background: linear-gradient(90deg, #fff, #bfeaf0);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 700;
+}
+
+.project-demo-btn .btn-icon {
+    font-size: 2.2rem;
+    transition: transform 0.4s ease;
+}
+
+.project-demo-btn:hover .btn-icon {
+    transform: rotate(15deg) scale(1.2);
 }
