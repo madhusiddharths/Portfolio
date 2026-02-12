@@ -3,7 +3,7 @@
    ========================================= */
 :root {
   /* Dynamic header height: 60px mobile / 80px desktop */
-  --header-height: 6rem;
+  --header-height: 7rem;
 }
 
 /* Box Model Hack */
@@ -1297,10 +1297,18 @@ footer span {
     /* Fallback */
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: center;
-    padding-top: 0;
+    padding-top: 2rem;
     margin: 0;
+  }
+
+  /* Safe Centering: margin: auto pushes content to center available space,
+     but top-aligns if content overflows viewport */
+  .home-page main section {
+    margin-top: auto;
+    margin-bottom: auto;
+    width: 100%;
   }
 
   /* Use specific calc for home page on mobile */
