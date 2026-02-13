@@ -844,23 +844,16 @@ h4+p {
 .cta {
   position: relative;
   display: inline-block;
-  width: fit-content;
-  margin: 0.5rem 0;
-  padding: 1rem 2.5rem;
-
-  background: rgb(34, 40, 49);
-  /* Dark Grey Box */
+  padding: 1.5rem 3rem;
+  /* Slightly larger for main CTA */
   border-radius: 1rem;
-
+  background: rgb(34, 40, 49);
   color: rgb(204, 213, 243);
-  font-family: "Satoshi 700";
-  text-align: center;
   text-decoration: none;
-  text-transform: uppercase;
-  font-weight: 500;
-
-  z-index: 1;
   transition: all 0.4s ease-in-out;
+  margin-top: 2rem;
+  font-size: 1.6rem;
+  /* Ensure it stays above pseudo-element */
 }
 
 .cta::after {
@@ -873,8 +866,8 @@ h4+p {
   background: linear-gradient(180deg, rgba(24, 185, 207, 0.9) 0%, #3b53a8 100%);
   z-index: -1;
   border-radius: 1.5rem;
+  /* Match parent radius + border width compensation */
   transition: all 0.4s ease-in-out;
-  opacity: 1;
 }
 
 /* Hover: Gradient BG + White Text */
@@ -882,6 +875,7 @@ h4+p {
   transform: scale(1.08);
   background: linear-gradient(180deg, rgba(24, 185, 207, 0.9) 0%, #3b53a8 100%);
   color: #ffffff;
+  box-shadow: 0 0 20px rgba(24, 185, 207, 0.4);
 }
 
 .cta:hover::after {
