@@ -26,66 +26,103 @@
 
     <section class="content-section">
       <div class="project-demo-container">
-        <a href="https://galaxy-explorer-1061483926543.us-central1.run.app" class="project-demo-btn" target="_blank">
+        <a href="https://galaxy-explorer-1061483926543.us-central1.run.app" class="project-demo-btn"
+           target="_blank">
           <span class="btn-text">Galaxy Explorer</span>
           <span class="btn-icon">🚀</span>
         </a>
       </div>
 
       <p>
-        <strong>Galaxy Explorer</strong> is a cloud-native, large-scale astrophysical visualization platform built on the
+        <strong>Galaxy Explorer</strong> is a cloud-native, large-scale astrophysical visualization platform
+        built on the
         European Space Agency’s Gaia DR3 catalog. The system enables real-time 3D exploration of over
-        <strong>557 million scientifically filtered stars</strong>, including physically accurate temporal projection
+        <strong>557 million scientifically filtered stars</strong>, including physically accurate temporal
+        projection
         using stellar proper motion and radial velocity vectors.
       </p>
 
       <p>
-        Designed as a full-stack big data engineering project, the platform demonstrates scalable query architecture,
+        Designed as a full-stack big data engineering project, the platform demonstrates scalable query
+        architecture,
         distributed data processing, GPU-accelerated browser rendering, and serverless cloud deployment.
-        Unlike static star maps, Galaxy Explorer dynamically computes stellar positions for arbitrary epochs,
+        Unlike static star maps, Galaxy Explorer dynamically computes stellar positions for arbitrary
+        epochs,
         allowing users to navigate both space and time within our galactic neighborhood.
       </p>
     </section>
 
+    <!-- Project Technology Stack -->
+    <section class="content-section">
+      <h2>Technology Stack</h2>
+      <div class="tech-stack-container">
+        <div class="tech-category">
+          <p class="subsection-title">Frontend</p>
+          <p>React, Three.js, React Three Fiber, Vite, Axios</p>
+        </div>
+        <div class="tech-category">
+          <p class="subsection-title">Backend</p>
+          <p>FastAPI, Python, Uvicorn, Pydantic</p>
+        </div>
+        <div class="tech-category">
+          <p class="subsection-title">Data & Preprocessing</p>
+          <p>Polars, NumPy, Scikit-learn (HDBSCAN), Pandas, PySpark</p>
+        </div>
+        <div class="tech-category">
+          <p class="subsection-title">Cloud & Infrastructure</p>
+          <p>Google BigQuery, Google Cloud Storage, Google Cloud Run, Docker</p>
+        </div>
+      </div>
+    </section>
 
     <section class="content-section">
-      <h2>Data Engineering & Big Data Architecture</h2>
+      <h2>Scientific Data Engineering Pipeline</h2>
 
-      <p class="subsection-title">Dataset Scale & Storage Strategy</p>
+      <p class="subsection-title">Multi-Stage Preprocessing with Polars</p>
       <p>
-        The system is powered by the Gaia DR3 dataset (originally ~1.8 billion sources),
-        filtered to approximately <strong>557 million high-confidence stars</strong>.
-        Data is stored in Google BigQuery using a columnar, serverless architecture
-        optimized for analytical workloads.
+        To handle the massive Gaia DR3 dataset (originally ~1.8 billion sources), I developed a
+        high-performance
+        preprocessing pipeline using <strong>Polars</strong>. This pipeline performs rigorous scientific
+        validation,
+        reducing the dataset to <strong>557 million high-confidence stars</strong>.
       </p>
+      <ul>
+        <li><strong>Quality Filtering:</strong> Implemented filters for Renormalised Unit Weight Error
+          (<strong>RUWE < 1.4</strong>)
+          and Astrometric Excess Noise (< 1) to ensure high-precision stellar positions.</li>
+        <li><strong>Artifact Removal:</strong> Applied a quadratic color-excess mask and filtered out
+          contaminated/blended
+          transits and non-single star candidates to eliminate unreliable data points.</li>
+        <li><strong>Density Analysis:</strong> Leveraged <strong>HDBSCAN</strong> clustering to identify and
+          analyze stellar
+          groupings and density patterns within the galaxy.</li>
+      </ul>
+
+      <p class="subsection-title">Kinematic Feature Engineering</p>
       <p>
-        Tables are partitioned and clustered to minimize scan size and cost.
-        Spatial filtering is performed using Healpix indexing, and range queries
-        are optimized for distance-based selection (light years). This design enables
-        sub-second queries over gigabyte-scale datasets without infrastructure management.
+        I engineered a simplified stellar kinematic model to enable real-time temporal simulation.
+        By transforming celestial coordinates (RA, Dec, Parallax) into a <strong>3D Cartesian system (x, y,
+        z)</strong>
+        and computing velocity vectors (<strong>vx, vy, vz</strong>) from proper motion and radial velocity,
+        the platform can project star positions forward or backward in time:
+      </p>
+      <p style="text-align: center; font-style: italic; margin: 15px 0;">
+        position(t) = position(t₀) + velocity × Δt
       </p>
 
-      <p class="subsection-title">Query Optimization & Cost Efficiency</p>
+      <p class="subsection-title">Big Data Optimizations for Web</p>
       <p>
-        Queries are dynamically generated and parameterized to ensure security and performance.
-        Only required columns are selected, full table scans are avoided, and filtering
-        is applied before projection calculations. The architecture is designed to remain
-        within BigQuery’s free query tier whenever possible while maintaining predictable per-query cost.
-      </p>
-
-      <p class="subsection-title">Proper Motion & Kinematic Projection Engine</p>
-      <p>
-        To provide physically meaningful visualization, the backend implements a simplified
-        stellar kinematic model. Right ascension, declination, and parallax values are converted
-        to Cartesian coordinates. Proper motion (pmRA, pmDec) and radial velocity vectors are applied
-        to project positions forward or backward in time:
-      </p>
-      <p>
-        <em>position(t) = position(t₀) + velocity × Δt</em>
-      </p>
-      <p>
-        These calculations occur dynamically during query execution, enabling real-time
-        epoch simulation directly from the cloud database.
+        To ensure sub-second response times on a global scale, I implemented several structural
+        optimizations:
+        <br>• <strong>Distance Binning:</strong> Partitioned the entire dataset into <strong>50 light-year
+        intervals</strong>,
+        enabling localized data loading.
+        <br>• <strong>Spatial Indexing:</strong> Integrated <strong>Healpix Level 12</strong> indexing for
+        ultra-fast
+        spatial lookups and sector-based filtering.
+        <br>• <strong>Storage Format:</strong> Utilized columnar <strong>Parquet</strong> files in GCS,
+        queried via BigQuery
+        external tables to eliminate data duplication and maximize I/O throughput.
       </p>
     </section>
 
@@ -95,37 +132,20 @@
 
       <p class="subsection-title">Backend (Cloud-Native API)</p>
       <p>
-        The backend is a containerized Python application built with FastAPI and deployed
-        on Google Cloud Run. It handles request validation, secure SQL generation,
-        BigQuery job execution, and JSON streaming to the frontend.
-        The service is stateless and auto-scales based on traffic.
-      </p>
-      <p>
-        Key engineering principles include:
-        <br>• Parameterized SQL for injection safety
-        <br>• Compute pushed to the data layer
-        <br>• Minimal network payload size
-        <br>• Serverless deployment with automatic scaling
+        The backend is a containerized Python application built with FastAPI and deployed on Google Cloud
+        Run.
+        It pushes the heavy kinematics computation to the BigQuery layer, generating parameterized SQL
+        to ensure both security and performance. The service is stateless, allowing for seamless horizontal
+        scaling.
       </p>
 
       <p class="subsection-title">Frontend (GPU-Accelerated Rendering)</p>
       <p>
-        The frontend is built using React and React Three Fiber (Three.js).
-        Instead of rendering individual components per star, the system uses
-        a single optimized <code>BufferGeometry</code> particle system for
-        high-performance WebGL rendering.
-      </p>
-      <p>
-        Features include:
-        <br>• Hardware-accelerated 3D star field rendering
-        <br>• Magnitude-based color mapping
-        <br>• Interactive orbit controls
-        <br>• Hover state inspection
-        <br>• Dynamic camera scaling
-      </p>
-      <p>
-        The system maintains smooth performance (≈60 FPS on modern hardware)
-        while rendering tens of thousands of stars simultaneously.
+        The frontend utilizes <strong>React Three Fiber</strong> to manage a WebGL-based visualization.
+        By using a single optimized <code>BufferGeometry</code> particle system, the application maintains
+        a buttery-smooth <strong>60 FPS</strong> while rendering tens of thousands of stars.
+        Stars are dynamically color-coded by magnitude and include interactive hover states for real-time
+        inspection.
       </p>
     </section>
 
@@ -143,37 +163,28 @@
       </div>
 
       <p>
-        Users can filter the galaxy by distance (light years), spatial sector (Healpix),
-        stellar magnitude, and simulation year. The system executes optimized cloud queries
-        and renders the resulting star field in a fully interactive 3D environment.
+        The resulting system allows for a fully interactive exploration of our cosmic neighborhood,
+        bridging the gap between professional astrophysical data and high-performance web visualization.
       </p>
     </section>
-
-    <section class="content-section">
-      <h2>Technical Summary</h2>
-      <p>
-        Galaxy Explorer demonstrates expertise in:
-        <br>• Large-scale data engineering (500M+ records)
-        <br>• Distributed cloud analytics (BigQuery)
-        <br>• Serverless container deployment (Cloud Run)
-        <br>• Scientific computation & coordinate transformations
-        <br>• GPU-accelerated WebGL rendering
-        <br>• Full-stack system architecture design
-      </p>
-    </section>
-
 
     <!-- ===================== NIGHT SKY SECOND (UNCHANGED CONTENT) ===================== -->
 
     <section class="content-section">
       <h2>Night Sky Explorer</h2>
       <p>
-        The Night Sky Explorer offers users an accurate, real-time view of the night sky based on their geographic
-        location (latitude and longitude), viewing direction (with north at 0°), and angle above the horizon. It
-        visualizes precise star positions using filtered data limited to those visible to the naked eye. To account
-        for varying light pollution, the app includes a brightness filter based on stellar magnitude—ranging from 6.5
-        (dark rural skies) to 2 (bright urban skies). While it doesn’t simulate atmospheric conditions like clouds, it
-        provides a clear and interactive experience of how the night sky appears from any point in Earth under different
+        The Night Sky Explorer offers users an accurate, real-time view of the night sky based on their
+        geographic
+        location (latitude and longitude), viewing direction (with north at 0°), and angle above the
+        horizon. It
+        visualizes precise star positions using filtered data limited to those visible to the naked eye. To
+        account
+        for varying light pollution, the app includes a brightness filter based on stellar magnitude—ranging
+        from 6.5
+        (dark rural skies) to 2 (bright urban skies). While it doesn’t simulate atmospheric conditions like
+        clouds, it
+        provides a clear and interactive experience of how the night sky appears from any point in Earth
+        under different
         visibility conditions.
       </p>
       <div class="project-demo-container">
@@ -196,8 +207,10 @@
         </figure>
       </div>
       <p>
-        The first image showcases the user interface of the Night Sky Explorer application, designed for intuitive
-        control over viewing parameters. The second image displays the interactive star map, which dynamically renders
+        The first image showcases the user interface of the Night Sky Explorer application, designed for
+        intuitive
+        control over viewing parameters. The second image displays the interactive star map, which
+        dynamically renders
         the night sky based on user inputs such as location, direction, and viewing angle.
       </p>
     </section>
