@@ -1,0 +1,337 @@
+<!-- Live Demo Button -->
+      <div class="project-demo-container">
+        <a href="/work/coming-soon/" class="project-demo-btn" target="_blank">
+          <span class="btn-text">Try Live App</span>
+          <span class="btn-icon">🚀</span>
+        </a>
+      </div>
+
+      <section class="content-section">
+        <h2>Overview</h2>
+        <p>
+          PulseTrade is a real-time financial intelligence platform that ingests live market data and news, processes
+          it through a Databricks medallion pipeline, and uses an agentic AI investigator to explain anomalies in
+          plain language. Stock prices and news headlines flow through Confluent Cloud Kafka, are cleaned and joined
+          in Delta Lake, and aggregated into 5-minute feature windows. When the anomaly detector flags an unusual
+          movement, a LangGraph agent powered by Gemini investigates, querying historical context and writing a
+          markdown brief to Postgres.
+        </p>
+        <p>
+          From a data-engineering perspective, the project is a <strong>seven-layer streaming + agentic system</strong>:
+          producers, message bus, stream processing, orchestration, agent layer, serving, and observability. Each
+          layer is built around a real production constraint — bronze as append-only audit log, silver as the
+          data-quality contract, gold as the seam between data engineering and AI.
+        </p>
+      </section>
+
+      <section class="content-section">
+        <h2>Problem and Goal</h2>
+        <p>
+          Trading desks and retail investors see thousands of price ticks and news headlines per day. When a stock
+          moves unusually, a human analyst has to assemble context from multiple sources — recent price history,
+          news sentiment, related tickers — before deciding whether to act. PulseTrade automates the first pass of
+          that triage: detect the anomaly, gather context, generate a structured brief, escalate to a human only
+          when the evidence warrants it.
+        </p>
+        <p>
+          The goal was to build something <strong>cohesive, not piecemeal</strong> — one project that exercises the
+          full modern data stack (Kafka, Spark Structured Streaming, Delta Lake, Airflow, agentic AI, Kubernetes,
+          MLOps) rather than a portfolio of disconnected demos.
+        </p>
+      </section>
+
+      <section class="content-section">
+        <h2>Architecture</h2>
+        <p>
+          The platform is split into seven logical layers: ingestion (Python producers polling Finnhub and NewsAPI),
+          message bus (Kafka), stream processing and storage (Spark + Delta Lake medallion on Databricks), batch
+          orchestration (Airflow), agentic AI (LangGraph + MCP + Gemini), serving (FastAPI + Streamlit on GKE), and
+          observability (Prometheus, Grafana, LangSmith, Evidently AI). Real-time data flows through layers 1–3
+          continuously; Airflow reads from layer 2 and writes to layers 3–4 on schedule.
+        </p>
+        <figure>
+          <img src="/img/pulsetrade/pulsetrade_architecture.svg" alt="PulseTrade end-to-end architecture diagram" />
+          <figcaption>Figure 1: Seven-layer architecture spanning ingestion, stream processing, agentic AI, and
+            observability.</figcaption>
+        </figure>
+      </section>
+
+      <section class="content-section">
+        <h2>Layer 1 &mdash; Ingestion</h2>
+        <p>
+          Two Python producers run independently to keep ingestion concerns separated. The <strong>stock
+            producer</strong>
+          polls the Finnhub REST API every 30 seconds for five tickers (NVDA, AAPL, MSFT, TSLA, GOOGL), pulls open,
+          high, low, current, and previous close in a single call, and publishes a structured <code>StockTick</code>
+          message to the <code>stock-prices</code> Kafka topic. The <strong>news producer</strong> polls NewsAPI every
+          30 minutes across business and technology categories, tags each article against a keyword catalogue, drops
+          articles with no ticker match (~87% of headlines), and publishes <code>NewsArticle</code> messages to
+          <code>market-news</code>.
+        </p>
+        <p>
+          <strong>Why Finnhub over yfinance:</strong> early prototyping used the yfinance library, but it broke
+          repeatedly with internal <code>currentTradingPeriod KeyError</code> failures because it scrapes Yahoo's
+          front-end rather than calling an API. Finnhub is an official REST endpoint with explicit rate limits, returns
+          full OHLC plus previous close in one call, and is documented in <code>ADR-001</code> as a deliberate
+          data-source
+          decision rather than a stack accident.
+        </p>
+        <p>
+          Both producers ship with graceful shutdown handlers, exponential-backoff retry on network errors,
+          <code>acks=all</code> for durability, and lz4 compression to reduce Kafka bandwidth.
+        </p>
+      </section>
+
+      <section class="content-section">
+        <h2>Layer 2 &mdash; Stream Processing &amp; Storage</h2>
+        <p>
+          The medallion architecture runs on Databricks Free Edition with Spark Structured Streaming writing into
+          Delta Lake, governed by Unity Catalog. Three layers, three contracts:
+        </p>
+        <ul>
+          <li><strong>Bronze</strong> &mdash; raw Kafka events, append-only, no transformation. Treated as an audit log.
+          </li>
+          <li><strong>Silver</strong> &mdash; cleaned, deduplicated, joined. Enforces the data-quality contract.</li>
+          <li><strong>Gold</strong> &mdash; 5-minute aggregated feature windows. The seam between data engineering and
+            AI.</li>
+        </ul>
+        <p>
+          <strong>Bronze ingestion (<code>01_kafka_to_bronze</code>):</strong> Spark reads Kafka with SASL_SSL using
+          the <code>kafkashaded</code> JAAS prefix required for Databricks runtimes, parses JSON against typed schemas,
+          and writes to Delta tables with checkpoint paths under Unity Catalog Volumes. The <code>availableNow</code>
+          trigger lets the notebook run as a scheduled micro-batch consumer rather than a long-running stream, which
+          suits Free Edition's serverless model.
+        </p>
+        <p>
+          <strong>Silver transformations (<code>02_bronze_to_silver_stocks</code>,
+            <code>03_bronze_to_silver_news</code>):</strong>
+          Bronze rows are filtered for null tickers (a defensive measure for malformed early test messages), the
+          ISO-8601 timestamp is cast to a proper <code>Timestamp</code>, and derived features are computed:
+          <code>intraday_range</code>, <code>gap</code>, <code>change_pct</code>. Silver writes use
+          <code>MERGE INTO</code>
+          keyed on <code>(ticker, quote_timestamp)</code> for idempotency &mdash; re-running the notebook against
+          the same Kafka offsets produces no duplicates.
+        </p>
+        <p>
+          For news, each article is exploded into one row per matched ticker, then sentiment-scored with FinBERT
+          running inside a Pandas UDF. The model is pre-downloaded onto the Spark driver to a Unity Catalog Volume,
+          with <code>HF_HUB_DISABLE_XET=1</code> set inside the UDF body so workers fall back to plain HTTP rather
+          than the Xet protocol that Volumes don't fully support.
+        </p>
+        <p>
+          <strong>Gold aggregation (<code>04_silver_to_gold</code>):</strong> Silver stock data is aggregated into
+          5-minute windows producing OHLC, mean price, price standard deviation, mean change percentage, and mean
+          intraday range. News sentiment for the same window is left-joined per ticker. The first version used
+          Spark's streaming windowed aggregation with watermarks, but watermark emission delays produced empty gold
+          windows on low-volume input. The final version reads silver as a stream but does the windowing inside
+          <code>foreachBatch</code>, treating each micro-batch as a static snapshot &mdash; no watermark complexity,
+          and idempotent via <code>MERGE INTO</code> on <code>(ticker, window_start)</code>.
+        </p>
+      </section>
+
+      <section class="content-section">
+        <h2>Layer 3 &mdash; Agentic AI Investigation</h2>
+        <p>
+          When the anomaly detector flags an unusual gold window, a FastAPI service receives a
+          <code>POST /investigate</code>
+          request and runs a LangGraph state machine. The agent is built as four pure
+          <code>state &rarr; state</code> functions wired into a directed graph:
+        </p>
+        <ul>
+          <li><strong><code>fetch_context</code></strong> &mdash; queries gold for the last 30 minutes of feature
+            windows on the ticker.</li>
+          <li><strong><code>fetch_news</code></strong> &mdash; queries silver for headlines in
+            <code>window_start &plusmn; 30 min</code>.</li>
+          <li><strong><code>reason</code></strong> &mdash; assembles a structured prompt and invokes Gemini 2.5 Flash
+            for analysis.</li>
+          <li><strong><code>write_report</code></strong> &mdash; persists the markdown brief plus the LangGraph state at
+            end-of-run to Postgres.</li>
+        </ul>
+        <p>
+          Each node captures its errors into a state-level <code>errors</code> array rather than raising, so the graph
+          always completes &mdash; partial failures still produce a stub report with diagnostic context. The agent's
+          output is markdown structured into four sections: Summary, Evidence, Likely Cause, and Recommended Action.
+        </p>
+        <p>
+          <strong>Grounded reasoning, not rubber-stamping:</strong> in an early end-to-end test, the agent was sent a
+          synthetic <code>price_spike</code> trigger on a window where the gold data showed all four OHLC values
+          identical and a <code>NULL</code> standard deviation (only one observation). Gemini correctly flagged the
+          trigger as a misclassification: <em>"This is likely noise &mdash; the data for the specified window directly
+            contradicts the price_spike anomaly type. The window shows open=close=high=low=276.83, indicating no price
+            movement."</em> The agent cites specific numbers from the data rather than confabulating, which is exactly
+          the behaviour you want.
+        </p>
+        <p>
+          <strong>MCP server for dynamic tool use:</strong> the second iteration replaces the hardcoded node order
+          with an MCP (Model Context Protocol) server exposing <code>get_recent_gold</code>,
+          <code>get_news_for_window</code>,
+          <code>tavily_web_search</code>, and <code>write_report</code> as discoverable tools. Gemini decides which
+          tools to call and when &mdash; for one ticker it might pull historical comparison data, for another it might
+          web-search recent news. The investigation path becomes adaptive rather than scripted.
+        </p>
+      </section>
+
+      <section class="content-section">
+        <h2>Layer 4 &mdash; Batch Orchestration with Airflow</h2>
+        <p>
+          Airflow runs locally via Docker Compose and orchestrates two DAGs. The <strong>streaming DAG</strong> fires
+          every five minutes: it triggers the bronze, silver, gold, and anomaly-detection notebooks via the Databricks
+          Jobs API using the <code>DatabricksSubmitRunOperator</code>, then the anomaly detector POSTs to the FastAPI
+          agent endpoint when triggers fire. The <strong>nightly DAG</strong> runs at 1 AM and handles housekeeping:
+          Delta table optimization, file vacuuming, and a daily report generation step.
+        </p>
+        <p>
+          The split between continuous Spark streaming (always-on, micro-batch) and scheduled Airflow orchestration
+          (every 5 minutes, plus nightly) is intentional &mdash; it mirrors how production systems actually work, with
+          streaming for low-latency data movement and batch orchestration for the cross-service workflows that span
+          Databricks, FastAPI, and external services.
+        </p>
+      </section>
+
+      <section class="content-section">
+        <h2>Layer 5 &mdash; Anomaly Detection</h2>
+        <p>
+          The anomaly detector is a Databricks notebook that reads the most recent gold windows every five minutes
+          and applies three statistical rules. A window is flagged if any of these conditions hold:
+        </p>
+        <ul>
+          <li><code>change_pct</code> exceeds 2&sigma; of the rolling 30-minute distribution for that ticker.</li>
+          <li><code>mean_news_sentiment</code> drops below &minus;0.5 with at least two articles in the window.</li>
+          <li><code>price_stddev</code> rises above 3&times; the rolling average of <code>price_stddev</code>.</li>
+        </ul>
+        <p>
+          Flagged anomalies are written to a <code>gold_anomalies</code> Delta table, then the notebook POSTs to the
+          FastAPI agent endpoint with the ticker, anomaly type, and window timestamp. The detector deliberately uses
+          simple statistical rules rather than a trained model &mdash; the heavy reasoning lives in the agent layer,
+          and a transparent rule-based detector is easier to debug and tune than a black-box classifier.
+        </p>
+      </section>
+
+      <section class="content-section">
+        <h2>Layer 6 &mdash; Serving on Kubernetes</h2>
+        <p>
+          The agent and dashboard are containerized and deployed to a GKE cluster. The Databricks pipeline stays in
+          Databricks; the Kafka stays in Confluent &mdash; only the stateless services move to Kubernetes. Multi-stage
+          Docker builds produce final images around 150 MB, run as non-root, and are pushed to Google Artifact Registry
+          by GitHub Actions on every push to main. Helm charts under <code>infra/helm/pulsetrade/</code> render the
+          Deployment, Service, Ingress, ConfigMap, and Secret resources, with API keys handled as GCP-managed
+          Kubernetes secrets.
+        </p>
+        <p>
+          An <code>ingress-nginx</code> controller fronts the cluster: <code>/api/*</code> routes to the FastAPI
+          deployment (three replicas for headroom), <code>/dashboard/*</code> routes to the Streamlit app, and
+          <code>/metrics</code> stays internal for Prometheus scraping. The CI pipeline lints, runs pytest, builds
+          the images, pushes them, and does a <code>helm upgrade</code> against the cluster &mdash; the standard modern
+          deploy loop.
+        </p>
+      </section>
+
+      <section class="content-section">
+        <h2>Layer 7 &mdash; Observability</h2>
+        <p>
+          Three observability tools, each watching a different layer of the system. <strong>LangSmith</strong> traces
+          every agent run end-to-end &mdash; you can replay any investigation, see the exact prompts Gemini received,
+          inspect the tool calls the agent made, and debug surprising outputs. Critical for debugging agentic systems
+          because conventional stack traces don't capture the model's decision flow.
+        </p>
+        <p>
+          <strong>Prometheus + Grafana</strong> handle system and API metrics. FastAPI exposes <code>/metrics</code>
+          via <code>prometheus-fastapi-instrumentator</code>, Prometheus scrapes on a 15-second cadence, and Grafana
+          dashboards visualize agent latency at p50/p95/p99, investigations per hour, error rate by endpoint, and
+          Postgres connection pool saturation.
+        </p>
+        <p>
+          <strong>Evidently AI</strong> runs in the nightly Airflow DAG and detects data drift. It compares this
+          week's gold feature distribution to last week's &mdash; if <code>mean_news_sentiment</code>,
+          <code>change_pct</code>,
+          or <code>price_stddev</code> shift significantly, it generates a drift report. This is the late-warning
+          system for data-source regressions, market-regime changes, or model degradation.
+        </p>
+      </section>
+
+      <section class="content-section">
+        <h2>Streamlit Dashboard</h2>
+        <p>
+          The user-facing layer is a multi-page Streamlit app that auto-refreshes every 30 seconds. The
+          <strong>Live Prices</strong> page renders OHLC charts per ticker straight from gold via the Databricks SQL
+          Connector. The <strong>News Sentiment</strong> page shows sentiment trend lines and article volume over
+          time. The <strong>Investigations</strong> page browses the agent reports stored in Postgres, with a manual
+          trigger button so users can fire investigations on demand without curl.
+        </p>
+      </section>
+
+      <section class="content-section">
+        <h2>Engineering Decisions Worth Highlighting</h2>
+        <p>
+          Several decisions in the build are worth calling out individually because they reflect production thinking
+          rather than tutorial-following.
+        </p>
+        <ul>
+          <li>
+            <strong>Per-service virtual environments.</strong> The producers, agent, and dashboard each have their
+            own <code>.venv</code>. Airflow's pinned Pydantic v1 conflicts with LangChain's Pydantic v2; isolating
+            environments prevents one service from breaking the others.
+          </li>
+          <li>
+            <strong>Bronze as append-only.</strong> Bronze never enforces schema beyond raw bytes from Kafka. Data
+            quality is a silver concern. This separation lets you re-process bronze with a corrected silver
+            transformation without losing history.
+          </li>
+          <li>
+            <strong>Edge filtering at the producer.</strong> The news producer drops 87% of articles before they
+            ever hit Kafka, by matching against a ticker keyword catalogue. Less downstream storage, less wasted
+            FinBERT inference, lower Kafka egress cost.
+          </li>
+          <li>
+            <strong>Stateless gold via <code>foreachBatch</code>.</strong> Streaming watermarks on low-volume data
+            produce delayed window emission. Switching to batch-style windowing inside <code>foreachBatch</code>
+            gave deterministic per-batch behaviour at the cost of one additional <code>spark.table()</code> read
+            per micro-batch &mdash; an acceptable trade for reliability.
+          </li>
+          <li>
+            <strong>Async-friendly agent endpoint.</strong> <code>asyncio.to_thread</code> wraps the synchronous
+            <code>agent.invoke</code> call so a 10-second Gemini latency doesn't block the FastAPI event loop. Three
+            concurrent investigations finish in roughly the same wall time as one.
+          </li>
+          <li>
+            <strong>Explicit Gemini API key.</strong> <code>langchain-google-genai</code> defaults to Application
+            Default Credentials when both ADC and an API key exist &mdash; cached <code>gcloud</code> ADC then fails
+            with an opaque <code>403 ACCESS_TOKEN_SCOPE_INSUFFICIENT</code>. Passing <code>google_api_key</code>
+            explicitly bypasses ADC entirely.
+          </li>
+        </ul>
+      </section>
+
+      <section class="content-section">
+        <h2>Tech Stack</h2>
+        <ul>
+          <li><strong>Ingestion:</strong> Python 3.11, Finnhub REST API, NewsAPI, kafka-python</li>
+          <li><strong>Streaming &amp; storage:</strong> Confluent Cloud Kafka, Databricks (Spark Structured Streaming,
+            Delta Lake, Unity Catalog), FinBERT</li>
+          <li><strong>Agent:</strong> FastAPI, LangGraph, LangChain, langchain-mcp-adapters, MCP Python SDK, Google
+            Gemini 2.5 Flash, Tavily Search</li>
+          <li><strong>Storage:</strong> Postgres 16 (investigations + agent state), Delta Lake (analytical)</li>
+          <li><strong>Orchestration:</strong> Apache Airflow on Docker Compose, Databricks Jobs API</li>
+          <li><strong>Serving:</strong> Streamlit, Uvicorn, GKE, Helm, ingress-nginx, Google Artifact Registry</li>
+          <li><strong>CI/CD:</strong> GitHub Actions, Docker multi-stage builds, GitHub-managed Kubernetes secrets</li>
+          <li><strong>Observability:</strong> Prometheus, Grafana, LangSmith, Evidently AI, structlog</li>
+        </ul>
+        <p>
+          The stack is intentionally <strong>cohesive rather than maximal</strong>: every tool earns its place by
+          solving a real problem in the pipeline, and each layer's outputs are interpretable enough to debug without
+          reading another layer's source code.
+        </p>
+      </section>
+
+      <section class="content-section">
+        <h2>Conclusion</h2>
+        <p>
+          PulseTrade demonstrates that a single, cohesive project can exercise the full modern data and AI stack
+          end-to-end. The same pipeline produces real-time price features, runs language-model investigations,
+          scheduled batch reports, and structured observability &mdash; with the same data flowing through Kafka,
+          Delta Lake, an agentic reasoning layer, and a containerized serving stack. The decisions documented along
+          the way (Finnhub over yfinance, batch-windowing inside <code>foreachBatch</code>, explicit Gemini auth,
+          bronze as audit log) reflect what gets you from a tutorial that runs once to a system that runs reliably
+          every five minutes.
+        </p>
+      </section>

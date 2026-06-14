@@ -1,0 +1,242 @@
+<section class="content-section">
+      <h2>Overview</h2>
+      <p>
+        This is a reproducible, statistically rigorous study of a deceptively simple question: <strong>do Elon Musk's
+        cryptocurrency tweets actually move the coin?</strong> I built an end-to-end R data-science pipeline that pairs
+        roughly <strong>20,000 LLM-classified Musk tweets</strong> with daily price histories for Dogecoin (DOGE/USD) and
+        Bitcoin (BTC/USD), then runs a full <strong>event-study framework</strong> over them — multi-horizon returns, a
+        seeded random baseline control, formal hypothesis tests, effect sizes, multiple-testing correction, and a power
+        analysis. It was completed for CSP 571 (Data Preparation &amp; Analysis) at the Illinois Institute of Technology.
+      </p>
+      <p>
+        The point of difference is the <strong>statistical hygiene</strong>. Most "tweet vs. price" analyses stop at a
+        correlation and a scatter plot; this one reports Cohen's <em>d</em> effect sizes and confidence intervals alongside
+        every p-value, corrects across 30+ category tests with both Bonferroni and Benjamini–Hochberg FDR, and quantifies
+        what the small sample <em>can</em> and <em>cannot</em> detect. The headline result is itself the lesson:
+        <strong>most signals that look significant disappear once you correct for multiple comparisons.</strong> The
+        deliverables are a self-contained Quarto HTML report (~2,300 lines), an interactive Shiny dashboard, and compiled
+        LaTeX PDF reports.
+      </p>
+    </section>
+
+    <section class="content-section">
+      <h2>Problem and Goal</h2>
+      <p>
+        High-profile social-media activity is widely believed to move crypto markets, and Musk's tweets — especially about
+        the meme-origin coin Dogecoin — are the canonical example. But "everyone knows it moves the price" is an empirical
+        claim, not a proven one, and the popular evidence for it tends to be anecdotal: a chart with a tweet annotated next
+        to a green candle. My goal was to test the claim <strong>properly</strong> — to treat each tweet as an event, measure
+        the realized forward returns, compare them against a fair baseline, and apply the kind of correction and
+        effect-size reporting that separates a real finding from noise. The honest answer mattered more than a clickbait one,
+        so the analysis is candid throughout about statistical power and the difference between statistical and practical
+        significance.
+      </p>
+    </section>
+
+    <section class="content-section">
+      <h2>Key Findings</h2>
+      <p>
+        Five research questions drove the study; the results are deliberately unglamorous, and that is the contribution:
+      </p>
+      <ul>
+        <li><strong>Does sentiment predict next-day returns?</strong> No meaningful effect for either coin (BTC: r ≈ 0.12, p = 0.22; DOGE: r ≈ −0.12, p = 0.38).</li>
+        <li><strong>Do negative-sentiment DOGE tweets precede declines?</strong> The opposite — a <em>contrarian</em> signal: mean +4.27% 7-day return (p = 0.0097, 95% CI [1.1%, 7.4%]).</li>
+        <li><strong>Do meme vs. "relevant" tweets behave differently?</strong> Strongly: meme DOGE tweets averaged <strong>+6.9%</strong> over 7 days while contextually relevant ones averaged <strong>−6.2%</strong>.</li>
+        <li><strong>Does tweet volume drive volatility?</strong> A tentative positive trend, but not statistically significant (BTC p ≈ 0.15).</li>
+        <li><strong>What survives multiple-testing correction?</strong> Almost nothing — most raw-significant signals fail Bonferroni/FDR.</li>
+      </ul>
+      <p>
+        The most defensible takeaway is methodological: with only <strong>~58 verified Doge tweets</strong>, statistical
+        power is low, so rigorous correction is essential to avoid false discoveries — and the analysis says so explicitly
+        rather than overselling the contrarian effect it found.
+      </p>
+    </section>
+
+    <section class="content-section">
+      <h2>Analytical Architecture &amp; Methodology</h2>
+      <p>
+        The pipeline runs end-to-end inside a single Quarto notebook (<code>analysis/data_analysis.qmd</code>), with two
+        data sources feeding a join keyed on date: ~20k LLM-classified tweets on one side, and daily OHLCV price series on
+        the other. Price data is fetched from Yahoo Finance via <code>quantmod</code> and <strong>auto-regenerates if the
+        committed CSVs are ever missing</strong>, so the report renders from a clean checkout without manual data wrangling.
+      </p>
+      <figure>
+        <img src="/img/crypto_tweet_impact/architecture.png" alt="Crypto tweet-impact analysis pipeline diagram" />
+        <figcaption>Figure 1: End-to-end pipeline — LLM-classified tweets and Yahoo Finance prices joined by date, run through a multi-horizon event study against a random baseline, corrected with Bonferroni/FDR plus a power analysis, and rendered to a Quarto report, Shiny dashboard, and LaTeX PDFs.</figcaption>
+      </figure>
+      <p>The seven stages, in order:</p>
+      <ul>
+        <li><strong>Ingest:</strong> load tweets + prices; auto-fetch DOGE/BTC daily series from Yahoo Finance if absent.</li>
+        <li><strong>Clean &amp; filter:</strong> keep relevant, non-meme, valid-sentiment tweets per coin; de-duplicate; bucket sentiment into low/medium/high.</li>
+        <li><strong>Feature-engineer:</strong> compute percentage returns at 1-, 3-, 7-, and 30-day horizons.</li>
+        <li><strong>Event study:</strong> compute tweet-event returns and a <strong>seeded random baseline</strong> control group, so "before/after a tweet" is benchmarked against "a random day" rather than against nothing.</li>
+        <li><strong>Test:</strong> Welch t-tests and Mann-Whitney U vs. baseline; one-sample t-tests for negative-sentiment events; correlation and multiple regression of returns on sentiment and volume.</li>
+        <li><strong>Correct &amp; quantify:</strong> Bonferroni + Benjamini–Hochberg FDR adjustment across all category tests; Cohen's <em>d</em> with confidence intervals; power and minimum-detectable-effect analysis with <code>pwr</code>.</li>
+        <li><strong>Report:</strong> narrative interpretation, summary tables (<code>kableExtra</code>), and visualizations (<code>ggplot2</code>).</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h2>LLM-in-the-Loop Tweet Classification</h2>
+      <p>
+        Raw price history is easy; the hard input was turning ~20,000 free-text Musk posts into structured, analysis-ready
+        signal. The labeling pipeline produces <code>sentiment_classified.csv</code> (~20,370 rows) through a multi-step
+        process: a crypto <strong>keyword filter</strong> (<code>bitcoin</code>, <code>btc</code>, <code>ethereum</code>,
+        <code>doge</code>, <code>crypto</code>, …) narrows the scrape, then the <strong>OpenAI API scores each tweet for
+        sentiment (0–10)</strong> and classifies it on two further axes: contextually <em>relevant</em> vs.
+        <em>joke/meme</em>, and a topic category (Bitcoin, Doge Coin, Alt coins, Ethereum/smart contracts, general crypto,
+        exchanges/trading, and others).
+      </p>
+      <p>
+        Critically, the two primary categories — <code>Bitcoin</code> and <code>Doge Coin</code> — were
+        <strong>manually verified by hand</strong> rather than trusted blindly from the model output. That manual-verification
+        step is what makes the per-coin sentiment interpretation defensible, and it is exactly why the verified DOGE sample
+        is small (~58 tweets): the analysis treats label quality as worth more than label quantity. The labeling is run as an
+        offline pipeline and its outputs are committed to <code>data/processed/</code>, so the statistical analysis is fully
+        reproducible without re-spending API calls.
+      </p>
+    </section>
+
+    <section class="content-section">
+      <h2>Statistical Rigor</h2>
+      <p>
+        This is the core of the project and the part most directly aimed at a data-science audience. Rather than reporting a
+        single test, the study layers several methods so each finding has to survive multiple, complementary checks:
+      </p>
+      <ul>
+        <li><strong>Event-study design with a control group:</strong> tweet-event returns are compared against a seeded random baseline sampled from the same price series, so the comparison is "tweet day vs. typical day," not "tweet day vs. zero."</li>
+        <li><strong>Parametric + non-parametric tests:</strong> Welch's t-test (unequal variances) is paired with the Mann-Whitney U rank test, so conclusions don't hinge on a normality assumption the return distributions may not satisfy.</li>
+        <li><strong>Effect sizes, not just p-values:</strong> Cohen's <em>d</em> with confidence intervals accompanies every comparison, with an explicit discussion of statistical vs. practical significance.</li>
+        <li><strong>Multiple-testing correction:</strong> both Bonferroni (family-wise error) and Benjamini–Hochberg FDR are applied across 30+ category tests — the single most important guard against false discovery in this design.</li>
+        <li><strong>Power analysis:</strong> the <code>pwr</code> package quantifies what the ~58-tweet sample can detect, reporting minimum detectable effects so the reader knows when a null result means "no effect" vs. "not enough data."</li>
+      </ul>
+      <figure>
+        <img src="/img/crypto_tweet_impact/sentiment_vs_returns.png" alt="Sentiment score plotted against subsequent returns" />
+        <figcaption>Figure 2: Tweet sentiment vs. subsequent returns. The weak, non-significant relationship is the result — visual evidence that sentiment is not a usable predictor of next-day price movement for either coin.</figcaption>
+      </figure>
+    </section>
+
+    <section class="content-section">
+      <h2>Tweet-Volume and Volatility</h2>
+      <p>
+        Beyond directional return, the Bitcoin analysis tests whether the <strong>volume</strong> of Musk's crypto tweets is
+        associated with subsequent price <strong>volatility</strong> — a separate hypothesis from "does sentiment predict
+        direction." The relationship shows a tentative positive trend but does not reach statistical significance (p ≈ 0.15),
+        and the report presents it as such rather than rounding it up to a finding. This is representative of the project's
+        discipline: a suggestive-but-not-significant result is reported as suggestive-but-not-significant.
+      </p>
+      <figure>
+        <img src="/img/crypto_tweet_impact/volatility_vs_volume.png" alt="Tweet volume plotted against subsequent volatility" />
+        <figcaption>Figure 3: Tweet volume vs. subsequent volatility for BTC — a positive trend that fails to clear the significance threshold once tested formally.</figcaption>
+      </figure>
+    </section>
+
+    <section class="content-section">
+      <h2>Interactive Shiny Dashboard</h2>
+      <p>
+        To make the event study explorable rather than static, I built a self-contained <strong>Shiny dashboard</strong>
+        (<code>dashboard/app.R</code>) that lets you step through individual Bitcoin tweets and inspect the BTC price
+        reaction. For each tweet it shows the tweet text, the <strong>30-day forward closing-price path</strong>, and the
+        realized 1-/7-/30-day returns. The app joins the categorized-tweet dataset to the price series in-process, and
+        <strong>degrades gracefully</strong> when the large, git-ignored raw tweet-text file is absent — it simply hides the
+        tweet text instead of crashing, so the dashboard runs from a clean clone.
+      </p>
+      <figure>
+        <img src="/img/crypto_tweet_impact/d1.png" alt="Shiny dashboard showing a Bitcoin tweet and its 30-day BTC price path" />
+        <figcaption>Figure 4: The tweet-effects dashboard. A 2018 Musk tweet about AI is shown alongside the BTC closing-price path over the following 30 days, with a −3.06% next-day, +0.51% 7-day, and −33.19% 30-day return — illustrating how widely the realized outcome can swing from a single tweet.</figcaption>
+      </figure>
+      <figure>
+        <img src="/img/crypto_tweet_impact/d2.png" alt="Shiny dashboard showing a second Bitcoin tweet and its 30-day price reaction" />
+        <figcaption>Figure 5: A second tweet's 30-day reaction (+1.30% next-day, −2.51% 7-day, +2.07% 30-day). Browsing tweet-by-tweet makes the central finding tangible — the sign and size of the "reaction" is mostly noise.</figcaption>
+      </figure>
+    </section>
+
+    <section class="content-section">
+      <h2>Engineering &amp; Reproducibility</h2>
+      <p>
+        The repository is structured as a <strong>portfolio-grade, reproducible project</strong> rather than a loose
+        notebook dump. A <code>Makefile</code> exposes the full lifecycle — <code>make deps</code>, <code>make report</code>,
+        <code>make dashboard</code>, <code>make reports-pdf</code>, <code>make clean</code> — and a one-shot
+        <code>scripts/install_dependencies.R</code> installs every package the analysis and dashboard need. The data
+        directory is split into <code>processed/</code> (small, committed, analysis-ready) and <code>raw/</code> (large
+        source scrapes, git-ignored), with a documented data dictionary and provenance trail for every column.
+      </p>
+      <ul>
+        <li><strong>Deterministic results:</strong> random seeds are fixed so the baseline control group — and therefore every reported figure — is reproducible across runs.</li>
+        <li><strong>Self-contained output:</strong> the Quarto report renders with <code>embed-resources: true</code> to a single HTML file with all assets inlined, so it can be shared as one artifact.</li>
+        <li><strong>Graceful data fallbacks:</strong> price CSVs auto-download from Yahoo Finance if missing; the dashboard runs without the git-ignored raw text file.</li>
+        <li><strong>Path-robust code:</strong> the dashboard resolves its data directory whether launched from the repo root or from inside <code>dashboard/</code>.</li>
+        <li><strong>Separation of sources and deliverables:</strong> editable LaTeX sources live in <code>docs/</code>, while the compiled PDF proposal and phase-2 report live in <code>reports/</code>.</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h2>Engineering Challenges Solved</h2>
+      <ul>
+        <li><strong>~20k free-text tweets into structured signal:</strong> built a keyword-filter → LLM-sentiment → LLM-classification pipeline, then hand-verified the two coins that the conclusions actually depend on — trading sample size for label trustworthiness.</li>
+        <li><strong>Multiple-comparison false discovery:</strong> testing 30+ tweet categories invites spurious "significant" hits. Applied Bonferroni and FDR correction so the reported conclusions reflect what survives, not what looked good once.</li>
+        <li><strong>Low statistical power, honestly handled:</strong> with ~58 verified DOGE tweets, a null result is ambiguous. Added a <code>pwr</code> power analysis with minimum-detectable-effect estimates so the reader can tell "no effect" from "not enough data."</li>
+        <li><strong>Fair baseline for an event study:</strong> "returns after a tweet" means nothing without a control. Constructed a seeded random baseline from the same price series so every event return is measured against a typical-day distribution.</li>
+        <li><strong>Reproducibility from a cold checkout:</strong> committed the processed datasets, fixed seeds, and made price data auto-fetch — so the report and dashboard run without re-spending OpenAI calls or manual data steps.</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h2>Tech Stack</h2>
+      <ul>
+        <li><strong>Language:</strong> R 4.x.</li>
+        <li><strong>Data wrangling:</strong> <code>tidyverse</code> (dplyr, tidyr, readr, stringr, purrr), <code>lubridate</code>.</li>
+        <li><strong>Modeling &amp; statistics:</strong> <code>broom</code>, <code>tseries</code>, base <code>stats</code> (Welch t-tests, Mann-Whitney U, one-sample t, lm, cor), <code>pwr</code> for power analysis.</li>
+        <li><strong>Market data:</strong> <code>quantmod</code> (Yahoo Finance ingestion).</li>
+        <li><strong>Reporting:</strong> Quarto, <code>knitr</code>, <code>kableExtra</code>; LaTeX for compiled PDF reports.</li>
+        <li><strong>Interactive app:</strong> Shiny, <code>ggplot2</code>.</li>
+        <li><strong>Sentiment &amp; classification:</strong> OpenAI API (offline labeling pipeline; outputs committed to <code>data/processed/</code>).</li>
+        <li><strong>Tooling:</strong> GNU Make, Git, RStudio project.</li>
+      </ul>
+      <p>
+        The pipeline is intentionally modular: each stage emits an inspectable intermediate artifact (classified tweets,
+        per-horizon returns, baseline draws, test tables), so any single step can be re-run, audited, or swapped without
+        rebuilding the whole study.
+      </p>
+    </section>
+
+    <section class="content-section">
+      <h2>Limitations &amp; Future Directions</h2>
+      <p>
+        The report is candid about its constraints — and treats that candor as part of the contribution rather than a
+        disclaimer to bury:
+      </p>
+      <ul>
+        <li><strong>Small verified sample</strong> (~58 Doge tweets) limits statistical power — quantified, not hand-waved, via the power analysis.</li>
+        <li><strong>Observational design</strong> yields associations, not causation; many market confounders are unmodeled.</li>
+        <li><strong>Temporal dependence</strong> in returns is not fully captured (no formal time-series model).</li>
+        <li><strong>Random baseline</strong> does not perfectly match the market conditions present at tweet times.</li>
+      </ul>
+      <p>
+        Each limitation is paired with a concrete next step in the report: larger and refreshed samples, condition-matched
+        baselines, explicit time-series methods, and causal-inference techniques.
+      </p>
+    </section>
+
+    <section class="content-section">
+      <h2>Key Learnings</h2>
+      <ul>
+        <li><strong>Correction changes the story.</strong> The single biggest lesson was watching a fistful of "significant" raw results evaporate under Bonferroni/FDR — a visceral demonstration of why multiple-testing discipline is non-negotiable.</li>
+        <li><strong>Effect size and power belong next to every p-value.</strong> Reporting Cohen's <em>d</em>, confidence intervals, and minimum detectable effects turned ambiguous nulls into interpretable statements.</li>
+        <li><strong>Label quality beats label quantity.</strong> Hand-verifying the two coins the conclusions depend on was worth more than a larger but noisier auto-labeled set.</li>
+        <li><strong>Reproducibility is an engineering feature.</strong> Fixed seeds, committed processed data, auto-fetching prices, and a Make-driven lifecycle are what let this run end-to-end from a clean clone.</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h2>Conclusion</h2>
+      <p>
+        This project is the clearest demonstration of how I approach data science: take a popular, intuitive claim, design
+        an honest test for it, and let the statistics — not the narrative — decide the verdict. It pairs a real
+        LLM-in-the-loop data pipeline with a disciplined inferential framework (event study, non-parametric and parametric
+        testing, effect sizes, multiple-testing correction, and power analysis), packages the result as a reproducible
+        Quarto report and an interactive Shiny dashboard, and is candid about exactly what its sample can and cannot support.
+        The conclusion that "most apparent tweet effects don't survive correction" is less exciting than a viral headline —
+        and far more defensible, which is the entire point.
+      </p>
+    </section>

@@ -1,0 +1,307 @@
+@import "tailwindcss";
+@import "./instrument.css";
+
+/* =============================================================================
+   INSTRUMENT — design system
+   Light-first "paper & ink" editorial aesthetic for a data scientist.
+   Geist + Geist Mono · single ultraviolet signal accent · graph-paper motifs.
+   ========================================================================== */
+
+/* Dark mode is opt-in via [data-theme="dark"] on <html>. */
+@custom-variant dark (&:where([data-theme="dark"] *));
+
+/* ----------------------------------------------------------------------------
+   1 · RAW PALETTE + SEMANTIC TOKENS (theme-reactive CSS variables)
+   --------------------------------------------------------------------------- */
+:root {
+  /* signal accent — ultraviolet */
+  --accent: #5b3df5;
+  --accent-press: #4a2ee0;
+  --accent-contrast: #ffffff;
+  --accent-soft: rgba(91, 61, 245, 0.1);
+  --accent-line: rgba(91, 61, 245, 0.32);
+
+  /* categorical data hues (project domains / tags) */
+  --c-stream: #5b3df5; /* data / streaming  */
+  --c-ml: #d9480f; /* ml / vision       */
+  --c-infra: #0b7285; /* infra / cloud     */
+  --c-research: #5f3dc4; /* research          */
+
+  /* paper & ink (light, default) */
+  --canvas: #f6f5f1;
+  --canvas-2: #efeee8;
+  --panel: #fdfdfb;
+  --ink: #111110;
+  --muted: #56554e;
+  --faint: #8d8c83;
+  --line: rgba(17, 17, 16, 0.11);
+  --line-2: rgba(17, 17, 16, 0.2);
+  --grid: rgba(17, 17, 16, 0.045);
+  --shadow-1: 0 1px 2px rgba(17, 17, 16, 0.04), 0 8px 24px -12px rgba(17, 17, 16, 0.16);
+  --shadow-2: 0 2px 6px rgba(17, 17, 16, 0.06), 0 24px 60px -24px rgba(17, 17, 16, 0.26);
+  --selection: rgba(91, 61, 245, 0.18);
+
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --accent: #8b74ff;
+  --accent-press: #a08dff;
+  --accent-contrast: #0b0b0f;
+  --accent-soft: rgba(139, 116, 255, 0.14);
+  --accent-line: rgba(139, 116, 255, 0.4);
+
+  --c-stream: #8b74ff;
+  --c-ml: #ff8a4c;
+  --c-infra: #3bc9db;
+  --c-research: #b197fc;
+
+  --canvas: #0a0a0d;
+  --canvas-2: #0e0e12;
+  --panel: #141419;
+  --ink: #ecece7;
+  --muted: #a4a39b;
+  --faint: #6e6d66;
+  --line: rgba(236, 236, 231, 0.12);
+  --line-2: rgba(236, 236, 231, 0.22);
+  --grid: rgba(236, 236, 231, 0.05);
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px -12px rgba(0, 0, 0, 0.7);
+  --shadow-2: 0 2px 6px rgba(0, 0, 0, 0.5), 0 24px 60px -24px rgba(0, 0, 0, 0.8);
+  --selection: rgba(139, 116, 255, 0.28);
+
+  color-scheme: dark;
+}
+
+/* Structural tokens (theme-independent) — defined as real :root variables so
+   plain CSS `var()` references resolve. Unlayered → these win over Tailwind. */
+:root {
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "SFMono-Regular", "Menlo", monospace;
+
+  --text-display: clamp(3.4rem, 8vw, 8.2rem);
+  --text-h1: clamp(2.6rem, 5vw, 4.4rem);
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  --container-page: 78rem;
+  --container-wide: 96rem;
+}
+
+/* ----------------------------------------------------------------------------
+   2 · TAILWIND THEME BRIDGE — expose tokens as utilities (theme-reactive)
+   --------------------------------------------------------------------------- */
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-canvas-2: var(--canvas-2);
+  --color-panel: var(--panel);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-line: var(--line);
+  --color-line-2: var(--line-2);
+  --color-accent: var(--accent);
+  --color-accent-press: var(--accent-press);
+  --color-accent-soft: var(--accent-soft);
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "SFMono-Regular", monospace;
+
+  --text-display: clamp(3.4rem, 8vw, 8.5rem);
+  --text-h1: clamp(2.6rem, 5vw, 4.4rem);
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  --container-page: 78rem;
+  --container-wide: 96rem;
+}
+
+/* ----------------------------------------------------------------------------
+   3 · BASE
+   --------------------------------------------------------------------------- */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+  scroll-padding-top: 8rem;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background-color: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "ss01", "cv01", "cv11";
+  overflow-x: hidden;
+  transition: background-color 0.5s var(--ease-out), color 0.5s var(--ease-out);
+}
+
+/* Graph-paper backdrop — the signature of the Instrument system. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background-image:
+    linear-gradient(to right, var(--grid) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid) 1px, transparent 1px);
+  background-size: 3.2rem 3.2rem;
+  -webkit-mask-image: radial-gradient(120% 100% at 50% 0%, #000 35%, transparent 78%);
+  mask-image: radial-gradient(120% 100% at 50% 0%, #000 35%, transparent 78%);
+  pointer-events: none;
+}
+
+::selection {
+  background: var(--selection);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+button {
+  font-family: inherit;
+}
+img,
+svg,
+canvas {
+  display: block;
+  max-width: 100%;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  margin: 0;
+}
+
+/* Focus — visible, on-brand, keyboard-only. */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 11px;
+  height: 11px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--line-2);
+  border-radius: 99px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+  background-clip: content-box;
+}
+
+/* ----------------------------------------------------------------------------
+   4 · REUSABLE PRIMITIVES
+   --------------------------------------------------------------------------- */
+.u-container {
+  width: 100%;
+  max-width: var(--container-wide);
+  margin-inline: auto;
+  padding-inline: clamp(1.4rem, 4vw, 3.2rem);
+}
+
+/* Monospace "chrome" label — section indices, tags, captions, readouts. */
+.u-mono {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+/* Eyebrow with leading index tick. */
+.u-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.u-eyebrow::before {
+  content: "";
+  width: 1.8rem;
+  height: 1px;
+  background: var(--accent);
+}
+
+.u-hairline {
+  height: 1px;
+  width: 100%;
+  background: var(--line);
+}
+
+/* Underline-on-hover inline link. */
+.u-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  color: var(--ink);
+  position: relative;
+}
+.u-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -3px;
+  height: 1px;
+  width: 100%;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.4s var(--ease-out);
+}
+.u-link:hover {
+  color: var(--accent);
+}
+.u-link:hover::after {
+  transform: scaleX(1);
+}
+.u-link .u-arrow {
+  transition: transform 0.4s var(--ease-out);
+}
+.u-link:hover .u-arrow {
+  transform: translateX(0.35rem);
+}
+
+/* ----------------------------------------------------------------------------
+   5 · MOTION
+   --------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

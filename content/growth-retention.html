@@ -1,0 +1,270 @@
+<!-- Live Demo Button -->
+    <div class="project-demo-container">
+      <a href="https://gr-frontend-ds4v3uzpta-uc.a.run.app" class="project-demo-btn" target="_blank">
+        <span class="btn-text">Try Live Demo</span>
+        <span class="btn-icon">🚀</span>
+      </a>
+    </div>
+
+    <section class="content-section">
+      <h2>Overview</h2>
+      <p>
+        E-Commerce Growth &amp; Retention is an end-to-end, production-grade analytics and machine-learning project that
+        answers a concrete business question: <strong>does a redesigned checkout flow actually move revenue, and can we predict
+        which shoppers are about to abandon their cart?</strong> I built the entire system solo, from raw clickstream ingestion to a
+        live, interactive web app — deliberately spanning <strong>data engineering, analytics engineering, statistical inference,
+        machine learning, and MLOps</strong> so the project reads as one continuous data pipeline rather than a single notebook.
+      </p>
+      <p>
+        Architecturally, data flows through a classic medallion pipeline: over <strong>20 million raw cosmetics-shop events</strong>
+        (~4.6&nbsp;GB across five months) are ingested with a simulated A/B experiment, landed in <strong>Google Cloud Storage</strong> and
+        <strong>BigQuery</strong>, transformed and tested with <strong>dbt</strong>, statistically validated with a Chi-Square test, modeled with an
+        <strong>XGBoost</strong> classifier explained via <strong>SHAP</strong>, and finally served through a <strong>FastAPI</strong> inference service behind a
+        multi-tab <strong>Streamlit</strong> front end — all containerized with <strong>Docker</strong> and monitored for data drift with <strong>Evidently AI</strong>.
+      </p>
+    </section>
+
+    <section class="content-section">
+      <h2>Problem and Goal</h2>
+      <p>
+        Cart abandonment is the single largest source of leaked revenue in e-commerce: shoppers add items, reach the checkout,
+        and disappear. Two questions follow directly from that. First, the <strong>causal</strong> question — if we ship a new checkout
+        experience, does it genuinely lift conversion, or are we fooling ourselves with noise? Second, the <strong>predictive</strong>
+        question — given a live session, can we estimate the probability that this user will abandon their cart in time to
+        intervene?
+      </p>
+      <p>
+        I set out to answer both rigorously. The causal question is handled with a properly randomized A/B test and a
+        significance test rather than eyeballed dashboards; the predictive question is handled with an interpretable gradient-boosted
+        model whose every prediction can be explained feature-by-feature. The goal was never just a model file — it was a
+        defensible, deployable system that a product or growth team could actually act on.
+      </p>
+    </section>
+
+    <section class="content-section">
+      <h2>The Dataset &amp; Experiment Simulation</h2>
+      <p>
+        The foundation is the Kaggle <em>"eCommerce Events History in a Cosmetics Shop"</em> dataset — real, anonymized clickstream
+        logs covering October 2019 through February 2020. Each row is a single user action (<code>view</code>, <code>cart</code>, <code>purchase</code>,
+        <code>remove_from_cart</code>) with a product, brand, price, user ID, and session ID. Across five monthly files this is
+        <strong>roughly 20 million events totaling ~4.6&nbsp;GB</strong> — large enough that naive in-memory processing fails, forcing real
+        data-engineering decisions.
+      </p>
+      <p>
+        Since I didn't have a real experiment to analyze, I <strong>simulated one rigorously</strong>. A Python script hashes each
+        <code>user_id</code> with MD5 and assigns the user to <strong>Control</strong> (old checkout) or <strong>Treatment</strong> (new checkout) based on the
+        hash parity. Hashing makes the assignment <strong>deterministic and stable</strong> — the same user always lands in the same group
+        across all five months — which is exactly how production experiment-bucketing systems behave. I then injected a realistic
+        causal effect: <strong>5% of Treatment-group <code>cart</code> events are probabilistically converted into <code>purchase</code> events</strong>, encoding
+        a genuine conversion uplift for the new checkout that the downstream statistical test has to <em>rediscover</em> from the data.
+      </p>
+    </section>
+
+    <section class="content-section">
+      <h2>Phase 1 — Data Engineering &amp; Cloud Ingestion</h2>
+      <p>
+        The raw CSVs are far too large to load whole, so ingestion is <strong>streamed in one-million-row chunks</strong> with pandas.
+        Each chunk is cleaned (NaN user IDs are coerced), tagged with its experiment group, and written incrementally to a
+        processed directory — keeping memory flat regardless of file size.
+      </p>
+      <p>
+        The processed, experiment-tagged data is uploaded to a <strong>Google Cloud Storage</strong> data lake as partitioned files, then
+        loaded into a BigQuery <strong>Bronze</strong> (raw) dataset (<code>cosmetics_bronze.events</code>). This Bronze layer is the immutable,
+        single-source-of-truth landing zone that every downstream transformation builds on — establishing a clean separation
+        between raw ingestion and modeled, business-ready data.
+      </p>
+    </section>
+
+    <section class="content-section">
+      <h2>Phase 2 — Modern Data Stack: dbt Transformation &amp; Testing</h2>
+      <p>
+        Transformation lives in a documented <strong>dbt</strong> project running on BigQuery, organized as a <strong>medallion architecture</strong>
+        (Bronze &rarr; Silver &rarr; Gold) so each layer has a single, clear responsibility.
+      </p>
+      <ul>
+        <li><strong>Silver (staging):</strong> <code>stg_events</code> is a view that casts every column to a strict type, normalizes timestamps,
+        and filters out malformed rows (null or <code>'unknown'</code> users, null sessions) — turning messy raw logs into a trustworthy
+        clean layer.</li>
+        <li><strong>Data quality tests:</strong> dbt schema tests enforce contracts directly in the pipeline — <code>not_null</code> on keys and
+        timestamps, and an <code>accepted_values</code> test that guarantees <code>event_type</code> only ever contains
+        <code>view</code>, <code>cart</code>, <code>purchase</code>, or <code>remove_from_cart</code>. A bad upstream load fails the build instead of silently corrupting analysis.</li>
+        <li><strong>Gold (marts):</strong> business-ready tables built with advanced SQL.</li>
+      </ul>
+      <p>
+        The marquee Gold model is <code>fact_user_sessions</code>, which reconstructs user sessions purely in SQL using <strong>window
+        functions</strong>: <code>LAG()</code> finds the gap to each user's previous event, a 30-minute inactivity timeout flags session
+        boundaries, and a cumulative <code>SUM()</code> over that flag generates a stable per-user session ID. Each session is then
+        aggregated into total views, carts, purchases, revenue, and duration. A second model, <code>dim_users</code>, rolls sessions up to
+        the user grain to compute <strong>lifetime value, total sessions, and days-since-last-session</strong>, carrying each user's
+        experiment group along for the analysis layer.
+      </p>
+    </section>
+
+    <section class="content-section">
+      <h2>Phase 3a — Statistical Validation: The A/B Test</h2>
+      <p>
+        With clean Gold tables in place, the causal question gets a proper answer. I pull per-group converted-vs-total user
+        counts from <code>dim_users</code> and run a <strong>Chi-Square test of independence</strong> (<code>scipy.stats.chi2_contingency</code>) on the
+        Control-vs-Treatment conversion contingency table.
+      </p>
+      <p>
+        The test returns a Chi-Square statistic and a <strong>p-value</strong> that I evaluate against a 0.05 significance threshold — turning
+        "the new checkout looks better" into a defensible statistical claim: the lift is either significant or it isn't. Because
+        the uplift was injected at the data layer, this closes the loop end-to-end — the experiment is designed, simulated,
+        modeled, and then statistically recovered from the warehouse.
+      </p>
+    </section>
+
+    <section class="content-section">
+      <h2>Phase 3b — Predicting Cart Abandonment with XGBoost</h2>
+      <p>
+        The predictive model is trained directly off the warehouse: a BigQuery query pulls every session that contained at least
+        one cart event and labels it <code>abandoned_cart = 1</code> when the session produced zero purchases. The feature set is
+        deliberately lean and interpretable — <code>total_views</code>, <code>total_carts</code>, <code>session_duration_minutes</code>, and
+        <code>experiment_group</code> — so the model's behavior maps cleanly onto real product levers.
+      </p>
+      <p>
+        I train an <strong>XGBoost</strong> binary classifier (<code>n_estimators=100</code>, <code>max_depth=4</code>, <code>learning_rate=0.1</code>) optimized for
+        <strong>ROC-AUC</strong>, with a stratified train/test split to preserve class balance. The model is evaluated on held-out data with
+        accuracy, ROC-AUC, and a full classification report, then serialized to a compact <strong>170&nbsp;KB</strong> <code>.pkl</code> file alongside a
+        1,000-row training sample reserved for the explainability layer.
+      </p>
+    </section>
+
+    <section class="content-section">
+      <h2>Phase 3c — Model Explainability with SHAP</h2>
+      <p>
+        A black-box probability is useless to a growth team — they need to know <em>why</em>. I wrap the trained model in a SHAP
+        <code>TreeExplainer</code> and generate two complementary views. A <strong>global summary plot</strong> ranks features by overall impact and
+        shows the direction of their effect across all users, while a <strong>local waterfall plot</strong> decomposes a single
+        high-risk prediction into the exact contribution of each feature — making every individual score auditable.
+      </p>
+      <figure>
+        <img src="/img/growth_retention/shap_summary.png" alt="SHAP summary plot of global feature importance for the cart-abandonment model" />
+        <figcaption>Figure 1: SHAP global summary plot — each feature's overall impact on the model's cart-abandonment prediction, with point color encoding the feature value and horizontal spread encoding the magnitude of its effect.</figcaption>
+      </figure>
+      <p>
+        Zooming from the global view to a single decision, the <strong>local waterfall plot</strong> below traces one high-risk session: starting
+        from the model's base rate, each feature pushes the abandonment probability up or down until it lands on the final score —
+        so a growth analyst can read off exactly which signals flagged that specific user.
+      </p>
+      <figure>
+        <img src="/img/growth_retention/shap_local_explanation.png" alt="SHAP waterfall plot explaining a single high-risk cart-abandonment prediction" />
+        <figcaption>Figure 2: SHAP local waterfall plot — a feature-by-feature breakdown of one individual prediction, showing how each input moves the score from the base value to the final abandonment probability.</figcaption>
+      </figure>
+    </section>
+
+    <section class="content-section">
+      <h2>Phase 4a — Real-Time Inference API (FastAPI)</h2>
+      <p>
+        The model is served behind a <strong>FastAPI</strong> backend that loads the serialized XGBoost model and SHAP explainer once at
+        startup. The core <code>POST /predict</code> endpoint accepts a session's parameters as a typed Pydantic request, returns the
+        <strong>abandonment probability</strong>, and — critically — renders the per-prediction SHAP <strong>waterfall plot server-side and ships it
+        back as a base-64 PNG</strong>, so the front end gets both the score and its explanation in a single round-trip.
+      </p>
+      <p>
+        A second endpoint, <code>POST /bulk_predict</code>, accepts a list of sessions and vectorizes scoring across the whole batch —
+        the backbone for the app's CSV-upload batch-scoring feature.
+      </p>
+    </section>
+
+    <section class="content-section">
+      <h2>Phase 4b — Interactive Web App (Streamlit)</h2>
+      <p>
+        The user-facing layer is a multi-tab <strong>Streamlit</strong> application that turns the whole pipeline into something a
+        non-technical stakeholder can explore:
+      </p>
+      <ul>
+        <li><strong>Real-Time Predictor:</strong> sliders for views, carts, session duration, and checkout experience drive a live call to
+        <code>/predict</code>; the app renders the probability, a color-coded risk verdict, and the SHAP explanation inline.</li>
+        <li><strong>Live A/B Test Dashboard:</strong> queries the BigQuery Gold tables on demand and visualizes the experiment with
+        <strong>Plotly</strong> — headline revenue and conversion-rate metrics with deltas, plus a Control-vs-Treatment conversion funnel.</li>
+        <li><strong>Bulk Prediction:</strong> upload a CSV of sessions, score them all through <code>/bulk_predict</code>, preview the results, and
+        download a scored file — the batch counterpart to the real-time tab.</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h2>Phase 4c — Containerization &amp; Deployment</h2>
+      <p>
+        Both services are containerized with their own <strong>Dockerfiles</strong> (slim Python 3.12 base images) and wired together with
+        <strong>docker-compose</strong>: the API exposes port 8000 with a health check, and the Streamlit front end on port 8501 talks to it
+        over the internal Docker network via an <code>API_URL</code> environment variable. This two-service design — stateless model API
+        plus thin UI — is exactly the shape that deploys cleanly to a serverless target like <strong>Google Cloud Run</strong>.
+      </p>
+    </section>
+
+    <section class="content-section">
+      <h2>Phase 4d — Model Observability (Evidently AI)</h2>
+      <p>
+        A model in production silently decays as the world shifts under it, so the project closes with monitoring. Using
+        <strong>Evidently AI</strong>, I generate a <strong>Data Drift report</strong> that compares the original training distribution (the saved
+        reference sample) against incoming production-like data, flagging when feature distributions such as cart counts or
+        session duration have drifted far enough to warrant retraining. The output is a shareable HTML report — the
+        early-warning system that keeps the deployed model honest.
+      </p>
+    </section>
+
+    <section class="content-section">
+      <h2>Engineering Challenges Solved</h2>
+      <ul>
+        <li><strong>Multi-gigabyte ingestion on a laptop:</strong> 4.6&nbsp;GB of raw events won't fit in memory. Solved with chunked,
+        streaming reads and incremental writes so processing stays memory-flat regardless of dataset size.</li>
+        <li><strong>Deterministic experiment assignment:</strong> users must stay in the same A/B bucket across five months of data.
+        Solved by hashing <code>user_id</code> rather than random assignment, mirroring real production bucketing systems.</li>
+        <li><strong>Sessionization in pure SQL:</strong> raw logs have no session concept tied to inactivity. Reconstructed sessions
+        entirely in the warehouse with <code>LAG()</code>, a 30-minute timeout flag, and a cumulative-sum session ID — no Python loop required.</li>
+        <li><strong>Causal claims, not vibes:</strong> a conversion-rate lift could be random noise. Backed every comparison with a
+        Chi-Square significance test so the result is defensible.</li>
+        <li><strong>Explainability as a first-class output:</strong> a bare probability isn't actionable. Rendered SHAP waterfall plots
+        server-side and shipped them with each prediction, so every score arrives with its own justification.</li>
+        <li><strong>Decoupled, deployable services:</strong> kept the model API and the UI as separate containers communicating over the
+        network, avoiding a monolith and keeping the system cloud-deployment-ready.</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h2>Tech Stack</h2>
+      <ul>
+        <li><strong>Languages:</strong> Python 3.12, advanced SQL (BigQuery dialect).</li>
+        <li><strong>Data Engineering:</strong> pandas (chunked processing), Google Cloud Storage (data lake), Google BigQuery (warehouse).</li>
+        <li><strong>Analytics Engineering:</strong> dbt (medallion modeling, window functions, schema tests &amp; documentation).</li>
+        <li><strong>Statistics:</strong> SciPy (Chi-Square test of independence), hypothesis testing &amp; p-value interpretation.</li>
+        <li><strong>Machine Learning:</strong> XGBoost (gradient-boosted classifier), scikit-learn (split &amp; metrics), SHAP (global + local explainability).</li>
+        <li><strong>Backend &amp; App:</strong> FastAPI + Uvicorn, Pydantic, Streamlit, Plotly, Matplotlib.</li>
+        <li><strong>Infra &amp; MLOps:</strong> Docker + docker-compose, Google Cloud Run (target), Evidently AI (data-drift monitoring).</li>
+      </ul>
+      <p>
+        Every stage emits an inspectable, swappable artifact — Bronze tables, tested Gold models, a serialized model, SHAP
+        plots, and drift reports — so any single component can be upgraded without rebuilding the rest of the pipeline.
+      </p>
+    </section>
+
+    <section class="content-section">
+      <h2>Outcomes &amp; Impact</h2>
+      <ul>
+        <li>Delivered a complete, end-to-end data product spanning <strong>ingestion, warehousing, analytics engineering, statistics,
+        ML, and deployment</strong> — designed and built solo.</li>
+        <li>Processed <strong>20M+ raw events (~4.6&nbsp;GB)</strong> through a chunked pipeline into a tested, documented dbt warehouse on BigQuery.</li>
+        <li>Reconstructed user sessions <strong>entirely in SQL</strong> with window functions and a 30-minute inactivity rule, then rolled them
+        into session- and user-grain Gold tables.</li>
+        <li>Validated the checkout experiment with a <strong>Chi-Square significance test</strong>, turning a simulated uplift into a statistically
+        defensible result.</li>
+        <li>Trained an <strong>XGBoost</strong> cart-abandonment classifier optimized for ROC-AUC and made every prediction auditable with
+        <strong>SHAP</strong> global and local explanations.</li>
+        <li>Shipped a <strong>three-tab Streamlit app</strong> (real-time prediction, live BigQuery A/B dashboard, bulk CSV scoring) over a
+        Dockerized FastAPI backend, with <strong>Evidently AI</strong> drift monitoring.</li>
+        <li>[ADD HEADLINE METRIC HERE — e.g., measured conversion lift / p-value from your A/B run, model ROC-AUC, or rows processed per minute.]</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h2>Conclusion</h2>
+      <p>
+        E-Commerce Growth &amp; Retention is the project I point to when I want to show that I can own a data problem from raw bytes
+        all the way to a deployed, explainable product. It pairs the analyst's instincts — framing a business question,
+        designing an experiment, proving a result with statistics — with the engineer's discipline of building a tested data
+        warehouse, an interpretable model, and a containerized service around it. It's the clearest demonstration of how I think
+        about data: not as an isolated notebook, but as a system that moves a real business metric and can defend every number it produces.
+      </p>
+    </section>
