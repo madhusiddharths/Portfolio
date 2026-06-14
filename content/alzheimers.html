@@ -8,204 +8,317 @@
 
     <section class="content-section">
       <h2>Overview</h2>
-      <p>This project focuses on predicting the progression stages of Alzheimer’s disease using MRI scans. It
-        leverages a transfer learning approach based on the EfficientNetB4 convolutional neural network to classify the stages of the
-        disease accurately. In addition to diagnosis, the system is capable of generating future-stage MRI images of a
-        patient's brain using a DCGAN-based generative architecture, providing visual insight into how the disease
-        may evolve over time. The entire solution is deployed as a web application using the Flask framework,
-        enabling accessible and scalable interaction with the model.</p>
-    </section>
-
-    <section class="content-section">
-      <h2>Data Preprocessing</h2>
       <p>
-        The dataset used for this project is the OASIS MRI dataset, which contains brain scan images categorized
-        into four stages of Alzheimer’s disease: No Alzheimer’s, Very Mild Alzheimer’s, Mild Alzheimer’s, and Moderate
-        Alzheimer’s. As is common with real-world medical datasets, the distribution is highly imbalanced. Over 60% of
-        the images fall under the "No Alzheimer’s" category, around 20% represent "Very Mild Alzheimer’s,"
-        approximately
-        15% are labeled as "Mild," and fewer than 4,000 images correspond to the "Moderate Alzheimer’s" stage. To
-        address this imbalance, we applied a combination of undersampling the dominant class and oversampling the
-        minority class. Additionally, the cyclic nature of our model architecture—which employs three GANs to simulate
-        progression between stages—further helped in mitigating the effects of data imbalance by generating synthetic
-        samples for underrepresented categories. More details about the architecture and its role in addressing this
-        challenge will be discussed in the upcoming sections.
+        Alzheimer's Progression is an end-to-end deep-learning system that does two things from a single brain MRI slice:
+        it <strong>stages the disease</strong> and it <strong>shows you what comes next</strong>. A fine-tuned
+        <strong>EfficientNetB4</strong> classifier reads a scan and assigns it to one of four clinical stages, and a chain of
+        three <strong>DCGANs</strong> then synthesizes how that same brain is likely to look as the disease advances &mdash; turning a
+        one-off diagnosis into a visual prognosis. The whole pipeline is wrapped in a <strong>Flask</strong> web app, containerized
+        with <strong>Docker</strong>, and instrumented with <strong>MLflow</strong> so every training run is reproducible.
+      </p>
+      <p>
+        The system is trained and evaluated on the <strong>OASIS MRI dataset &mdash; 86,437 labelled slices</strong> spanning
+        Non&nbsp;Demented, Very&nbsp;Mild, Mild, and Moderate dementia. The classifier reaches <strong>98% accuracy
+        (0.98 macro-F1)</strong> on a held-out test set, and adding region-of-interest guidance to the generators cut their
+        <strong>FID by ~23%</strong>, producing noticeably sharper, more anatomically faithful progression images. It was built as a
+        team project for CS&nbsp;584 (Machine Learning), and it deliberately spans the full arc &mdash; data analysis, transfer
+        learning, generative modeling, and deployment &mdash; rather than a single notebook.
       </p>
     </section>
 
     <section class="content-section">
-      <figure>
-        <img src="/img/alzheimers/brain_diff.png" alt="Difference in mean images between stages" />
-        <figcaption>Figure 1: Difference in mean images between stages.</figcaption>
-      </figure>
-      <p>This image highlights the brain regions most affected as Alzheimer’s progresses, based on differences between
-        mean MRI images at each stage. These spatial patterns reveal structural changes—such as cortical thinning and
-        ventricular enlargement—that are consistent across patients. By analyzing these differences, we can better
-        understand where the disease manifests in the brain. This information can help guide our model’s architecture,
-        such as focusing attention on high-variation regions or refining preprocessing steps to emphasize critical
-        areas
-        of degeneration.</p>
-    </section>
-
-    <section class="content-section">
-      <figure>
-        <img src="/img/alzheimers/hist_analysis.png" alt="Pixel Intensity Distribution" />
-        <figcaption>Figure 2: Pixel Intensity distribution.</figcaption>
-      </figure>
-      <p>The DCGAN architecture relies on pixel-level transformations to generate future-stage brain images.
-        However, variations in contrast or brightness across the dataset can lead the model to focus on intensity
-        differences rather than the structural changes that are clinically relevant. Notably, when analyzing pixel
-        intensity distributions, we observe distinct frequency spikes in the 40–60 and 100–140 ranges for brains
-        without dementia. As Alzheimer’s progresses, these distributions tend to flatten, indicating a loss of
-        contrast
-        and structural definition in affected brain regions. This shift in pixel frequency highlights the importance
-        of normalization during preprocessing to ensure the model learns disease-related anatomical changes rather
-        than
-        superficial intensity variations.</p>
-    </section>
-
-    <section class="content-section">
-      <h2>Architecture</h2>
-      <p>The first stage of the pipeline involves data preprocessing, where input MRI images are resized and converted
-        to RGB format to match the input requirements of the model. These preprocessed images are then passed to an
-        EfficientNetB4-based transfer learning model, which classifies each scan into one of the four stages of Alzheimer’s:
-        No Alzheimer’s, Very Mild, Mild, or Moderate. Based on this classification, the image is routed to one of
-        three
-        GAN models—each trained to simulate progression between consecutive stages (No → Very Mild, Very Mild → Mild,
-        Mild → Moderate). These GANs are chained in a cyclic architecture, where the output of one GAN serves as the
-        input for the next, enabling the system to generate realistic predictions of how a patient's brain MRI might
-        evolve through successive stages of the disease.</p>
-    </section>
-
-    <section class="content-section">
-      <figure>
-        <img src="/img/alzheimers/architecture.png" alt="Model architecture" />
-        <figcaption>Figure 3: Model architecture.</figcaption>
-      </figure>
-      <p>The final output includes both the predicted current stage of Alzheimer’s and a series of synthesized MRI
-        images illustrating how the brain is expected to progress through the subsequent stages.</p>
-    </section>
-
-    <section class="content-section">
-      <h2>EfficientNetB4 based classification model</h2>
+      <h2>Problem &amp; Motivation</h2>
       <p>
-        This architecture uses a pre-trained EfficientNetB4 model down to its deep image features. Initially, the
-        base model’s weights were frozen to train a new, robust classification head on our specific dataset without
-        destroying the learned ImageNet patterns. The default EfficientNetB4 classification head was replaced by a final
-        dense layer mapping precisely to our four Alzheimer's stages. After an initial training phase, all layers were
-        unfrozen for a fine-tuning pass. The model is compiled with the Adam optimizer, categorical cross-entropy loss,
-        and a learning rate scheduler to optimize and stabilize multiclass classification accuracy.
+        Alzheimer's disease is progressive and irreversible, and the window where intervention helps most is
+        <em>early</em> &mdash; precisely when the structural changes on an MRI are subtlest and easiest to miss. Two distinct
+        machine-learning problems follow from that. The first is <strong>diagnostic</strong>: given a scan, which of the four stages
+        is this? The second is <strong>prognostic and far harder</strong>: can we make the likely <em>future</em> of a specific brain
+        visible, so a clinician or patient can see the trajectory rather than read a label off a chart?
+      </p>
+      <p>
+        We tackle both, and we do it on top of a genuinely difficult dataset. Real medical imaging is brutally imbalanced &mdash;
+        healthy scans vastly outnumber late-stage ones &mdash; and the visual gap between adjacent stages is small enough that
+        even the difference between two stages is mostly low-contrast structural drift. The goal was never just a model file;
+        it was a defensible system that classifies accurately <em>and</em> generates progression imagery a non-specialist can
+        actually interpret.
       </p>
     </section>
 
     <section class="content-section">
+      <h2>Dataset &amp; Exploratory Analysis</h2>
+      <p>
+        The foundation is the open <strong>OASIS</strong> MRI dataset: <strong>86,437 axial brain slices</strong> labelled across four
+        Alzheimer's stages. As is typical of clinical data, the distribution is severely skewed &mdash; Non&nbsp;Demented scans
+        outnumber Moderate&nbsp;Dementia scans by roughly <strong>138 to 1</strong>, which dominates every downstream design decision
+        from sampling strategy to how we report metrics.
+      </p>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr><th>Stage</th><th>Images</th><th>Share of dataset</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Non Demented</td><td>67,222</td><td>77.8%</td></tr>
+            <tr><td>Very mild Dementia</td><td>13,725</td><td>15.9%</td></tr>
+            <tr><td>Mild Dementia</td><td>5,002</td><td>5.8%</td></tr>
+            <tr><td>Moderate Dementia</td><td>488</td><td>0.6%</td></tr>
+            <tr><td><strong>Total</strong></td><td><strong>86,437</strong></td><td><strong>100%</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Before modeling, we ran a focused EDA to understand <em>where</em> and <em>how</em> the disease shows up on a scan. Averaging
+        every image within a stage and subtracting consecutive means produces a <strong>difference map</strong> that localizes change:
+        the recurring signatures are cortical thinning at the brain's periphery and ventricular enlargement toward the centre &mdash;
+        spatially consistent across patients, which is exactly the kind of structure a generator should learn to reproduce.
+      </p>
       <figure>
-        <div class="code-container">
-<pre><code>                    precision    recall  f1-score   support
-
-          Mild Dementia       0.98      0.98      0.98       117
-          Moderate Dementia       1.00      1.00      1.00        10
-          Non Demented       0.99      0.99      0.99      1588
-          Very mild Dementia       0.96      0.94      0.95       333
-
-          accuracy                           0.98      2048
-          macro avg       0.98      0.98      0.98      2048
-          weighted avg       0.98      0.98      0.98      2048</code></pre>
-        </div>
-        <figcaption>Figure 4: Classification report evaluating the EfficientNetB4 model.</figcaption>
+        <img src="/img/alzheimers/brain_diff.png" alt="Difference in mean images between consecutive Alzheimer's stages" />
+        <figcaption>Figure 1 — Mean-image difference maps between consecutive stages (Non→Very Mild, Very Mild→Mild, Mild→Moderate). Warm and cool regions mark where structure changes most as the disease advances.</figcaption>
       </figure>
       <p>
-        Figure 4 displays the evaluation metrics for the updated EfficientNetB4 classification model, showcasing an outstanding overall accuracy of 98%.
+        We also profiled <strong>pixel-intensity distributions</strong> per stage. Healthy brains show distinct frequency spikes around
+        the 40&ndash;60 and 100&ndash;140 intensity bands; as the disease progresses these distributions flatten, signalling a loss of
+        contrast and structural definition. That finding mattered for the GANs: without careful normalization, a pixel-level
+        generator will happily learn brightness shifts instead of the anatomical changes that are actually clinically meaningful,
+        so every image is normalized before it reaches a model. A complementary <strong>SSIM</strong> analysis between adjacent stages
+        confirmed how structurally similar neighbouring stages are &mdash; quantifying why this is a hard, fine-grained problem rather
+        than a coarse one.
       </p>
+      <figure>
+        <img src="/img/alzheimers/hist_analysis.png" alt="Pixel intensity distributions across stages" />
+        <figcaption>Figure 2 — Per-stage pixel-intensity histograms. The characteristic spikes in healthy scans flatten as dementia advances, motivating intensity normalization before generation.</figcaption>
+      </figure>
     </section>
 
     <section class="content-section">
-      <h2>Generative Adversarial Networks (GANs)</h2>
-      <p>The architecture incorporates three GANs, each responsible for modeling progression between Alzheimer’s
-        stages:
-        from no Alzheimer’s to very mild (no → vmild), very mild to mild (vmild → mild), and mild to moderate (mild →
-        moderate). All three GANs share the same underlying DCGAN architecture.</p>
-      <p>The <strong>Generator</strong> follows an encoder-decoder convolutional neural network design. It begins with
-        three convolutional layers that downsample the input image (single channel) into 256 feature maps, using a
-        kernel size of 4, stride of 2, and padding of 1. Each layer is followed by a ReLU activation, with Batch
-        Normalization applied after the second and third layers to enhance training stability. After encoding, the
-        model upsamples the features through three transposed convolution layers, gradually reducing the channels from
-        256 back to 1. Each upsampling layer also includes Batch Normalization and ReLU, except for the final output
-        layer, which uses a Tanh activation to scale pixel values between -1 and 1. This structure enables the
-        Generator
-        to learn detailed pixel-level transformations between stages.</p>
-      <p>The <strong>Discriminator</strong> acts as a convolutional classifier, taking a single-channel image and
-        passing it through four convolutional layers. The first three use kernel size 4, stride 2, and padding 1,
-        combined with LeakyReLU activations (negative slope 0.2) and Batch Normalization after the second and third
-        layers. These layers extract hierarchical features while reducing spatial dimensions. The final convolutional
-        layer, with kernel size 4, stride 1, and no padding, produces a single scalar output after a Sigmoid
-        activation,
-        representing the probability that the input image is real versus generated. The output tensor is flattened to
-        shape [batch_size], providing a classification score for each image in the batch.</p>
-      <p>Both Generator and Discriminator models are deployed on GPU if available and are trained adversarially using
-        binary cross-entropy loss. The Generator’s goal is to produce realistic images that fool the Discriminator,
-        while the Discriminator learns to better distinguish between real and generated images, resulting in
-        progressively improved image generation quality.</p>
+      <h2>System Architecture</h2>
+      <p>
+        The pipeline is two models working in sequence. An incoming MRI is first resized and converted to RGB, then passed to
+        the <strong>EfficientNetB4 classifier</strong>, which predicts the current stage. That prediction acts as a
+        <strong>router</strong>: the scan is fed into the generator trained for its specific stage transition, and the generators are
+        <strong>chained</strong> &mdash; the output of one becomes the input of the next (Non→Very&nbsp;Mild→Mild→Moderate) &mdash; until the
+        brain reaches the final stage. The result returned to the user is the predicted current stage <em>plus</em> a sequence of
+        synthesized scans illustrating the road ahead.
+      </p>
+      <figure>
+        <img src="/img/alzheimers/architecture.png" alt="End-to-end architecture: classifier routes into a chain of stage-transition GANs" />
+        <figcaption>Figure 3 — End-to-end architecture. The classifier predicts the stage, which selects an entry point into the chained stage-transition GANs that generate the remaining progression.</figcaption>
+      </figure>
     </section>
 
     <section class="content-section">
+      <h2>Stage Classifier — EfficientNetB4</h2>
+      <p>
+        The classifier is built on <strong>EfficientNetB4 pre-trained on ImageNet</strong>, with its default head replaced by a single
+        dense layer mapping to our four stages. Inputs are <strong>256×256</strong> and standardized with ImageNet statistics; training
+        uses light, anatomy-preserving augmentation &mdash; <strong>horizontal flips, ±15° rotations, and mild brightness/contrast
+        jitter</strong> &mdash; on an 80/20 train/validation split, optimized with cross-entropy.
+      </p>
+      <p>
+        The key choice is a <strong>two-phase transfer-learning schedule</strong>. In <strong>Phase&nbsp;1</strong> the entire backbone is
+        frozen and only the new classification head is trained (Adam, learning rate <code>1e-3</code>, 10 epochs), so the freshly
+        initialized head adapts without destroying ImageNet's learned features. In <strong>Phase&nbsp;2</strong> every layer is unfrozen
+        and the whole network is fine-tuned at a far gentler rate (Adam, <code>1e-5</code>) under a <code>ReduceLROnPlateau</code>
+        scheduler, with the best-validation checkpoint kept. The training history makes the payoff obvious: accuracy sits flat
+        around <strong>78%</strong> while the backbone is frozen, then climbs sharply to <strong>~98%</strong> the moment fine-tuning begins,
+        as validation loss falls from ~0.55 to under 0.10. Training runs on Apple <strong>Metal (MPS)</strong> or CUDA when available.
+      </p>
+      <figure>
+        <img src="/img/alzheimers/training_history.png" alt="Training and validation accuracy and loss across the two-phase schedule" />
+        <figcaption>Figure 4 — Two-phase training history. Accuracy is flat (~78%) while the backbone is frozen and jumps to ~98% once fine-tuning unfreezes the network around epoch 10; loss falls in lockstep.</figcaption>
+      </figure>
+    </section>
+
+    <section class="content-section">
+      <h2>Classification Results</h2>
+      <p>
+        Evaluated on a <strong>2,048-image held-out set</strong> drawn from the natural (imbalanced) distribution, the fine-tuned model
+        reaches <strong>98% overall accuracy</strong> with strong per-class precision and recall:
+      </p>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr><th>Stage</th><th>Precision</th><th>Recall</th><th>F1-score</th><th>Support</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Non Demented</td><td>0.99</td><td>0.99</td><td>0.99</td><td>1,588</td></tr>
+            <tr><td>Very mild Dementia</td><td>0.96</td><td>0.94</td><td>0.95</td><td>333</td></tr>
+            <tr><td>Mild Dementia</td><td>0.98</td><td>0.98</td><td>0.98</td><td>117</td></tr>
+            <tr><td>Moderate Dementia</td><td>1.00</td><td>1.00</td><td>1.00</td><td>10</td></tr>
+            <tr><td><strong>Accuracy</strong></td><td colspan="3" style="text-align:center"><strong>0.98</strong></td><td><strong>2,048</strong></td></tr>
+            <tr><td>Macro avg</td><td>0.98</td><td>0.98</td><td>0.98</td><td>2,048</td></tr>
+            <tr><td>Weighted avg</td><td>0.98</td><td>0.98</td><td>0.98</td><td>2,048</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="highlight-box">
+        <p>
+          The headline isn't just the 98% accuracy &mdash; on an imbalanced set, accuracy flatters a model that only nails the
+          majority class. The more honest signal is the <strong>0.98 macro-averaged F1</strong>, which weights every stage equally:
+          even <strong>Very Mild</strong> (the subtle, easy-to-confuse stage) holds a <strong>0.95 F1</strong>. The one figure to read with
+          care is Moderate Dementia, whose perfect scores rest on only <strong>10</strong> test images &mdash; a direct consequence of how
+          rare that class is in the source data.
+        </p>
+      </div>
+    </section>
+
+    <section class="content-section">
+      <h2>Progression Modeling with DCGANs</h2>
+      <p>
+        Generating the future of a brain is framed as <strong>image-to-image translation</strong>, not noise-to-image synthesis: each
+        generator takes a real scan at one stage and produces the corresponding scan at the next. We train <strong>three separate
+        DCGANs</strong>, one per transition &mdash; Non→Very&nbsp;Mild, Very&nbsp;Mild→Mild, and Mild→Moderate &mdash; all sharing the same
+        architecture.
+      </p>
+      <p>
+        The <strong>Generator</strong> is an encoder&ndash;decoder convolutional network. Three strided convolutions
+        (kernel 4, stride 2) downsample the single-channel input into 256 feature maps with ReLU activations and batch
+        normalization, and three transposed convolutions upsample back to a one-channel image, ending in a <strong>Tanh</strong> that
+        maps pixels to <code>[-1, 1]</code> &mdash; letting the network learn detailed pixel-level transformations between stages. The
+        <strong>Discriminator</strong> mirrors it: four convolutional layers with LeakyReLU (slope 0.2) and batch norm reduce the image
+        to a single <strong>Sigmoid</strong> score, the probability that a scan is real rather than generated.
+      </p>
+      <p>
+        Both networks are trained adversarially with <strong>binary cross-entropy</strong>, optimized by <strong>Adam (lr 2e-4,
+        β=(0.5, 0.999))</strong> over <strong>100 epochs</strong> on grayscale 256×256 inputs. For the rare Mild→Moderate transition we
+        <strong>upsampled the minority stage</strong> so the generator saw a balanced stream of pairs &mdash; and the chained, stage-by-stage
+        design itself helps, since it can synthesize realistic samples for the underrepresented late stages.
+      </p>
       <div class="image-grid grid-2">
         <figure>
-          <img src="/img/alzheimers/input_none.png" alt="No Alzheimer's input" />
-          <figcaption>Figure 5a: Input (No Alzheimer's).</figcaption>
+          <img src="/img/alzheimers/input_none.png" alt="Input MRI — Non Demented" />
+          <figcaption>Figure 5a — Input scan (Non Demented).</figcaption>
         </figure>
         <figure>
-          <img src="/img/alzheimers/predicted_very_mild_dementia.png" alt="Very Mild Alzheimer's" />
-          <figcaption>Figure 5b: Very Mild.</figcaption>
+          <img src="/img/alzheimers/predicted_very_mild_dementia.png" alt="Generated Very Mild Dementia scan" />
+          <figcaption>Figure 5b — Generated: Very Mild Dementia.</figcaption>
         </figure>
         <figure>
-          <img src="/img/alzheimers/predicted_mild_dementia.png" alt="Mild Alzheimer's" />
-          <figcaption>Figure 5c: Mild.</figcaption>
+          <img src="/img/alzheimers/predicted_mild_dementia.png" alt="Generated Mild Dementia scan" />
+          <figcaption>Figure 5c — Generated: Mild Dementia.</figcaption>
         </figure>
         <figure>
-          <img src="/img/alzheimers/predicted_moderate_dementia.png" alt="Moderate Alzheimer's" />
-          <figcaption>Figure 5d: Moderate.</figcaption>
+          <img src="/img/alzheimers/predicted_moderate_dementia.png" alt="Generated Moderate Dementia scan" />
+          <figcaption>Figure 5d — Generated: Moderate Dementia.</figcaption>
         </figure>
       </div>
     </section>
 
     <section class="content-section">
-      <h2>Region Of Interest (ROI)</h2>
-      <p>To further enhance the accuracy of the predicted images, we introduced the concept of Region of Interest
-        (ROI).
-        By focusing on specific, clinically relevant areas of the brain, we implemented a region-based discriminator
-        that is better equipped to capture subtle structural changes. This approach allows the model to learn finer
-        details in the most affected regions, resulting in more realistic and diagnostically meaningful image
-        generation.</p>
+      <h2>Region-of-Interest Refinement</h2>
+      <p>
+        A vanilla discriminator judges the whole frame, which lets the generator spend capacity on irrelevant background instead
+        of the regions that actually change. To fix that we added a <strong>Region-of-Interest (ROI)</strong> stage: we extract the
+        brain contour from each scan and build a binary mask, then use a <strong>region-aware discriminator</strong> that scores the
+        clinically relevant area rather than the empty surround &mdash; pushing the generator to sharpen the structures that matter.
+      </p>
+      <figure>
+        <img src="/img/alzheimers/roi.png" alt="ROI extraction — original, brain outline, and binary mask" />
+        <figcaption>Figure 6 — ROI extraction. For each scan we detect the brain outline and derive a binary mask that focuses the discriminator on the relevant region.</figcaption>
+      </figure>
+      <p>
+        The improvement is measurable. At epoch 15 on the Very&nbsp;Mild→Mild transition, the ROI-guided model beat the baseline on
+        <strong>every</strong> metric we tracked &mdash; pixel error, signal quality, structural and perceptual similarity, and distribution
+        realism:
+      </p>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr><th>Metric</th><th>Without ROI</th><th>With ROI</th><th>Better</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>MSE</td><td>0.0378</td><td>0.0326</td><td>lower ↓</td></tr>
+            <tr><td>PSNR (dB)</td><td>14.33</td><td>14.93</td><td>higher ↑</td></tr>
+            <tr><td>SSIM</td><td>0.3295</td><td>0.3330</td><td>higher ↑</td></tr>
+            <tr><td>LPIPS</td><td>0.3191</td><td>0.3092</td><td>lower ↓</td></tr>
+            <tr><td>FID</td><td>39.99</td><td>30.94</td><td>lower ↓</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <figure>
+        <img src="/img/alzheimers/roi_generated.png" alt="ROI-guided generation — original, generated, and difference map" />
+        <figcaption>Figure 7 — ROI-guided output: original scan, generated next-stage scan, and their difference map highlighting where the model introduced change.</figcaption>
+      </figure>
+      <div class="highlight-box">
+        <p>
+          ROI guidance cut <strong>FID from 39.99 → 30.94 — roughly a 23% gain in realism</strong> — and lifted PSNR by
+          <strong>0.6 dB</strong>, with SSIM and LPIPS improving in lockstep. Concentrating the adversarial signal on the brain
+          itself, rather than the background, is what made the generated scans sharper and more anatomically faithful.
+        </p>
+      </div>
     </section>
 
     <section class="content-section">
-      <figure>
-        <img src="/img/alzheimers/roi.png" alt="Outline of the brain to crop ROI for each image." />
-        <figcaption>Figure 6: Outline of the brain to crop ROI for each image.</figcaption>
-      </figure>
+      <h2>Deployment &amp; Experiment Tracking</h2>
+      <p>
+        The system ships as a <strong>Flask</strong> web application: a user uploads an MRI, the classifier identifies the current
+        stage, the GAN chain generates the remaining progression, and the original and synthesized scans are rendered side by
+        side. The app is <strong>containerized with Docker</strong> for one-command reproducible deployment (it runs live on Render),
+        and inference uses Apple <strong>MPS</strong>/CUDA acceleration when present.
+      </p>
+      <p>
+        Training is fully tracked with <strong>MLflow</strong> under a dedicated <code>Alzheimers_Classifier</code> experiment: every run
+        logs its hyperparameters (batch size, both learning rates, epoch counts, image size), per-epoch train/validation loss and
+        accuracy for both phases, and registers the resulting model. That makes runs directly comparable in the MLflow UI and the
+        whole experiment reproducible rather than a one-off result buried in a notebook.
+      </p>
     </section>
 
     <section class="content-section">
-      <figure>
-        <img src="/img/alzheimers/roi_generated.png" alt="Images generated by ROI." />
-        <figcaption>Figure 7: Images generated by ROI.</figcaption>
-      </figure>
-      <p>At epoch 15, the DCGAN model trained with ROI (Region of Interest) guidance for the very mild to mild
-        Alzheimer's stage transition outperformed the version without ROI. It achieved lower average MSE (0.0326 vs.
-        0.0378), higher PSNR (14.93 dB vs. 14.33 dB), and slightly better SSIM (0.3330 vs. 0.3295). It also
-        produced more perceptually similar results with a lower LPIPS (0.3092 vs. 0.3191) and significantly improved
-        FID (30.94 vs. 39.99), indicating sharper and more realistic outputs when ROI information was used.</p>
+      <h2>Engineering Challenges Solved</h2>
+      <ul>
+        <li><strong>Extreme class imbalance (~138:1):</strong> healthy scans swamp late-stage ones. Addressed with transfer learning
+        plus minority upsampling for GAN training, and &mdash; crucially &mdash; reporting <strong>macro-F1</strong> alongside accuracy so the
+        minority stages can't hide behind the majority.</li>
+        <li><strong>Subtle inter-stage differences:</strong> adjacent stages are structurally similar (confirmed by SSIM and the
+        mean-difference maps). Tackled with intensity normalization and an <strong>ROI-aware discriminator</strong> that focuses learning
+        on the regions that actually change.</li>
+        <li><strong>Two-phase fine-tuning, not blind training:</strong> fine-tuning a 17M-parameter backbone from the start would wreck
+        the ImageNet features. Freezing first, then unfreezing at a low learning rate, is what unlocked the 78%→98% jump.</li>
+        <li><strong>Encoder&ndash;decoder bottleneck:</strong> compressing a scan to 256 feature maps and reconstructing it risks losing
+        fine detail. ROI guidance and pixel-range normalization (Tanh + <code>[-1,1]</code>) mitigated the information loss.</li>
+        <li><strong>Chaining generators without drift:</strong> feeding one GAN's output into the next can compound artifacts, so each
+        transition is a dedicated, separately-trained model rather than one generator asked to do everything.</li>
+        <li><strong>Reproducibility &amp; hardware portability:</strong> MLflow tracking plus Docker, with an MPS/CUDA/CPU device fallback,
+        so the project trains and serves on a laptop or a cloud box without code changes.</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h2>Tech Stack</h2>
+      <ul>
+        <li><strong>Deep learning:</strong> PyTorch &amp; torchvision (EfficientNetB4 transfer learning, custom DCGAN generator/discriminator).</li>
+        <li><strong>Data &amp; analysis:</strong> OASIS MRI dataset, OpenCV, scikit-image (SSIM), NumPy, pandas, Matplotlib &amp; Seaborn for EDA.</li>
+        <li><strong>Generation metrics:</strong> MSE, PSNR, SSIM, LPIPS, and FID for evaluating synthesized scans.</li>
+        <li><strong>Serving:</strong> Flask web app with HTML/CSS/JS front end, MPS/CUDA-accelerated inference.</li>
+        <li><strong>MLOps:</strong> MLflow (experiment tracking &amp; model registry), Docker, Git LFS for model weights, deployed on Render.</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h2>Outcomes &amp; Impact</h2>
+      <ul>
+        <li>Built a complete diagnosis-<em>and</em>-prognosis system &mdash; staging classifier plus generative progression &mdash; over
+        <strong>86,437 OASIS MRI slices</strong>.</li>
+        <li>Achieved <strong>98% accuracy and 0.98 macro-F1</strong> across all four stages on a 2,048-image held-out set, holding
+        <strong>0.95 F1</strong> even on the hard Very Mild class.</li>
+        <li>Trained <strong>three stage-transition DCGANs</strong> and chained them into a coherent, stage-by-stage progression
+        visualizer.</li>
+        <li>Improved generation quality with ROI guidance &mdash; <strong>FID 39.99 → 30.94 (~23% better)</strong> and <strong>+0.6 dB
+        PSNR</strong>, with SSIM and LPIPS improving too.</li>
+        <li>Shipped the whole thing as a <strong>Dockerized Flask app with MLflow tracking</strong> and a public live demo.</li>
+      </ul>
     </section>
 
     <section class="content-section">
       <h2>Conclusion</h2>
-      <p>This project offered deep insights into the workings of Generative Adversarial Networks (GANs), transfer
-        learning, and web deployment using Python. The key technologies used were PyTorch for building both the
-        EfficientNetB4-based classification model and the DCGANs, and Flask for deploying the application.
-        A significant learning outcome was understanding the challenges of compressing and reconstructing information
-        within encoder-decoder architectures—particularly the bottleneck effect that can lead to loss of critical
-        details in GAN-generated images. Extending similar approaches to other medical datasets, such as those related
-        to cancer detection and progression, holds great potential for advancing targeted treatment and precision
-        medicine in clinical practice.</p>
+      <p>
+        This project is where I learned to make generative models and transfer learning work together on a genuinely messy,
+        imbalanced medical dataset &mdash; and to be honest about what the numbers mean. The standout lessons were practical: how a
+        two-phase fine-tuning schedule converts a frozen 78% into a fine-tuned 98%, how an encoder&ndash;decoder bottleneck quietly
+        eats detail in GAN outputs, and how focusing the discriminator on a region of interest measurably improves realism. The
+        same recipe &mdash; classify the present state, then generate the likely future &mdash; extends naturally to other progressive
+        conditions such as tumor growth or retinal disease, where <em>seeing</em> the trajectory is as valuable as naming the stage.
+      </p>
     </section>

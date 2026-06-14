@@ -719,16 +719,29 @@ main {
 }
 
 /* ---- certifications -------------------------------------------------------- */
+/* Fixed 4-up grid (collapsing to 2-up / 1-up) rather than auto-fit, so a lone
+   trailing card can never stretch to a different width than its siblings. */
 .certs {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(255px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 1.1rem;
+}
+@media (max-width: 900px) {
+  .certs {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 480px) {
+  .certs {
+    grid-template-columns: 1fr;
+  }
 }
 .cert-card {
   position: relative;
   display: flex;
   flex-direction: column;
   gap: 1.1rem;
+  height: 100%;
   padding: 1.6rem;
   border: 1px solid var(--line);
   border-radius: 1rem;
@@ -745,14 +758,29 @@ main {
   font-size: 0.62rem;
   color: var(--faint);
 }
+/* A uniform, theme-aware plate for every badge. The source images are wildly
+   different (full-bleed coloured squares, white cards, and centred logos on
+   transparency); a soft tinted plate + flex centring + object-fit make them
+   read as one set in both light and dark themes — no glaring white slab. */
 .cert-badge {
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   height: 8.5rem;
+  padding: 1.2rem;
+  border: 1px solid var(--line);
+  border-radius: 0.7rem;
+  background: rgba(var(--ink-rgb), 0.04);
+  overflow: hidden;
 }
+/* Contain (never crop) and centre. Flex centring resolves the percentage caps
+   against the plate's fixed height reliably, so the badge is always fully
+   visible — unlike the previous grid track, which let it overflow and clip. */
 .cert-badge img {
+  max-width: 100%;
   max-height: 100%;
-  max-width: 70%;
+  width: auto;
+  height: auto;
   object-fit: contain;
 }
 .cert-meta {
@@ -764,6 +792,8 @@ main {
   font-size: 0.96rem;
   font-weight: 540;
   line-height: 1.3;
+  /* Reserve two lines so cards with 1- and 2-line names stay the same height. */
+  min-height: 2.5em;
 }
 .cert-issuer {
   font-size: 0.62rem;
@@ -1039,7 +1069,22 @@ main {
     height: 100%;
     object-fit: cover;
   }
+  /* The inline thumb above is the cover image at this width; the floating
+     cursor-preview would duplicate it (touch taps fire mouseenter), so drop
+     it here. Desktop/laptop (> 680px) keeps the hover preview unchanged. */
+  .work-preview {
+    display: none;
+  }
   .hero-actions .btn-text {
+    display: none;
+  }
+}
+
+/* The work preview tracks a pointer, so it only makes sense with a real
+   hover-capable cursor. On touch devices a tap would otherwise pin a stray
+   floating copy over the inline thumbnail. */
+@media (hover: none) {
+  .work-preview {
     display: none;
   }
 }
