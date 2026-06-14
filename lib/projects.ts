@@ -198,7 +198,7 @@ export const PROJECTS: Project[] = [
     summary:
       "A high-performance ETL pipeline using Snowflake, Polars, and BigQuery to transform raw retail data into actionable business insights on a live Looker Studio dashboard.",
     tech: ["GCP", "Snowflake", "Polars"],
-    thumb: `${IMG}/online_retail.jpg`,
+    thumb: `${IMG}/online_retail.png`,
     repo: "https://github.com/madhusiddharths/Online_retail",
     hasCaseStudy: true,
   },
