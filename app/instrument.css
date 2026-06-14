@@ -527,16 +527,6 @@ main {
   padding: 1.7rem 0.4rem 1.7rem 1.6rem;
   border-bottom: 1px solid var(--line);
   transition: padding-left 0.4s var(--ease-out), background-color 0.4s var(--ease-out);
-  /* Stop iOS firing the link callout / preview on the press-and-hold gesture. */
-  -webkit-touch-callout: none;
-}
-/* Only kill text selection on touch, so the long-press doesn't flash a
-   selection; desktop keeps normal selection. */
-@media (hover: none) {
-  .work-row {
-    -webkit-user-select: none;
-    user-select: none;
-  }
 }
 .work-row-rail {
   position: absolute;
@@ -649,9 +639,8 @@ main {
 }
 
 /* ---- mobile press-and-hold peek -------------------------------------------- */
-/* The card is pinned (position: fixed, centred via auto margins so framer-motion
-   can own the transform) so the page can keep scrolling underneath while held.
-   The scrim is pointer-events:none so it never blocks that scroll. */
+/* Everything here is pointer-events:none so the held finger keeps scrolling the
+   page underneath. The scrim dims; the stage centres the card on any screen. */
 .work-peek-scrim {
   position: fixed;
   inset: 0;
@@ -659,15 +648,25 @@ main {
   background: rgba(0, 0, 0, 0.32);
   pointer-events: none;
 }
-.work-peek {
+/* A full-screen flex stage centres the card on any screen size/orientation,
+   without a CSS transform — so framer-motion is free to own scale/opacity. */
+.work-peek-stage {
   position: fixed;
-  top: clamp(4.5rem, 15vh, 9rem);
-  left: 0;
-  right: 0;
-  margin-inline: auto;
+  inset: 0;
   z-index: 950;
-  width: min(80vw, 24rem);
-  aspect-ratio: 16 / 9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  pointer-events: none;
+}
+.work-peek {
+  display: flex;
+  flex-direction: column;
+  width: min(82vw, 22rem);
+  /* Cap to the padded stage so it's always fully on-screen; overflow:hidden →
+     never scrolls or runs off the edges, in portrait or landscape. */
+  max-height: 100%;
   border-radius: 1rem;
   overflow: hidden;
   border: 1px solid var(--line-2);
@@ -675,20 +674,77 @@ main {
   background: var(--panel);
   pointer-events: none;
 }
-.work-peek img {
+.work-peek-media {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  max-height: 34vh; /* shrink the image on short / landscape screens */
+  overflow: hidden;
+  border-bottom: 1px solid var(--line);
+}
+.work-peek-media img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
-.work-peek-meta {
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  width: 100%;
-  padding: 0.6rem 0.8rem;
+.work-peek-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.9rem 1rem 1rem;
+  min-height: 0;
+}
+.work-peek-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.55rem;
+}
+.work-peek-index {
+  flex: none;
+  color: var(--accent);
   font-size: 0.62rem;
-  color: #fff;
-  background: linear-gradient(transparent, rgba(0, 0, 0, 0.78));
+}
+.work-peek-name {
+  font-size: 1.06rem;
+  font-weight: 580;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.work-peek-domain {
+  color: var(--muted);
+  font-size: 0.62rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* Clamp the blurb to two lines — keeps the "3-second" card tidy, no scrolling. */
+.work-peek-summary {
+  margin: 0;
+  color: var(--ink);
+  font-size: 0.82rem;
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.work-peek-tech {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.1rem;
+  max-height: 3.1rem;
+  overflow: hidden;
+}
+.work-peek-chip {
+  padding: 0.2rem 0.45rem;
+  border: 1px solid var(--line-2);
+  border-radius: 5px;
+  font-size: 0.58rem;
+  color: var(--muted);
+  white-space: nowrap;
 }
 
 .work-section-cta {
@@ -1100,6 +1156,11 @@ main {
     grid-template-columns: 2.4rem 1fr 1.6rem;
     gap: 1rem;
     padding-left: 0.8rem;
+    /* Phone press-and-hold peek: suppress the iOS callout + selection flash.
+       Scoped here so tablet/laptop keep their normal callout & text selection. */
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
   }
   .work-row:hover {
     padding-left: 1.4rem;

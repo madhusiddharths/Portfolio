@@ -20,6 +20,11 @@ function rowHref(p: Project) {
 const HOLD_MS = 250; // how long to hold before the peek appears
 const MOVE_CANCEL_PX = 12; // moving more than this before the hold fires = a scroll, not a press
 
+// The peek is a phone-only feature — tablet and laptop views are left untouched.
+function mobilePeekActive() {
+  return typeof window !== "undefined" && window.matchMedia("(max-width: 680px)").matches;
+}
+
 export function WorkIndex({ projects }: { projects: Project[] }) {
   const [active, setActive] = useState<Project | null>(null); // desktop hover
   const [peek, setPeek] = useState<Project | null>(null); // touch press-and-hold preview
@@ -50,6 +55,7 @@ export function WorkIndex({ projects }: { projects: Project[] }) {
   }
 
   function onTouchStart(e: React.TouchEvent, p: Project) {
+    if (!mobilePeekActive()) return; // phones only — don't alter tablet/laptop behavior
     const t = e.touches[0];
     startPt.current = { x: t.clientX, y: t.clientY };
     peekedRef.current = false;
@@ -106,7 +112,9 @@ export function WorkIndex({ projects }: { projects: Project[] }) {
               onTouchEnd={onTouchEnd}
               onTouchCancel={onTouchCancel}
               onClick={onRowClick}
-              onContextMenu={(e) => e.preventDefault()}
+              onContextMenu={(e) => {
+                if (mobilePeekActive()) e.preventDefault(); // suppress long-press callout on phones only
+              }}
               aria-label={`${p.name} — ${p.domain}`}
             >
               <span className="work-row-rail" aria-hidden="true" />
@@ -152,9 +160,9 @@ export function WorkIndex({ projects }: { projects: Project[] }) {
         )}
       </AnimatePresence>
 
-      {/* Mobile: press-and-hold a row to peek its cover image. It stays pinned —
-          you can keep scrolling the page — until you lift your finger. A quick
-          tap still opens the project (see onRowClick). */}
+      {/* Mobile: press-and-hold a row to peek a quick card (cover, blurb, tech).
+          It stays pinned — you can keep scrolling the page — until you lift your
+          finger. A quick tap still opens the project (see onRowClick). */}
       <AnimatePresence>
         {peek && (
           <motion.div
@@ -168,17 +176,39 @@ export function WorkIndex({ projects }: { projects: Project[] }) {
         )}
         {peek && (
           <motion.div
-            key="peek-card"
-            className="work-peek"
-            initial={{ opacity: 0, scale: reduce ? 1 : 0.94 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: reduce ? 1 : 0.96 }}
-            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+            key="peek-stage"
+            className="work-peek-stage"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
           >
-            <img src={peek.thumb} alt="" />
-            <span className="work-peek-meta u-mono">
-              {peek.index} — {peek.name}
-            </span>
+            <motion.div
+              className="work-peek"
+              initial={{ scale: reduce ? 1 : 0.94 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: reduce ? 1 : 0.97 }}
+              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <div className="work-peek-media">
+                <img src={peek.thumb} alt="" />
+              </div>
+              <div className="work-peek-info">
+                <div className="work-peek-head">
+                  <span className="work-peek-index u-mono">{peek.index}</span>
+                  <span className="work-peek-name">{peek.name}</span>
+                </div>
+                <div className="work-peek-domain u-mono">{peek.domain}</div>
+                <p className="work-peek-summary">{peek.summary}</p>
+                <div className="work-peek-tech">
+                  {peek.tech.slice(0, 4).map((t) => (
+                    <span key={t} className="work-peek-chip u-mono">
+                      {t}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
