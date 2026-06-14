@@ -527,6 +527,16 @@ main {
   padding: 1.7rem 0.4rem 1.7rem 1.6rem;
   border-bottom: 1px solid var(--line);
   transition: padding-left 0.4s var(--ease-out), background-color 0.4s var(--ease-out);
+  /* Stop iOS firing the link callout / preview on the press-and-hold gesture. */
+  -webkit-touch-callout: none;
+}
+/* Only kill text selection on touch, so the long-press doesn't flash a
+   selection; desktop keeps normal selection. */
+@media (hover: none) {
+  .work-row {
+    -webkit-user-select: none;
+    user-select: none;
+  }
 }
 .work-row-rail {
   position: absolute;
@@ -593,9 +603,6 @@ main {
   color: var(--muted);
   font-size: 0.98rem;
 }
-.work-row-thumb {
-  display: none;
-}
 .work-row-tech {
   color: var(--faint);
   font-size: 0.68rem;
@@ -640,6 +647,50 @@ main {
   color: #fff;
   background: linear-gradient(transparent, rgba(0, 0, 0, 0.75));
 }
+
+/* ---- mobile press-and-hold peek -------------------------------------------- */
+/* The card is pinned (position: fixed, centred via auto margins so framer-motion
+   can own the transform) so the page can keep scrolling underneath while held.
+   The scrim is pointer-events:none so it never blocks that scroll. */
+.work-peek-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 940;
+  background: rgba(0, 0, 0, 0.32);
+  pointer-events: none;
+}
+.work-peek {
+  position: fixed;
+  top: clamp(4.5rem, 15vh, 9rem);
+  left: 0;
+  right: 0;
+  margin-inline: auto;
+  z-index: 950;
+  width: min(80vw, 24rem);
+  aspect-ratio: 16 / 9;
+  border-radius: 1rem;
+  overflow: hidden;
+  border: 1px solid var(--line-2);
+  box-shadow: var(--shadow-2);
+  background: var(--panel);
+  pointer-events: none;
+}
+.work-peek img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.work-peek-meta {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.62rem;
+  color: #fff;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.78));
+}
+
 .work-section-cta {
   margin-top: 3rem;
   display: flex;
@@ -1056,22 +1107,8 @@ main {
   .work-row-tech {
     display: none;
   }
-  .work-row-thumb {
-    display: block;
-    margin-top: 0.9rem;
-    border-radius: 0.6rem;
-    overflow: hidden;
-    border: 1px solid var(--line);
-    aspect-ratio: 16 / 9;
-  }
-  .work-row-thumb img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-  /* The inline thumb above is the cover image at this width; the floating
-     cursor-preview would duplicate it (touch taps fire mouseenter), so drop
-     it here. Desktop/laptop (> 680px) keeps the hover preview unchanged. */
+  /* On touch the cover image is shown via press-and-hold (.work-peek), so hide
+     the cursor-following preview here. Desktop/laptop (> 680px) is unchanged. */
   .work-preview {
     display: none;
   }

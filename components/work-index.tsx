@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   motion,
@@ -16,8 +16,13 @@ function rowHref(p: Project) {
   return p.hasCaseStudy ? `/work/${p.slug}/` : "/work/coming-soon/";
 }
 
+// Touch press-and-hold → preview tuning.
+const HOLD_MS = 250; // how long to hold before the peek appears
+const MOVE_CANCEL_PX = 12; // moving more than this before the hold fires = a scroll, not a press
+
 export function WorkIndex({ projects }: { projects: Project[] }) {
-  const [active, setActive] = useState<Project | null>(null);
+  const [active, setActive] = useState<Project | null>(null); // desktop hover
+  const [peek, setPeek] = useState<Project | null>(null); // touch press-and-hold preview
   const reduce = useReducedMotion();
 
   const mx = useMotionValue(0);
@@ -25,9 +30,62 @@ export function WorkIndex({ projects }: { projects: Project[] }) {
   const px = useSpring(mx, { stiffness: 350, damping: 30, mass: 0.5 });
   const py = useSpring(my, { stiffness: 350, damping: 30, mass: 0.5 });
 
+  // Long-press bookkeeping (touch only).
+  const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const startPt = useRef<{ x: number; y: number } | null>(null);
+  const peekedRef = useRef(false); // a peek fired → suppress the navigation click on release
+
+  useEffect(() => () => clearHold(), []);
+
+  function clearHold() {
+    if (holdTimer.current) {
+      clearTimeout(holdTimer.current);
+      holdTimer.current = null;
+    }
+  }
+
   function onMove(e: React.MouseEvent) {
     mx.set(e.clientX + 28);
     my.set(e.clientY - 40);
+  }
+
+  function onTouchStart(e: React.TouchEvent, p: Project) {
+    const t = e.touches[0];
+    startPt.current = { x: t.clientX, y: t.clientY };
+    peekedRef.current = false;
+    clearHold();
+    holdTimer.current = setTimeout(() => {
+      peekedRef.current = true;
+      setPeek(p);
+    }, HOLD_MS);
+  }
+
+  function onTouchMove(e: React.TouchEvent) {
+    // Already peeking → let the page scroll freely; the image stays pinned.
+    if (peekedRef.current || !startPt.current) return;
+    const t = e.touches[0];
+    const moved = Math.hypot(t.clientX - startPt.current.x, t.clientY - startPt.current.y);
+    if (moved > MOVE_CANCEL_PX) clearHold(); // a scroll began before the hold fired
+  }
+
+  function onTouchEnd() {
+    clearHold();
+    // Lifting the finger dismisses the peek; peekedRef stays true so the
+    // synthesized click below is swallowed instead of navigating.
+    if (peekedRef.current) setPeek(null);
+  }
+
+  function onTouchCancel() {
+    clearHold();
+    peekedRef.current = false;
+    setPeek(null);
+  }
+
+  function onRowClick(e: React.MouseEvent) {
+    if (peekedRef.current) {
+      e.preventDefault(); // this gesture was a peek, not a tap → don't open the project
+      peekedRef.current = false;
+    }
   }
 
   const showPreview = active && !reduce;
@@ -43,6 +101,12 @@ export function WorkIndex({ projects }: { projects: Project[] }) {
               data-cursor={p.hasCaseStudy ? "read" : "soon"}
               onMouseEnter={() => setActive(p)}
               onFocus={() => setActive(p)}
+              onTouchStart={(e) => onTouchStart(e, p)}
+              onTouchMove={onTouchMove}
+              onTouchEnd={onTouchEnd}
+              onTouchCancel={onTouchCancel}
+              onClick={onRowClick}
+              onContextMenu={(e) => e.preventDefault()}
               aria-label={`${p.name} — ${p.domain}`}
             >
               <span className="work-row-rail" aria-hidden="true" />
@@ -59,10 +123,6 @@ export function WorkIndex({ projects }: { projects: Project[] }) {
                   {!p.hasCaseStudy && <span className="work-tag work-tag-soon u-mono">soon</span>}
                 </span>
                 <span className="work-row-domain">{p.domain}</span>
-                {/* mobile-only inline thumbnail */}
-                <span className="work-row-thumb" aria-hidden="true">
-                  <img src={p.thumb} alt="" loading="lazy" />
-                </span>
               </span>
 
               <span className="work-row-tech u-mono">{p.tech.slice(0, 3).join(" / ")}</span>
@@ -87,6 +147,37 @@ export function WorkIndex({ projects }: { projects: Project[] }) {
             <img src={active!.thumb} alt="" />
             <span className="work-preview-meta u-mono">
               {active!.index} — {active!.hasCaseStudy ? "view case study" : "coming soon"}
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Mobile: press-and-hold a row to peek its cover image. It stays pinned —
+          you can keep scrolling the page — until you lift your finger. A quick
+          tap still opens the project (see onRowClick). */}
+      <AnimatePresence>
+        {peek && (
+          <motion.div
+            key="peek-scrim"
+            className="work-peek-scrim"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          />
+        )}
+        {peek && (
+          <motion.div
+            key="peek-card"
+            className="work-peek"
+            initial={{ opacity: 0, scale: reduce ? 1 : 0.94 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: reduce ? 1 : 0.96 }}
+            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <img src={peek.thumb} alt="" />
+            <span className="work-peek-meta u-mono">
+              {peek.index} — {peek.name}
             </span>
           </motion.div>
         )}
