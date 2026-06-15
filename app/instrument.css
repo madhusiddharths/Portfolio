@@ -1284,6 +1284,16 @@ main {
 }
 
 @media (max-width: 680px) {
+  /* The display floor (3.4rem) is oversized for phones, and the accent phrase
+     "scalable models" is nowrap — together they overran narrow viewports and
+     clipped the last letter. Scale the headline to the viewport and let the
+     phrase wrap as a fallback so it can never overflow. */
+  .hero-headline {
+    font-size: clamp(2.4rem, 9vw, 3.4rem);
+  }
+  .hero-mark {
+    white-space: normal;
+  }
   .hero-metrics {
     grid-template-columns: repeat(2, 1fr);
     gap: 1.8rem 1.2rem;
