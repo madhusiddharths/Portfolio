@@ -18,6 +18,9 @@ export function ThemeToggle() {
   function toggle() {
     const next = theme === "dark" ? "light" : "dark";
     document.documentElement.setAttribute("data-theme", next);
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute("content", next === "dark" ? "#0a0a0d" : "#f6f5f1");
     try {
       localStorage.setItem("instrument-theme", next);
     } catch {}

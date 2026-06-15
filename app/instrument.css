@@ -24,6 +24,145 @@
   transform: none;
 }
 
+/* ---- landing intro — "instrument calibration" (home, once per session) -----
+   Hidden by default; `intro-on` is added pre-paint by the theme script only
+   when it should play. The whole sequence is keyframe-driven and self-lifts —
+   no JS timeline. Children are transform/opacity only (GPU-friendly). */
+.intro {
+  display: none;
+}
+.intro-on .intro {
+  display: grid;
+  place-items: center;
+  position: fixed;
+  inset: 0;
+  z-index: 1900;
+  background-color: var(--canvas);
+  background-image:
+    linear-gradient(to right, var(--grid) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid) 1px, transparent 1px);
+  background-size: 3.2rem 3.2rem;
+  pointer-events: none;
+  animation: intro-lift 0.42s var(--ease-out) 1.06s forwards;
+}
+.intro-emblem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.15rem;
+}
+.intro-mark {
+  display: grid;
+  place-items: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 0.7rem;
+  background: var(--ink);
+  color: var(--canvas);
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 0.92rem;
+  letter-spacing: 0.02em;
+  opacity: 0;
+  transform: scale(0.9);
+  animation: intro-pop 0.4s var(--ease-spring) 0.05s forwards;
+}
+.intro-plot {
+  width: 220px;
+  height: 60px;
+  overflow: visible;
+}
+.intro-axis {
+  stroke: var(--line-2);
+  stroke-width: 1;
+}
+.intro-trace {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 248;
+  stroke-dashoffset: 248;
+  animation: intro-draw 0.56s var(--ease-out) 0.2s forwards;
+}
+.intro-dot {
+  fill: var(--accent);
+  transform-box: fill-box;
+  transform-origin: center;
+  opacity: 0;
+  transform: scale(0);
+  animation: intro-bloom 0.32s var(--ease-spring) 0.72s forwards;
+}
+.intro-ring {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.5;
+  transform-box: fill-box;
+  transform-origin: center;
+  opacity: 0;
+  animation: intro-ring 0.5s var(--ease-out) 0.78s forwards;
+}
+.intro-caption {
+  font-size: 0.62rem;
+  letter-spacing: 0.34em;
+  padding-left: 0.34em; /* optical re-centre for the tracking */
+  color: var(--faint);
+  opacity: 0;
+  animation: intro-fade 0.36s var(--ease-out) 0.4s forwards;
+}
+@keyframes intro-pop {
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes intro-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes intro-fade {
+  to {
+    opacity: 1;
+  }
+}
+@keyframes intro-bloom {
+  0% {
+    opacity: 0;
+    transform: scale(0);
+  }
+  60% {
+    transform: scale(1.3);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes intro-ring {
+  0% {
+    opacity: 0.6;
+    transform: scale(0.5);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(3.4);
+  }
+}
+@keyframes intro-lift {
+  to {
+    transform: translateY(-100%);
+    visibility: hidden;
+  }
+}
+/* Safety net: never let the panel sit on top of content without motion. */
+@media (prefers-reduced-motion: reduce) {
+  .intro {
+    display: none !important;
+  }
+}
+
 /* ---- skip link ---- */
 .skip-link {
   position: fixed;

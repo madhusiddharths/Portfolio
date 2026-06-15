@@ -1,4 +1,4 @@
-import type { Metadata, Viewport } from "next";
+import type { Metadata } from "next";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import "./globals.css";
@@ -24,17 +24,15 @@ export const metadata: Metadata = {
   },
 };
 
-export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f6f5f1" },
-    { media: "(prefers-color-scheme: dark)", color: "#0a0a0d" },
-  ],
-};
-
-// Runs before paint: sets the theme (no flash) and enables scroll-reveal only
-// when motion is allowed. If JS is off or motion is reduced, content stays
-// visible by default — the reveal is purely additive.
-const themeScript = `(function(){try{var t=localStorage.getItem("instrument-theme");if(!t){t=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";}document.documentElement.setAttribute("data-theme",t);if(!matchMedia("(prefers-reduced-motion: reduce)").matches){document.documentElement.classList.add("reveal-on");}}catch(e){document.documentElement.setAttribute("data-theme","light");}})();`;
+// Runs before paint, so there is no flash. Responsibilities:
+//  · Theme — defaults to LIGHT; only an explicit prior choice flips it to dark.
+//    Also syncs the mobile browser-chrome color to the resolved theme.
+//  · Scroll-reveal — armed only when motion is allowed.
+//  · Landing intro — armed once per session, on the home route only, motion
+//    permitting; the class is auto-removed after it plays so SPA re-visits
+//    don't replay it. If JS is off or motion is reduced, none of this runs and
+//    all content stays visible by default — every enhancement is additive.
+const themeScript = `(function(){try{var t=localStorage.getItem("instrument-theme")||"light";var d=document.documentElement;d.setAttribute("data-theme",t);var m=document.querySelector('meta[name="theme-color"]');if(!m){m=document.createElement("meta");m.setAttribute("name","theme-color");document.head.appendChild(m);}m.setAttribute("content",t==="dark"?"#0a0a0d":"#f6f5f1");var r=matchMedia("(prefers-reduced-motion: reduce)").matches;if(!r){d.classList.add("reveal-on");}var p=location.pathname;if(!r&&(p==="/"||p.slice(-11)==="/index.html")&&!sessionStorage.getItem("intro-played")){d.classList.add("intro-on");sessionStorage.setItem("intro-played","1");setTimeout(function(){d.classList.remove("intro-on");},1650);}}catch(e){document.documentElement.setAttribute("data-theme","light");}})();`;
 
 export default function RootLayout({
   children,

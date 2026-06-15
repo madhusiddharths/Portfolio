@@ -1,192 +1,431 @@
-<!-- ===================== GALAXY EXPLORER FIRST ===================== -->
+<!-- ===================== GALAXY EXPLORER (big-data 3D) ===================== -->
+
+    <div class="project-demo-container">
+      <a href="https://galaxy-explorer-1061483926543.us-central1.run.app" class="project-demo-btn" target="_blank">
+        <span class="btn-text">Launch Galaxy Explorer</span>
+        <span class="btn-icon">🚀</span>
+      </a>
+    </div>
 
     <section class="content-section">
-      <div class="project-demo-container">
-        <a href="https://galaxy-explorer-1061483926543.us-central1.run.app" class="project-demo-btn"
-           target="_blank">
-          <span class="btn-text">Galaxy Explorer</span>
-          <span class="btn-icon">🚀</span>
-        </a>
-      </div>
-
+      <h2>Overview</h2>
       <p>
-        <strong>Galaxy Explorer</strong> is a cloud-native, large-scale astrophysical visualization platform
-        built on the
-        European Space Agency’s Gaia DR3 catalog. The system enables real-time 3D exploration of over
-        <strong>557 million scientifically filtered stars</strong>, including physically accurate temporal
-        projection
-        using stellar proper motion and radial velocity vectors.
+        <strong>Galaxy Explorer</strong> is a cloud-native big-data platform that turns one of the largest scientific
+        catalogues in the world — the European Space Agency's <strong>Gaia DR3</strong> star catalogue — into a live,
+        interactive 3D map of the solar neighbourhood. It lets anyone fly through <strong>557 million scientifically
+        validated stars</strong> in the browser, scrub the epoch to watch the sky shear over millennia, and run
+        astronomical analytics — stellar density fields, a Hertzsprung–Russell diagram, and unsupervised open-cluster
+        discovery — on demand.
       </p>
-
       <p>
-        Designed as a full-stack big data engineering project, the platform demonstrates scalable query
-        architecture,
-        distributed data processing, GPU-accelerated browser rendering, and serverless cloud deployment.
-        Unlike static star maps, Galaxy Explorer dynamically computes stellar positions for arbitrary
-        epochs,
-        allowing users to navigate both space and time within our galactic neighborhood.
+        The engineering story is a <strong>data-reduction and query-cost story</strong>. I started from a raw firehose
+        of roughly <strong>1.8 billion sources, 157 columns and 750+ GB</strong>, and engineered it down to a clean,
+        physically meaningful <strong>557 M-star, 13-column serving table</strong> — then re-architected the warehouse
+        so that the heavy scan happens <em>once</em> and every interaction afterwards is a cheap, pruned read. The same
+        preprocessing pipeline feeds a second application, a scientifically accurate <strong>Night Sky Viewer</strong>
+        planetarium, covered at the end of this report. I designed and built the entire system solo, from raw
+        astrometry to a deployed Cloud Run container.
       </p>
     </section>
 
-    <!-- Project Technology Stack -->
     <section class="content-section">
-      <h2>Technology Stack</h2>
-      <div class="tech-stack-container">
-        <div class="tech-category">
-          <p class="subsection-title">Frontend</p>
-          <p>React, Three.js, React Three Fiber, Vite, Axios</p>
-        </div>
-        <div class="tech-category">
-          <p class="subsection-title">Backend</p>
-          <p>FastAPI, Python, Uvicorn, Pydantic</p>
-        </div>
-        <div class="tech-category">
-          <p class="subsection-title">Data & Preprocessing</p>
-          <p>Polars, NumPy, Scikit-learn (HDBSCAN), Pandas, PySpark</p>
-        </div>
-        <div class="tech-category">
-          <p class="subsection-title">Cloud & Infrastructure</p>
-          <p>Google BigQuery, Google Cloud Storage, Google Cloud Run, Docker</p>
-        </div>
-      </div>
-    </section>
-
-    <section class="content-section">
-      <h2>Scientific Data Engineering Pipeline</h2>
-
-      <p class="subsection-title">Multi-Stage Preprocessing with Polars</p>
+      <h2>Problem &amp; Goal</h2>
       <p>
-        To handle the massive Gaia DR3 dataset (originally ~1.8 billion sources), I developed a
-        high-performance
-        preprocessing pipeline using <strong>Polars</strong>. This pipeline performs rigorous scientific
-        validation,
-        reducing the dataset to <strong>557 million high-confidence stars</strong>.
+        Gaia DR3 is a gift and a problem at the same time. It contains positions, parallaxes, proper motions and
+        multi-band photometry for ~1.8 billion stars — but at <strong>750+ GB across 157 columns</strong> it is far too
+        large to open in memory, and far too expensive to query naively. Two distinct hard problems follow.
       </p>
       <ul>
-        <li><strong>Quality Filtering:</strong> Implemented filters for Renormalised Unit Weight Error
-          (<strong>RUWE < 1.4</strong>)
-          and Astrometric Excess Noise (< 1) to ensure high-precision stellar positions.</li>
-        <li><strong>Artifact Removal:</strong> Applied a quadratic color-excess mask and filtered out
-          contaminated/blended
-          transits and non-single star candidates to eliminate unreliable data points.</li>
-        <li><strong>Density Analysis:</strong> Leveraged <strong>HDBSCAN</strong> clustering to identify and
-          analyze stellar
-          groupings and density patterns within the galaxy.</li>
+        <li><strong>The data-engineering problem:</strong> reduce a 1.8-billion-row, 157-column raw catalogue into a
+          clean, trustworthy, physically meaningful dataset — on a single machine — without ever loading it whole.</li>
+        <li><strong>The serving-cost problem:</strong> drive interactive 3D exploration <em>and</em> on-the-fly
+          analytics over hundreds of millions of stars from a browser, at low latency and near-zero marginal cost. The
+          naive cloud approach — point a warehouse query at the whole catalogue every time a user moves a slider —
+          full-scans tens of gigabytes per interaction, which is both slow and a real, recurring dollar cost.</li>
       </ul>
-
-      <p class="subsection-title">Kinematic Feature Engineering</p>
       <p>
-        I engineered a simplified stellar kinematic model to enable real-time temporal simulation.
-        By transforming celestial coordinates (RA, Dec, Parallax) into a <strong>3D Cartesian system (x, y,
-        z)</strong>
-        and computing velocity vectors (<strong>vx, vy, vz</strong>) from proper motion and radial velocity,
-        the platform can project star positions forward or backward in time:
-      </p>
-      <p style="text-align: center; font-style: italic; margin: 15px 0;">
-        position(t) = position(t₀) + velocity × Δt
-      </p>
-
-      <p class="subsection-title">Big Data Optimizations for Web</p>
-      <p>
-        To ensure sub-second response times on a global scale, I implemented several structural
-        optimizations:
-        <br>• <strong>Distance Binning:</strong> Partitioned the entire dataset into <strong>50 light-year
-        intervals</strong>,
-        enabling localized data loading.
-        <br>• <strong>Spatial Indexing:</strong> Integrated <strong>Healpix Level 12</strong> indexing for
-        ultra-fast
-        spatial lookups and sector-based filtering.
-        <br>• <strong>Storage Format:</strong> Utilized columnar <strong>Parquet</strong> files in GCS,
-        queried via BigQuery
-        external tables to eliminate data duplication and maximize I/O throughput.
+        The goal was a system where rigour and cost-awareness are designed in from the first byte: a reproducible
+        preprocessing pipeline that shrinks and structures the data, and a warehouse layer that pays the big scan once
+        and then prunes every subsequent query down to only the sky and distance the user is actually looking at.
       </p>
     </section>
 
+    <section class="content-section">
+      <h2>The Dataset — Gaia DR3</h2>
+      <p>
+        <strong>Gaia</strong> is an ESA space observatory that has measured the positions, distances (via parallax),
+        motions and colours of nearly two billion stars. Its third data release, <strong>Gaia DR3</strong>, is the
+        backbone of modern Milky Way science. I worked from the full <code>gaia_source</code> catalogue: ~1.8 billion
+        rows, 157 columns of astrometry and photometry, 750+ GB on disk.
+      </p>
+      <p>
+        One detail in the catalogue is worth calling out because the whole spatial-indexing strategy hangs on it: Gaia's
+        64-bit <code>source_id</code> <strong>encodes each star's position on the sky</strong>. The most significant bits
+        are the star's HEALPix pixel at level 12, so <code>source_id / 2^35</code> recovers the level-12 sky pixel with
+        zero spatial computation, and integer-dividing again rolls that up the HEALPix hierarchy to coarser levels.
+        That free, baked-in spatial key becomes the partition and clustering column for everything downstream.
+      </p>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr><th>Stage</th><th>Sources</th><th>Columns</th><th>Footprint</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Raw Gaia DR3 <code>gaia_source</code></td><td>~1.8 B</td><td>157</td><td>750+ GB</td></tr>
+            <tr><td>Quality-filtered + feature-engineered (GCS Parquet → external BigQuery table)</td><td>557 M</td><td>~20</td><td>~77 GB</td></tr>
+            <tr><td>Native serving table — clustered &amp; slimmed</td><td>557 M</td><td>13</td><td>pruned per query</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="content-section">
+      <h2>Data Engineering Pipeline</h2>
+      <p>
+        The reduction from 1.8 billion raw sources to a 557 M-star serving catalogue runs as a multi-stage
+        <strong>Polars</strong> pipeline. Polars' lazy, multi-threaded, larger-than-memory execution let me process the
+        catalogue <strong>one Parquet shard at a time</strong> on a single machine — never holding more than a partition
+        in memory — while staying in a columnar format end to end.
+      </p>
+
+      <p class="subsection-title">Column projection — 157 → ~12</p>
+      <p>
+        The first and cheapest win is throwing away what I don't need. Of 157 columns, the explorer needs roughly a
+        dozen — positions (<code>ra</code>, <code>dec</code>), <code>parallax</code>, proper motions
+        (<code>pmra</code>, <code>pmdec</code>), three-band photometry and <code>source_id</code>. Projecting to those
+        columns and re-encoding as <strong>Zstandard-compressed Parquet</strong> collapses the per-row footprint before
+        any heavy work begins, so every later stage reads a fraction of the original I/O.
+      </p>
+
+      <p class="subsection-title">Scientific quality filtering — 1.8 B → 557 M</p>
+      <p>
+        Raw Gaia rows include blended sources, spurious astrometric solutions and contaminated photometry that would
+        poison a 3D map. I apply the community-standard Gaia DR3 quality cuts as a single vectorised Polars mask, keeping
+        only high-confidence stars:
+      </p>
+      <ul>
+        <li><strong>Astrometric reliability:</strong> <code>RUWE &lt; 1.4</code> (the standard renormalised-unit-weight-error
+          threshold), <code>astrometric_excess_noise &lt; 1</code>, <code>astrometric_sigma5d_max ≤ 2</code>, at least 15
+          good along-scan observations and at most 5 bad ones, and a valid 5-/6-parameter solution.</li>
+        <li><strong>Photometric integrity:</strong> a flux-over-error floor, caps on contaminated and blended BP/RP
+          transits, and a <strong>quadratic colour-excess mask</strong>
+          (<code>phot_bp_rp_excess_factor &lt; 1.3 + 0.06·(BP−RP)²</code>) that rejects sources whose colours are
+          corrupted by a nearby neighbour.</li>
+        <li><strong>Cleanliness:</strong> drop duplicated sources, non-single-star solutions, and anything flagged as a
+          quasar or galaxy candidate.</li>
+      </ul>
+      <p>
+        The mask retains roughly <strong>31% of the catalogue — 557 million stars</strong> whose positions, distances
+        and colours can be trusted. This is the step that makes everything downstream scientifically defensible rather
+        than just visually plausible.
+      </p>
+
+      <p class="subsection-title">Spatial indexing with HEALPix</p>
+      <p>
+        Rather than compute a spatial index, I derive it for free from <code>source_id</code>:
+        <code>healpix_12 = source_id / 2^35</code> gives the level-12 pixel, and
+        <code>healpix_2 = healpix_12 / 4^10</code> rolls it up to <strong>HEALPix level 2 — 192 equal-area sky
+        sectors</strong>. HEALPix (Hierarchical Equal-Area isoLatitude Pixelisation) tiles the celestial sphere into
+        nested, equal-area cells, so a coarse level-2 sector cleanly contains all of its finer children. I physically
+        <strong>partition the Parquet by <code>healpix_2</code></strong>, so any region-of-sky query reads only the
+        relevant shards.
+      </p>
+      <figure class="small-figure">
+        <img src="/img/galaxy/healpix.png" alt="HEALPix tessellation of the celestial sphere into equal-area pixels" />
+        <figcaption>Figure 1: HEALPix tiles the sky into nested, equal-area pixels. Gaia's source_id encodes each star's level-12 pixel, which I roll up to 192 level-2 sectors used as the partition / cluster key.</figcaption>
+      </figure>
+
+      <p class="subsection-title">Kinematic feature engineering</p>
+      <p>
+        For 3D rendering and time projection I convert each star from celestial coordinates into a Cartesian state. A
+        unit direction vector <strong>(x, y, z)</strong> comes from <code>ra</code>/<code>dec</code>; the physical
+        distance comes from the parallax (<code>distance_pc = 1000 / parallax</code> in milliarcseconds, then
+        <code>distance_ly = distance_pc × 3.26156</code>); and a transverse-velocity vector <strong>(vx, vy, vz)</strong>
+        is derived from the proper motions <code>pmra</code> and <code>pmdec</code>. Stars with unreliable, near-zero
+        parallax (<code>&lt; 0.2 mas</code>) are parked at a 10,000-ly sentinel and excluded from analytics, so noisy
+        distances never reach the map.
+      </p>
+
+      <p class="subsection-title">Distance binning &amp; aligned partitioning</p>
+      <p>
+        Finally I bucket each star into a <strong>50-light-year shell</strong>
+        (<code>distance_bin = floor(distance_ly / 50) × 50</code>) and lay the data out by both keys —
+        <strong>sky sector (<code>healpix_2</code>) and distance shell (<code>distance_bin</code>)</strong>. This is a
+        deliberate choice: these are the exact two columns BigQuery later clusters on, so the on-disk physical layout and
+        the warehouse's pruning keys are aligned. A "show me this patch of sky between 200 and 400 ly" query touches a
+        small, contiguous slice instead of the whole galaxy.
+      </p>
+    </section>
+
+    <section class="content-section">
+      <h2>BigQuery: Sub-Second Queries at Low Cost</h2>
+      <p>
+        The processed catalogue lands in <strong>Google Cloud Storage</strong> as partitioned Parquet, exposed to
+        <strong>BigQuery</strong> as an external table over ~77 GB / 557 M rows. This is where the project's central
+        engineering problem lives — and the part I'm most proud of.
+      </p>
+
+      <p class="subsection-title">The clustered native table</p>
+      <p>
+        External BigQuery tables <strong>cannot be clustered</strong>, so every query against them full-scans all 77 GB.
+        The original design also used <code>ORDER BY RAND()</code> to sample stars — meaning each time a user moved the
+        distance slider, BigQuery scanned the entire 77 GB catalogue at roughly <strong>$0.38 per interaction</strong>
+        (on-demand pricing of $5/TB). That is unacceptable for an interactive app.
+      </p>
+      <p>
+        The fix is a one-time <strong>materialisation into a native, clustered, column-slimmed table</strong>. I pay the
+        full 77 GB scan exactly once to build it; from then on, every interactive query <strong>prunes by
+        <code>healpix_2</code> and <code>distance_bin</code></strong> and reads only the blocks in view:
+      </p>
+      <pre><code>CREATE OR REPLACE TABLE gaia_ly.stars_native
+CLUSTER BY healpix_2, distance_bin AS
+SELECT source_id, healpix_2, distance_bin, distance_ly,
+       x, y, z, vx, vy, vz,
+       phot_g_mean_mag, bp_rp, has_rvs
+FROM   gaia_ly.stars            -- external table over ~77 GB of Parquet in GCS
+WHERE  distance_ly &gt; 0;</code></pre>
+      <p>
+        The interactive <code>/stars</code> query then drops <code>ORDER BY RAND()</code> entirely and relies on cluster
+        pruning plus a <code>LIMIT</code>, so a sector-and-shell request reads a small fraction of the table instead of
+        all 77 GB. Every BigQuery job in the build is also wrapped in a <strong>free dry-run cost estimator</strong> that
+        prints bytes-scanned and a dollar figure before anything executes — cost is a first-class part of the workflow,
+        not an afterthought.
+      </p>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr><th>Workload</th><th>Naive approach</th><th>Engineered approach</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Interactive star fetch</td><td>external table, <code>ORDER BY RAND()</code> → full 77 GB scan (~$0.38) every interaction</td><td>native clustered table pruned by <code>(healpix_2, distance_bin)</code> + <code>LIMIT</code> → a small fraction of 77 GB</td></tr>
+            <tr><td>Stellar density map</td><td><code>GROUP BY</code> over 77 GB, on demand</td><td>precomputed <code>density_voxels</code> → kilobytes scanned</td></tr>
+            <tr><td>HR / colour–magnitude diagram</td><td><code>GROUP BY</code> over 77 GB, on demand</td><td>precomputed <code>hr_bins</code> → kilobytes scanned</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="subsection-title">Precomputed aggregate tables</p>
+      <p>
+        Analytics that don't need individual stars are pushed into tiny precomputed tables, so the app reads kilobytes
+        instead of re-scanning the catalogue:
+      </p>
+      <ul>
+        <li><strong><code>density_voxels</code></strong> — one row per <em>(sky sector × distance shell)</em>:
+          <code>COUNT(*)</code>, mean magnitude and colour, and a flux-weighted centroid
+          (<code>GROUP BY healpix_2, distance_bin</code>). This is the 3D stellar-density field the "Structure" page
+          renders — a whole galaxy's worth of structure in a few thousand rows.</li>
+        <li><strong><code>hr_bins</code></strong> — a 2D histogram of colour (<code>BP−RP</code>) against
+          <strong>absolute magnitude</strong>, computed in-warehouse via
+          <code>absmag = g − 5·log10(distance_pc) + 5</code> and binned to a 0.05 × 0.2 grid. It powers a live
+          Hertzsprung–Russell diagram in which the main sequence and giant branch emerge straight from the data.</li>
+      </ul>
+      <div class="highlight-box">
+        <p>
+          <strong>The core result:</strong> because external tables can't be clustered, the original design re-scanned
+          all 77 GB — about $0.38 — on <em>every</em> interaction. Materialising a native table
+          <code>CLUSTER BY healpix_2, distance_bin</code> turns each interaction into a pruned scan of just the sky
+          sectors and distance shells in view, and pushing the density map and HR diagram into precomputed aggregate
+          tables drops those workloads from 77 GB scans to kilobytes.
+        </p>
+      </div>
+    </section>
+
+    <section class="content-section">
+      <h2>Stellar Families — HDBSCAN in 6D</h2>
+      <p>
+        The "Families" page finds <strong>open clusters and co-moving groups</strong> — stars born together that still
+        drift through the galaxy as a pack — with no labels, straight from the data. I restrict to the solar
+        neighbourhood within <strong>600 light-years</strong>, where Gaia distances are most reliable and the classic
+        clusters live, and run <strong>HDBSCAN over the full 6D phase space</strong>: position (x, y, z) <em>and</em>
+        space velocity (vx, vy, vz).
+      </p>
+      <p>
+        The key insight is that a cluster is defined less by where its stars are than by <strong>how they move
+        together</strong>: members share a space velocity to within ~1 km/s while the surrounding field spreads over
+        ~40 km/s. So I standardise position and velocity separately, then <strong>up-weight velocity by 3.5×</strong>
+        so shared motion dominates the clustering. HDBSCAN runs with <code>cluster_selection_method="leaf"</code>, which
+        returns the many small, dense knots that are real clusters rather than collapsing them into one giant root blob.
+      </p>
+      <p>
+        A post-processing pass keeps only genuinely compact groups — rejecting any "cluster" whose positional RMS
+        exceeds 60 ly or that contains more than 8,000 members as diffuse field — and then <strong>auto-labels recovered
+        groups</strong> by matching their centroids against a reference list of famous clusters (Hyades, Pleiades / M45,
+        Praesepe / M44, Coma Berenices, the Ursa Major moving group, α Persei), with each known cluster naming only its
+        single nearest match. The output is two native tables — a per-group <code>cluster_catalog</code> and the member
+        <code>cluster_stars</code> — served to a clickable 3D catalogue in the frontend.
+      </p>
+    </section>
+
+    <section class="content-section">
+      <h2>Real-Time Kinematic Projection</h2>
+      <p>
+        Because every star carries a distance and a transverse-velocity vector, the explorer can project the sky to any
+        epoch — letting you scrub forward or backward through time and watch the solar neighbourhood shear. Each star's
+        position at year <em>t</em> is a first-order, constant-velocity propagation from Gaia's reference epoch
+        (J2016.0):
+      </p>
+      <p style="text-align:center; font-style:italic; margin:15px 0;">
+        position(t) = direction × distance + velocity × Δt,&nbsp;&nbsp;&nbsp; Δt = t − 2016
+      </p>
+      <p>
+        The transverse velocity is converted from proper motion in milliarcseconds-per-year into light-years-per-year by
+        scaling with each star's distance, and the <code>has_rvs</code> flag is carried through to mark the subset with
+        measured radial velocities. This propagation is done <strong>server-side</strong> in the API, so the browser
+        receives ready-to-render points and the projection scales to tens of thousands of stars without bogging down the
+        client.
+      </p>
+    </section>
 
     <section class="content-section">
       <h2>Full-Stack System Design</h2>
-
-      <p class="subsection-title">Backend (Cloud-Native API)</p>
+      <p class="subsection-title">Backend — cloud-native API</p>
       <p>
-        The backend is a containerized Python application built with FastAPI and deployed on Google Cloud
-        Run.
-        It pushes the heavy kinematics computation to the BigQuery layer, generating parameterized SQL
-        to ensure both security and performance. The service is stateless, allowing for seamless horizontal
-        scaling.
+        The backend is a containerised <strong>FastAPI</strong> service exposing four endpoints —
+        <code>/stars</code>, <code>/density</code>, <code>/hr</code>, <code>/clusters</code> — each mapping to one of the
+        engineered tables. Queries are built with <strong>parameterised <code>ScalarQueryParameter</code>s</strong> (SQL-injection-safe),
+        and the star sampler uses a <strong>density-adaptive <code>LIMIT</code></strong> — more points for wide
+        distance ranges, fewer per sector — to keep payloads bounded. Crucially, the service
+        <strong>degrades gracefully</strong>: if BigQuery or a precomputed table is unavailable, each endpoint falls
+        back to synthetic mock data, so the UI always renders and local development needs no GCP credentials at all.
       </p>
-
-      <p class="subsection-title">Frontend (GPU-Accelerated Rendering)</p>
+      <p class="subsection-title">Frontend — GPU-accelerated rendering</p>
       <p>
-        The frontend utilizes <strong>React Three Fiber</strong> to manage a WebGL-based visualization.
-        By using a single optimized <code>BufferGeometry</code> particle system, the application maintains
-        a buttery-smooth <strong>60 FPS</strong> while rendering tens of thousands of stars.
-        Stars are dynamically color-coded by magnitude and include interactive hover states for real-time
-        inspection.
+        The frontend is a <strong>React + React Three Fiber</strong> (Three.js / WebGL) app built with Vite. Tens of
+        thousands of stars are drawn as a single optimised <code>BufferGeometry</code> particle system, holding a smooth
+        <strong>60 FPS</strong>, colour-coded by magnitude, with hover inspection. Two pages sit on the same data layer:
+        <strong>Structure</strong> (the 3D density field plus the live HR diagram) and <strong>Families</strong> (the
+        HDBSCAN clusters in 3D with a clickable catalogue).
       </p>
-    </section>
-
-
-    <section class="content-section">
       <div class="image-grid grid-2">
         <figure>
-          <img src="/img/galaxy/galaxy_load.png" alt="Galaxy Explorer UI" />
-          <figcaption>Figure 1a: Parameterized Query Interface.</figcaption>
+          <img src="/img/galaxy/galaxy_load.png" alt="Galaxy Explorer query interface" />
+          <figcaption>Figure 2a: Parameterised query interface — choose a distance range, sky sector and epoch.</figcaption>
         </figure>
         <figure>
-          <img src="/img/galaxy/all17kly.png" alt="Galaxy Explorer 3D Output" />
-          <figcaption>Figure 1b: GPU-Rendered 3D Star Field.</figcaption>
+          <img src="/img/galaxy/all17kly.png" alt="GPU-rendered 3D star field spanning ~17,000 light-years" />
+          <figcaption>Figure 2b: GPU-rendered 3D star field, the solar neighbourhood out to ~17,000 ly.</figcaption>
         </figure>
       </div>
-
+      <p class="subsection-title">Deployment</p>
       <p>
-        The resulting system allows for a fully interactive exploration of our cosmic neighborhood,
-        bridging the gap between professional astrophysical data and high-performance web visualization.
+        Production is a <strong>single Docker container on Google Cloud Run</strong>: the built React bundle is served by
+        FastAPI from the same origin as the API, so there is no CORS hop and one stateless service scales horizontally to
+        zero. The same image runs locally with a <code>MOCK_DATA</code> flag for credential-free frontend development.
       </p>
     </section>
 
-    <!-- ===================== NIGHT SKY SECOND (UNCHANGED CONTENT) ===================== -->
+    <section class="content-section">
+      <h2>Engineering Challenges Solved</h2>
+      <ul>
+        <li><strong>1.8 billion rows on one machine:</strong> the raw catalogue can't be loaded whole. Solved with a
+          shard-at-a-time Polars pipeline in columnar, Zstandard-compressed Parquet — memory stays flat regardless of
+          catalogue size.</li>
+        <li><strong>External tables can't be clustered:</strong> a 77 GB full scan (~$0.38) on every interaction is a
+          non-starter. Solved by materialising a native table <code>CLUSTER BY healpix_2, distance_bin</code> so
+          interactive queries prune to the blocks in view.</li>
+        <li><strong>Re-aggregating the galaxy per request:</strong> density maps and HR diagrams don't need raw stars.
+          Solved by precomputing <code>density_voxels</code> and <code>hr_bins</code>, turning 77 GB <code>GROUP BY</code>s
+          into kilobyte reads.</li>
+        <li><strong>Zero-cost spatial indexing:</strong> instead of an expensive spatial join, I exploit the HEALPix
+          pixel baked into Gaia's <code>source_id</code> and align the on-disk partitioning with the warehouse cluster
+          keys.</li>
+        <li><strong>Clusters vs. the field:</strong> naive density clustering returns one giant blob. Solved with 6D
+          phase-space features, velocity up-weighting, HDBSCAN leaf selection, and a compactness post-filter that
+          rejects the diffuse field.</li>
+        <li><strong>Resilient serving:</strong> a missing table shouldn't break the app. Solved with per-endpoint mock
+          fallbacks, so the UI renders and the project is demoable with no cloud at all.</li>
+      </ul>
+    </section>
+
+    <!-- ===================== NIGHT SKY VIEWER (planetarium) ===================== -->
 
     <section class="content-section">
-      <h2>Night Sky Explorer</h2>
+      <h2>Night Sky Viewer</h2>
       <p>
-        The Night Sky Explorer offers users an accurate, real-time view of the night sky based on their
-        geographic
-        location (latitude and longitude), viewing direction (with north at 0°), and angle above the
-        horizon. It
-        visualizes precise star positions using filtered data limited to those visible to the naked eye. To
-        account
-        for varying light pollution, the app includes a brightness filter based on stellar magnitude—ranging
-        from 6.5
-        (dark rural skies) to 2 (bright urban skies). While it doesn’t simulate atmospheric conditions like
-        clouds, it
-        provides a clear and interactive experience of how the night sky appears from any point in Earth
-        under different
-        visibility conditions.
+        The second application built on the same Gaia pipeline is a scientifically accurate
+        <strong>planetarium</strong>. From your latitude, longitude and a draggable time slider, it renders the real sky
+        as a dome (stereographic) projection — true star colours, constellations, the Sun, Moon and naked-eye planets,
+        the Milky Way band, and day/night twilight shading. Its star field is the <strong>naked-eye-visible slice of the
+        processed Gaia catalogue</strong> (magnitude ≤ 6.5), cross-matched with the HYG database for proper names and
+        Bayer designations and d3-celestial for constellation lines and the Milky Way outline.
+      </p>
+      <p>
+        The astronomy is real, not decorative. A dedicated <code>skyview</code> package converts equatorial RA/Dec to
+        horizontal altitude/azimuth with vectorised NumPy via local sidereal time, applies a Bennett
+        <strong>atmospheric-refraction</strong> term near the horizon, and propagates each star's position from the
+        J2016.0 epoch using its Gaia proper motion. Sun, Moon and planet positions, the Moon's illuminated phase and the
+        twilight state come from <strong>astropy</strong> with bundled ephemerides and IERS tables, so the deployed app
+        needs <strong>no network at runtime</strong>. Star colours are physical: a colour index is mapped to an
+        effective temperature (Ballesteros relation), then to an sRGB blackbody tint — hot stars blue-white, Sun-like
+        stars yellow, cool stars orange-red.
       </p>
       <div class="project-demo-container">
         <a href="https://nightsky.streamlit.app" class="project-demo-btn" target="_blank">
-          <span class="btn-text">Launch Night Sky Explorer</span>
+          <span class="btn-text">Launch Night Sky Viewer</span>
           <span class="btn-icon">🚀</span>
         </a>
       </div>
-    </section>
-
-    <section class="content-section">
       <div class="image-grid grid-2">
         <figure>
-          <img src="/img/galaxy/stars_ui.png" alt="Night Sky Explorer UI" />
-          <figcaption>Figure 2a: Night Sky Explorer UI.</figcaption>
+          <img src="/img/galaxy/stars_ui.png" alt="Night Sky Viewer controls" />
+          <figcaption>Figure 3a: Location, time and magnitude controls.</figcaption>
         </figure>
         <figure>
-          <img src="/img/galaxy/stars_op.png" alt="Night Sky Explorer Output" />
-          <figcaption>Figure 2b: Night Sky Explorer Output.</figcaption>
+          <img src="/img/galaxy/stars_op.png" alt="Night Sky Viewer dome projection output" />
+          <figcaption>Figure 3b: The dome projection — constellations, planets and the Milky Way for a given place and time.</figcaption>
         </figure>
       </div>
       <p>
-        The first image showcases the user interface of the Night Sky Explorer application, designed for
-        intuitive
-        control over viewing parameters. The second image displays the interactive star map, which
-        dynamically renders
-        the night sky based on user inputs such as location, direction, and viewing angle.
+        A magnitude slider (6.5 for dark rural skies down to ~2 for bright urban skies) lets you simulate light
+        pollution, city presets and one-tap GPS set your location, and a time-lapse "play" mode advances the clock so you
+        can watch the whole sky rotate.
+      </p>
+    </section>
+
+    <section class="content-section">
+      <h2>Tech Stack</h2>
+      <ul>
+        <li><strong>Data engineering:</strong> Polars (larger-than-memory, shard-at-a-time processing), NumPy,
+          Zstandard-compressed Parquet, HEALPix spatial indexing.</li>
+        <li><strong>Warehouse:</strong> Google BigQuery (external tables, native clustered tables, precomputed
+          aggregates, dry-run cost estimation), Google Cloud Storage data lake.</li>
+        <li><strong>Machine learning:</strong> HDBSCAN 6D phase-space clustering, scikit-learn (<code>StandardScaler</code>).</li>
+        <li><strong>Backend:</strong> FastAPI, Uvicorn, Pydantic, the BigQuery Python client with parameterised queries.</li>
+        <li><strong>Frontend:</strong> React, React Three Fiber, Three.js (WebGL), Vite, Axios.</li>
+        <li><strong>Planetarium:</strong> Streamlit, astropy (ephemerides, sidereal time, refraction), NumPy; HYG and
+          d3-celestial overlays; SIMBAD / Hipparcos / Tycho-2 cross-matching for names.</li>
+        <li><strong>Infrastructure:</strong> Docker, Google Cloud Run (single-container deploy), graceful mock-data
+          fallback for credential-free local dev.</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h2>Outcomes &amp; Impact</h2>
+      <ul>
+        <li>Engineered a <strong>750+ GB, ~1.8-billion-source, 157-column</strong> raw Gaia DR3 catalogue down to a
+          clean, physically meaningful <strong>557 M-star, 13-column</strong> serving table — entirely on a single
+          machine.</li>
+        <li>Cut interactive query cost from a <strong>~77 GB / ~$0.38 full scan on every interaction</strong> to
+          cluster-pruned reads, and pushed density and HR analytics into precomputed tables scanned in
+          <strong>kilobytes</strong>.</li>
+        <li>Made <strong>557 M+ stars</strong> explorable in 3D at <strong>60 FPS</strong> in the browser, with
+          server-side epoch projection for travelling through time.</li>
+        <li>Recovered known open clusters and moving groups — Hyades, Pleiades, Praesepe, Coma Berenices and more —
+          <strong>unsupervised</strong>, via 6D HDBSCAN in position + velocity.</li>
+        <li>Shipped the whole system as a <strong>single Cloud Run container</strong> with resilient mock-data
+          fallbacks, plus a second app — a scientifically accurate Night Sky planetarium — on the same pipeline.</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h2>Conclusion</h2>
+      <p>
+        Galaxy Explorer is the project I point to when I want to show that I can take a genuinely large scientific
+        dataset and engineer it all the way to a fast, cheap, interactive product. It pairs the data engineer's
+        instincts — shrink the data, structure it around how it will be queried, and make the warehouse pay the big scan
+        only once — with the discipline to keep every number scientifically defensible and the cost of every query
+        visible. From 750 GB of raw astrometry to a 3D galaxy you can fly through in a browser, it's the clearest
+        demonstration of how I think about big data: not as something you scan, but as something you design.
       </p>
     </section>
