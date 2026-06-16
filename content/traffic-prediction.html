@@ -1,115 +1,267 @@
 <section class="content-section">
-            <h2>Overview</h2>
-            <p>This project forecasts traffic conditions and generates optimized travel routes
-                using a Random Forest Regressor for prediction and Dijkstra’s algorithm for route
-                planning. To improve accuracy, it incorporates real-time and historical traffic data,
-                along with roadblock and accident reports scraped from news websites using the Beautiful
-                Soup library. Interactive route visualizations are created with Folium.</p>
-        </section>
+      <h2>Overview</h2>
+      <p>
+        This project is a <strong>traffic-aware fleet routing system</strong> for San Francisco: given a single depot and
+        dozens of stops scattered across the city, it decides <em>which vehicle visits which stops, in what order</em>, so the
+        whole fleet finishes as fast as possible — while travel times bend in real time around predicted congestion and live road
+        incidents. It chains five stages into one pipeline: <strong>CalTrans sensor data</strong> is cleaned and modeled with a
+        <strong>Random Forest</strong> traffic forecaster, the forecast is turned into a congestion multiplier, real driving times are
+        pulled from the <strong>OSRM</strong> road-network engine, a <strong>Google OR-Tools</strong> constraint solver assigns and
+        sequences every stop across the fleet, and the result is drawn on an interactive <strong>Folium</strong> map using true
+        street geometry.
+      </p>
+      <p>
+        It began as a textbook exercise — predict traffic, then run Dijkstra's algorithm to find the shortest path between two
+        points on a hand-drawn twelve-node grid. I deliberately rebuilt it into something closer to a real operations problem:
+        the toy graph became the <strong>actual San Francisco street network</strong>, the single origin&ndash;destination query became a
+        <strong>multi-vehicle Vehicle Routing Problem (VRP)</strong> over <strong>50 stops and 8 vehicles</strong>, and the static edge
+        weights became a <strong>live cost matrix</strong> driven by machine-learning forecasts and news-scraped incident signals.
+      </p>
+    </section>
 
-        <section class="content-section">
-            <h2>Data Preprocessing</h2>
-            <p>The dataset used in this project was the <strong>CalTrans traffic dataset</strong> for the city of San Francisco. Key steps in preprocessing included:</p>
-            <ul>
-                <li>The raw data came as multiple text files — one per day — sampled every 5 minutes.</li>
-                <li><code>Regex</code> was used to extract relevant information and compile it into a <code>pandas</code> DataFrame.</li>
-                <li>Main columns included: <em>date</em>, <em>time</em>, <em>section</em>, <em>district</em>, <em>lane</em>, <em>flow</em>, and others.</li>
-                <li>A specific region within San Francisco was filtered for focused analysis.</li>
-                <li>Missing values were handled using a <strong>KNN imputer</strong>.</li>
-                <li>The final dataset consisted of <strong>315,359 entries</strong>, representing approximately 3 years of data.</li>
-            </ul>
-        </section>
+    <section class="content-section">
+      <h2>Problem and Goal</h2>
+      <p>
+        Finding the quickest route between two points is the easy version of the problem, and it is largely solved — any maps app
+        does it. The version that actually shows up in logistics, field service, and last-mile delivery is harder and more
+        interesting: a depot has to dispatch a <em>fleet</em> of vehicles to serve <em>many</em> stops, and "best" is no longer a
+        single shortest path but a <strong>set of balanced routes</strong> that minimize how long the <em>last</em> vehicle takes to get
+        home. On top of that, the road costs are not constant — they swell during rush hour and spike when an accident closes a
+        lane.
+      </p>
+      <p>
+        My goal was to build a system that answers that harder question end-to-end. Concretely, it had to (1) <strong>forecast</strong>
+        congestion from historical sensor data, (2) <strong>price that congestion</strong>, plus any live incidents, into a real
+        road-network travel-time matrix, and (3) <strong>solve the resulting VRP</strong> — assigning and ordering stops across multiple
+        vehicles while keeping their workloads balanced. The deliverable is not a notebook cell that prints a path; it is a
+        dispatch map a fleet operator could act on.
+      </p>
+    </section>
 
-        <section class="content-section">
-            <figure>
-                <img src="/img/traffic/dailytraffic.png" alt="Traffic sensor map of San Francisco" />
-                <figcaption>Figure 1: Daily traffic in San Francisco.</figcaption>
-            </figure>
-            <p>This image illustrates the daily traffic patterns in San Francisco. Dates highlighted in red represent
-                Sundays. The data reveals a consistent trend across all days: traffic volume increases in the morning,
-                peaks around midday, and gradually declines afterward — regardless of whether it’s a weekday or weekend.</p>
-        </section>
+    <section class="content-section">
+      <h2>The Dataset &amp; Preprocessing</h2>
+      <p>
+        The foundation is the <strong>CalTrans PeMS</strong> traffic dataset for San Francisco — loop-detector readings sampled at
+        <strong>5-minute intervals</strong>. The raw data arrives as a pile of plain-text files, one per day, so the first job was
+        turning that into something analyzable:
+      </p>
+      <ul>
+        <li>Each daily file was parsed with <code>regex</code> to extract the relevant fields and compiled into a single
+          <code>pandas</code> DataFrame.</li>
+        <li>Core columns included <em>date</em>, <em>time</em>, <em>section</em>, <em>district</em>, <em>lane</em>, and
+          <em>flow</em> (vehicles per interval).</li>
+        <li>A specific corridor within San Francisco was filtered out for focused, like-for-like analysis.</li>
+        <li>Missing detector readings — endemic to real sensor networks — were reconstructed with a <strong>KNN imputer</strong>
+          rather than dropped, preserving the temporal continuity the forecaster depends on.</li>
+        <li>The cleaned dataset held <strong>315,359 rows</strong>, roughly <strong>three years</strong> of five-minute observations.</li>
+      </ul>
+    </section>
 
-        <section class="content-section">
-            <figure>
-                <img src="/img/traffic/hourlytraffic.png" alt="Timeline of sensor activity" />
-                <figcaption>Figure 2: Hourly traffic on a particular day.</figcaption>
-            </figure>
-            <p>This image displays the hourly traffic volume across different lanes. The graph shows two distinct peaks —
-                one in the morning and another in the evening — reflecting typical commute times during standard
-                working hours.</p>
-        </section>
+    <section class="content-section">
+      <h2>Exploratory Data Analysis</h2>
+      <p>
+        Before modeling, I mapped the shape of the traffic to decide what features the model actually needed.
+      </p>
+      <figure>
+        <img src="/img/traffic/dailytraffic.png" alt="Daily traffic volume across San Francisco, with Sundays highlighted in red" />
+        <figcaption>Figure 1: Daily traffic in San Francisco — dates highlighted in red are Sundays.</figcaption>
+      </figure>
+      <p>
+        At the daily scale, a consistent shape emerges regardless of weekday or weekend: volume climbs through the morning, peaks
+        around midday, and tapers off afterward. The Sundays (in red) sit lower but follow the same arc — confirming that
+        <strong>day-of-week</strong> is a real signal, not noise.
+      </p>
+      <figure>
+        <img src="/img/traffic/hourlytraffic.png" alt="Hourly traffic volume across lanes for a single day" />
+        <figcaption>Figure 2: Hourly traffic across lanes on a single day.</figcaption>
+      </figure>
+      <p>
+        Zooming into a single day exposes the classic <strong>two-peak commuter signature</strong> — a morning rush and an evening
+        rush — which is invisible at the daily scale. Together these two views told me the model had to capture periodicity at
+        both the <em>hour</em> and <em>day-of-week</em> grain, which directly shaped the feature encoding below.
+      </p>
+    </section>
 
-        <section class="content-section">
-            <h2>Approach</h2>
-            <p>
-                We began by experimenting with <strong>ARIMA models</strong>, which are well-suited for capturing patterns in time series data. However, due to the high frequency and complexity of the dataset, even advanced ARIMA configurations struggled to accurately model the traffic trends.
-            </p>
-            <p>
-                As a result, we shifted to a <strong>machine learning-based approach</strong>. Temporal features such as <em>minute, hour, and day of the week</em> were extracted and included as model inputs to better capture periodic patterns.
-            </p>
-            <p>
-                We evaluated three primary models based on the nature of the data:
-            </p>
-            <ul>
-                <li><strong>Polynomial Regression</strong></li>
-                <li><strong>Ridge Regression</strong></li>
-                <li><strong>Random Forest Regressor</strong></li>
-            </ul>
-            <p>
-                Among these, the <strong>Random Forest Regressor</strong> outperformed the others, offering the best balance of accuracy and generalization for our traffic prediction task.
-            </p>
-        </section>
+    <section class="content-section">
+      <h2>Forecasting Traffic with Machine Learning</h2>
+      <p>
+        I started with <strong>ARIMA</strong>, the natural choice for time series. But the data is high-frequency and strongly
+        multi-periodic (daily <em>and</em> weekly cycles), and even carefully tuned ARIMA configurations couldn't track it
+        cleanly. So I reframed forecasting as a <strong>supervised regression</strong> problem and let the model learn the periodicity
+        from explicit temporal features.
+      </p>
+      <p>
+        Each observation was encoded as a <strong>43-dimensional one-hot vector</strong> over <em>day-of-week</em> (7),
+        <em>hour</em> (24), and <em>5-minute bucket</em> (12), then expanded with <code>PolynomialFeatures(2)</code> so the model
+        could learn interactions between, say, "Monday" and "8&nbsp;AM." I evaluated three models against that representation:
+      </p>
+      <ul>
+        <li><strong>Polynomial Regression</strong> — a fast, linear baseline over the expanded features.</li>
+        <li><strong>Ridge Regression</strong> — the same, regularized to curb the polynomial blow-up.</li>
+        <li><strong>Random Forest Regressor</strong> — a non-linear ensemble able to carve the feature space into regime-specific
+          rules.</li>
+      </ul>
+      <p>
+        The <strong>Random Forest</strong> won decisively, reaching an <strong>R&sup2; of &asymp;&nbsp;0.87</strong> on held-out data, and was
+        serialized to <code>rf.pkl</code> for reuse downstream.
+      </p>
+      <figure>
+        <img src="/img/traffic/prediction.png" alt="Random Forest predicted traffic versus actual traffic over time" />
+        <figcaption>Figure 3: Random Forest predictions (blue) tracking actual traffic flow (green) across the test window.</figcaption>
+      </figure>
+      <p>
+        The predictions track the real signal closely through the normal daily cycles. The model is most strained at the
+        <strong>extreme peaks</strong> — the rare spikes that likely correspond to special events or public holidays. I deliberately
+        <strong>kept those outliers</strong> rather than trimming them: they're real demand, and the honest next step is to feed the
+        model event-calendar features so it can learn them, not to delete the evidence that it can't yet.
+      </p>
+    </section>
 
-        <section class="content-section">
-            <figure>
-                <img src="/img/traffic/prediction.png" alt="Timeline of sensor activity" />
-                <figcaption>Figure 3: Random Forest regressor prediction.</figcaption>
-            </figure>
-            <p> As shown in the image, the predicted values closely align with the actual traffic data. While the model slightly
-                overfits in certain regions, it still struggles to predict extreme values accurately. These outliers were not removed,
-                as they may correspond to special events or public holidays in the city. In future iterations, we plan to include
-                such contextual factors as additional features to improve the model's performance. </p>
-        </section>
+    <section class="content-section">
+      <h2>Pricing Congestion into Travel Time</h2>
+      <p>
+        A forecast is only useful here if it changes a routing decision, so the model's output is converted into a
+        <strong>congestion multiplier</strong> that scales every travel time. The Random Forest predicts the expected flow for the
+        target time, that flow is normalized against a baseline (~150 vehicles) and floored at <code>1.0</code>, and the result
+        becomes a factor that <strong>inflates the whole cost matrix proportionally</strong> when traffic is forecast to be heavy.
+        Quiet periods leave costs untouched; a congested window stretches them across the board.
+      </p>
+      <p>
+        A second, independent signal captures the things a historical model can't see — today's accidents, protests, and lane
+        closures. I pull live San Francisco coverage from the <strong>NewsAPI</strong> and scrape local news with
+        <strong>BeautifulSoup</strong>, filtering descriptions for incident keywords (<code>accident</code>, <code>protest</code>,
+        <code>lane close</code>). When an active incident is detected, an <strong>incident multiplier of 1.3&times;</strong> is layered on
+        top of the congestion factor. The two multipliers compose cleanly: a base driving time becomes
+        <code>base &times; congestion &times; incident</code>, so the optimizer routes around both <em>predicted</em> and
+        <em>breaking</em> slowdowns. Both fetchers fail safe — if an API is unreachable, the multiplier defaults to
+        <code>1.0</code> and routing continues on the unscaled network rather than crashing.
+      </p>
+    </section>
 
-        <section class="content-section">
-            <h2>Web Scraping</h2>
-            <p>
-                To account for external factors that could impact traffic patterns — such as city events, road closures,
-                or accidents — we utilized information from local news websites. Using the Python library <code>BeautifulSoup</code>,
-                we performed web scraping to extract relevant updates that could serve as contextual features in our model.
-            </p>
-        </section>
+    <section class="content-section">
+      <h2>A Real Road Network with OSRM</h2>
+      <p>
+        The original prototype routed over a <strong>hand-built twelve-node grid</strong> (a stylized slice of SoMa, with edges
+        weighted by vehicle count over lane count). That's fine for a demo and useless for a city. The rebuild swaps it for the
+        <strong>actual road network</strong> via <strong>OSRM</strong> (the Open Source Routing Machine).
+      </p>
+      <p>
+        I scatter <strong>50 locations</strong> across a San Francisco bounding box — one depot near City Hall plus 49 stops generated
+        from a <strong>fixed random seed</strong> for reproducibility — and call OSRM's <code>table</code> service to retrieve a full
+        <strong>50&times;50 driving-time matrix</strong> (<strong>2,500 origin&ndash;destination pairs</strong>) of <em>real</em> street-level
+        durations. Those base durations are then multiplied by the congestion and incident factors from the previous stage to
+        produce the live cost matrix the solver consumes. For visualization, OSRM's <code>route</code> service returns the
+        <strong>true polyline geometry</strong> between stops, so the rendered routes follow real streets instead of straight lines.
+      </p>
+    </section>
 
-        <section class="content-section">
-            <h2>Maps</h2>
-            <p>
-                We integrated the model predictions and event data from web scraping into a weighted graph network, where edge weights reflect traffic conditions. This network allows us to compute the most efficient routes across the city.
-            </p>
-            <p>
-                For pathfinding, we initially implemented <strong>Dijkstra’s algorithm</strong>. While effective, it can become computationally expensive for larger graphs — in such cases, <strong>A* search</strong> serves as a more scalable alternative.
-            </p>
-            <p>
-                To accurately compute distances between geographic points, we used the <strong>Haversine formula</strong>, which accounts for the Earth's curvature based on latitude and longitude.
-            </p>
-            <p>
-                The final output is visualized using <strong>Folium maps</strong>, displaying the predicted shortest path between two selected locations.
-            </p>
-        </section>
+    <section class="content-section">
+      <h2>Fleet Optimization with Google OR-Tools</h2>
+      <p>
+        With a real, congestion-aware cost matrix in hand, the core problem becomes a <strong>Vehicle Routing Problem</strong>:
+        partition 50 stops among <strong>8 vehicles</strong>, each starting and ending at the depot, to minimize total cost. The VRP is
+        <strong>NP-hard</strong> — there is no brute-forcing the assignment-and-ordering of 50 stops — so I model and solve it with
+        <strong>Google OR-Tools</strong>' constraint-programming routing engine.
+      </p>
+      <ul>
+        <li><strong>Model:</strong> a <code>RoutingIndexManager</code> and <code>RoutingModel</code> over the 50-node matrix, with the
+          scaled OSRM durations registered as the arc-cost callback for all vehicles.</li>
+        <li><strong>Search:</strong> a <code>PATH_CHEAPEST_ARC</code> first-solution heuristic builds an initial set of routes, then a
+          guided local-search metaheuristic improves it within a bounded <strong>10-second solve budget</strong> — trading optimality
+          for a fast, good-enough answer, exactly the tradeoff real dispatch systems make.</li>
+        <li><strong>Balancing:</strong> the objective isn't just total drive time. A <code>Time</code> dimension tracks each route's
+          cumulative duration, and a <strong>global span cost coefficient of 100</strong> heavily penalizes the <em>longest</em> single
+          route. That pushes OR-Tools to <strong>balance the eight vehicles into comparable workloads</strong> — minimizing the fleet's
+          <em>makespan</em> — instead of dumping most stops on one truck and sending the rest home empty.</li>
+      </ul>
+      <p>
+        Optimizing for makespan rather than raw mileage is the operationally meaningful choice: a depot cares when the
+        <em>last</em> vehicle finishes, because that's when the run is done.
+      </p>
+    </section>
 
-        <section class="content-section">
-            <figure>
-                <img src="/img/traffic/traffic_map.png" alt="Traffic sensor map of San Francisco" />
-                <figcaption>Figure 4: Predicted Route.</figcaption>
-            </figure>
-        </section>
+    <section class="content-section">
+      <h2>Visualizing the Fleet</h2>
+      <p>
+        The solver's output is rendered as an interactive <strong>Folium</strong> map. The depot is marked at the center; each of the
+        8 vehicles gets its own color; its stops are dropped as numbered markers in visit order; and its route is drawn using the
+        <strong>real street geometry</strong> returned by OSRM — so what you see is a genuine, drivable dispatch plan, not a web of
+        straight lines.
+      </p>
+      <figure>
+        <img src="/img/traffic/fleet_routes.png" alt="Optimized fleet routes across San Francisco — eight color-coded vehicle routes from a central depot" />
+        <figcaption>Figure 4: The optimized fleet — 8 color-coded vehicle routes fanning out from the central depot across San
+          Francisco, each following real OSRM street geometry to its assigned, sequenced stops.</figcaption>
+      </figure>
+      <p>
+        The balanced spread is visible at a glance: routes reach into the Richmond, the Sunset, the Mission, SoMa, and Bayview
+        rather than piling onto one corridor — the makespan objective doing its job.
+      </p>
+    </section>
 
-        <section class="content-section">
-            <h2>Conclusion</h2>
-            <p>
-                This project provided valuable hands-on experience in preprocessing and modeling time series data,
-                as well as a deeper understanding of the challenges involved in making accurate predictions. It also
-                allowed me to explore and apply lesser-known Python libraries, contributing to a more comprehensive
-                and well-rounded solution.
-            </p>
-        </section>
+    <section class="content-section">
+      <h2>Engineering Challenges Solved</h2>
+      <ul>
+        <li><strong>Toy graph &rarr; real network:</strong> a hand-drawn twelve-node grid can't represent a city. Replaced it with
+          OSRM's real driving-time matrix and true street geometry over 50 live locations.</li>
+        <li><strong>Static weights &rarr; living costs:</strong> fixed edge weights ignore reality. Fused an ML congestion forecast and
+          a news-scraped incident signal into multiplicative factors so the cost matrix breathes with predicted and breaking
+          conditions.</li>
+        <li><strong>One route &rarr; a whole fleet:</strong> single-pair Dijkstra doesn't scale to dispatch. Reformulated the task as an
+          NP-hard VRP and solved it with OR-Tools' constraint solver under a bounded time budget.</li>
+        <li><strong>Lopsided routes &rarr; balanced workloads:</strong> minimizing total mileage tends to overload one vehicle. Added a
+          global span cost coefficient so the solver minimizes the fleet's makespan and distributes work evenly.</li>
+        <li><strong>Brittle external calls &rarr; graceful degradation:</strong> the pipeline depends on third-party APIs (OSRM,
+          NewsAPI). Wrapped the live fetchers so failures default to a neutral <code>1.0</code> multiplier and routing proceeds
+          instead of crashing.</li>
+        <li><strong>Forecasting periodic, multi-cycle traffic:</strong> ARIMA stalled on the daily-and-weekly seasonality; an explicit
+          one-hot temporal encoding plus a Random Forest captured it at an R&sup2; of ~0.87.</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h2>Tech Stack</h2>
+      <ul>
+        <li><strong>Data &amp; ML:</strong> Python, pandas, NumPy, scikit-learn (<code>RandomForestRegressor</code>,
+          <code>PolynomialFeatures</code>, train/test split), joblib for model persistence.</li>
+        <li><strong>Optimization:</strong> Google OR-Tools constraint-programming routing solver (VRP modeling, span-balancing
+          objective, guided local search).</li>
+        <li><strong>Geospatial &amp; Routing:</strong> OSRM (driving-time matrix + route geometry), <code>polyline</code> decoding,
+          Folium for interactive maps, geopy / Nominatim and the Haversine formula for geocoding in the original prototype.</li>
+        <li><strong>Live Signals:</strong> NewsAPI and BeautifulSoup web scraping over the <code>requests</code> stack for incident
+          detection.</li>
+        <li><strong>Analysis &amp; Visualization:</strong> Matplotlib and Seaborn for EDA, developed across Jupyter notebooks
+          (ETL, EDA, ML, and the final routing application).</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h2>Outcomes &amp; Impact</h2>
+      <ul>
+        <li>Built a complete, traffic-aware <strong>fleet routing system</strong> end-to-end — from raw sensor data and a forecasting
+          model through real-network routing and constrained optimization to an interactive dispatch map.</li>
+        <li>Processed <strong>315,359 rows (~3 years)</strong> of 5-minute CalTrans sensor data and trained a Random Forest traffic
+          forecaster reaching <strong>R&sup2; &asymp; 0.87</strong> on held-out data.</li>
+        <li>Scaled the problem from a single shortest-path query on a 12-node toy graph to a <strong>50-stop, 8-vehicle VRP</strong>
+          solved over a real <strong>50&times;50 (2,500-pair) OSRM travel-time matrix</strong>.</li>
+        <li>Made routing <strong>condition-aware</strong> by fusing an ML congestion multiplier with a <strong>1.3&times; live-incident
+          multiplier</strong> from NewsAPI and web scraping directly into the cost matrix.</li>
+        <li>Used a <strong>global span cost coefficient</strong> to minimize fleet makespan, producing <strong>balanced</strong> routes across
+          all 8 vehicles within a <strong>10-second OR-Tools solve budget</strong>.</li>
+        <li><strong>Key Metrics:</strong> <strong>315,359</strong> sensor rows modeled · <strong>R&sup2; &asymp; 0.87</strong> forecaster ·
+          <strong>50 stops / 8 vehicles / 1 depot</strong> · <strong>2,500</strong> origin&ndash;destination pairs · <strong>1.3&times;</strong> incident
+          weighting · <strong>10s</strong> makespan-balanced solve.</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h2>Conclusion</h2>
+      <p>
+        Traffic Prediction &amp; Fleet Routing is the project I point to when I want to show range across the full
+        <strong>data-to-decision stack</strong>: time-series cleaning and feature engineering, applied machine learning, real-world
+        geospatial data, and — the part most ML projects never reach — <strong>operations-research optimization</strong> that turns a
+        prediction into an actionable plan. Rebuilding it from a two-point shortest-path demo into a balanced multi-vehicle
+        routing system taught me the most valuable lesson in it: a good forecast is only half the job, and the harder, more
+        useful half is wiring that forecast into a decision a real operator can run.
+      </p>
+    </section>

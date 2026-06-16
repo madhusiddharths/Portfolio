@@ -231,10 +231,10 @@ export const PROJECTS: Project[] = [
     slug: "traffic-prediction",
     index: "11",
     name: "Traffic Prediction",
-    domain: "Forecasting · Routing",
+    domain: "Fleet routing · 50-stop VRP",
     summary:
-      "This project predicts traffic conditions and generates optimized travel routes using real-time, historical, and incident data for accurate and efficient navigation.",
-    tech: ["Python", "NumPy", "Jupyter", "scikit-learn", "Matplotlib"],
+      "A traffic-aware fleet routing system that forecasts congestion with a Random Forest, prices it into a real OSRM road network, and solves a 50-stop, 8-vehicle Vehicle Routing Problem with Google OR-Tools.",
+    tech: ["Python", "scikit-learn", "Pandas", "NumPy", "Matplotlib"],
     thumb: `${IMG}/sf.jpg`,
     repo: "https://github.com/madhusiddharths/Traffic-Prediction",
     hasCaseStudy: true,
