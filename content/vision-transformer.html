@@ -1,241 +1,304 @@
 <section class="content-section">
-            <h2>Overview</h2>
-            <p>This project provides an annotated implementation of the Vision Transformer (ViT) model based on the paper
-                "An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale" (Dosovitskiy et al., ICLR 2021).
-                While Convolutional Neural Networks (CNNs) have long dominated computer vision, this project explores how
-                Transformers—originally designed for NLP—can be applied directly to image sequences. We demonstrate the
-                implementation from the ground up and analyze its performance when trained from scratch on the CIFAR-10 dataset.</p>
-        </section>
+  <h2>Overview</h2>
+  <p>
+    This project is a <strong>from-scratch, annotated implementation</strong> of the Vision Transformer (ViT) from the
+    landmark paper <em>"An Image is Worth 16&times;16 Words: Transformers for Image Recognition at Scale"</em>
+    (Dosovitskiy et al., ICLR&nbsp;2021). Rather than calling a pre-built model, every component &mdash; patch embedding,
+    the learnable <code>[CLS]</code> token, positional embeddings, the pre-norm Transformer encoder, and the
+    classification head &mdash; is built in PyTorch and explained inline, in the spirit of Harvard NLP's
+    <em>"The Annotated Transformer."</em>
+  </p>
+  <p>
+    On top of faithfully reproducing the architecture, the project goes further in three ways: we train a miniaturised
+    ViT <strong>from scratch on CIFAR-10 to 72.9% test accuracy</strong> on a laptop GPU; we wrap the model in a single
+    config object that scales unchanged from our 0.8M-parameter mini model all the way up to the paper's
+    <strong>ViT-Base / Large / Huge</strong> (86M&ndash;632M parameters); and we implement a <strong>hybrid
+    CNN-Transformer</strong> variant that swaps raw-pixel patches for ResNet feature maps. It was built as a three-person
+    graduate course project (CS&nbsp;577, Illinois Tech); my own focus was the <strong>training loop, experiment
+    configuration, and hyperparameter tuning</strong>.
+  </p>
+</section>
 
-        <section class="content-section">
-            <h2>Background</h2>
-            <p>
-                For decades, CNNs like ResNet and VGG have been the standard for vision tasks due to their built-in inductive biases:
-            </p>
-            <ul style="margin-left: 1.5rem; margin-bottom: 1rem; list-style-type: disc;">
-                <li><strong>Locality:</strong> Convolutions operate on local neighborhoods of pixels.</li>
-                <li><strong>Translation Equivariance:</strong> Features detected in one location can be recognized elsewhere.</li>
-                <li><strong>Hierarchical Features:</strong> Stacking layers builds from edges to textures to objects.</li>
-            </ul>
-            <p>
-                However, the Transformer revolution in NLP (BERT, GPT) showed that massive datasets and self-attention mechanisms could outperform hand-crafted priors. The Vision Transformer paper made a simple but powerful observation: <strong>Treat image patches as tokens.</strong>
-            </p>
-            <p>
-                Key findings from the paper indicate that while ViT underperforms ResNets on small datasets (due to lack of inductive bias), it achieves state-of-the-art results when pre-trained on massive datasets (like JFT-300M), effectively <em>learning</em> the spatial relationships that CNNs have hard-coded.
-            </p>
-        </section>
+<section class="content-section">
+  <h2>Background: Why Transformers for Vision</h2>
+  <p>
+    For a decade, Convolutional Neural Networks (AlexNet, VGG, ResNet) dominated computer vision because they bake in
+    useful <strong>inductive biases</strong>: <strong>locality</strong> (convolutions act on local pixel neighbourhoods),
+    <strong>translation equivariance</strong> (a feature is recognised wherever it appears), and
+    <strong>hierarchical composition</strong> (edges &rarr; textures &rarr; parts &rarr; objects). Meanwhile, the
+    Transformer's self-attention reshaped NLP by modelling relationships between all positions at once and scaling
+    gracefully to billions of parameters.
+  </p>
+  <p>
+    ViT asks a deceptively simple question: <strong>can we apply a pure Transformer directly to images, with no
+    convolutional priors?</strong> Its answer is to <strong>treat image patches as tokens</strong> &mdash; split the
+    image into fixed-size patches, linearly embed each one, and feed the sequence to a standard Transformer encoder. The
+    paper's central finding is about <em>scale</em>: trained on modest data a ViT underperforms ResNets, but pre-trained
+    on enormous datasets (ImageNet-21k, or JFT-300M's 300M images) it reaches state-of-the-art &mdash; ViT-H/14 hits
+    88.55% on ImageNet using <strong>4&times; less pre-training compute</strong> than the prior best. With enough data,
+    learned attention beats hand-coded priors.
+  </p>
+</section>
 
-        <section class="content-section">
-            <h2>Model Architecture </h2>
-            <p>The ViT architecture consists of several specific components designed to map image data into a sequence format compatible with standard Transformers.</p>
-        </section>
-
-        <section class="content-section">
-            <figure>
-                <img src="/img/vision_transformer/entire_architecture.jpeg" alt="Vision Transformer Architecture" />
-                <figcaption>
-                    Figure 1: The Vision Transformer workflow. Image patches are linearly embedded, prepended with a class token, and processed by a Transformer encoder.
-                </figcaption>
-            </figure>
-        </section>
-
-        <section class="content-section">
-            <h3>1. Patch Embedding</h3>
-            <p>The first step converts an image into a sequence. We split the image into fixed-size patches and project them to an embedding dimension. In our implementation, we use a <code>Conv2d</code> layer with kernel size and stride equal to the patch size to perform this extraction and projection simultaneously.</p>
-
-            <div class="code-container">
+<section class="content-section">
+  <h2>Architecture: Patches as Tokens</h2>
+  <p>
+    The model maps an image of shape <code>(B, C, H, W)</code> into a token sequence and runs it through the encoder:
+    patch-embed to <code>(B, N, D)</code>, prepend the <code>[CLS]</code> token to get <code>(B, N+1, D)</code>, add
+    positional embeddings, pass through <code>L</code> encoder layers, then project the final <code>[CLS]</code>
+    representation to class logits.
+  </p>
+  <figure>
+    <img src="/img/vision_transformer/entire_architecture.jpeg" alt="Vision Transformer architecture: image split into patches, linearly embedded, combined with a class token and position embeddings, processed by a Transformer encoder and classification head" />
+    <figcaption>Figure 1: The end-to-end ViT workflow &mdash; patches are linearly embedded, a learnable [CLS] token is prepended, position embeddings are added, and the sequence is processed by the Transformer encoder before the [CLS] token is classified. Diagram adapted from Dosovitskiy et al. (2021).</figcaption>
+  </figure>
+  <h3>1. Patch Embedding</h3>
+  <p>
+    The first step turns an image into a sequence. A neat implementation trick collapses two operations into one: a
+    single <code>Conv2d</code> with <strong>kernel size = stride = patch size</strong> extracts each non-overlapping
+    patch <em>and</em> projects it to the embedding dimension simultaneously.
+  </p>
+  <div class="code-container">
     <pre><code>class PatchEmbedding(nn.Module):
-def __init__(self, in_channels=3, embed_dim=768, patch_size=16):
-    super().__init__()
-    self.proj = nn.Conv2d(in_channels, embed_dim,
-                          kernel_size=patch_size, stride=patch_size)
+    """(B, C, H, W) -> (B, N, D), where N = (H/P) * (W/P)."""
+    def __init__(self, in_channels=3, embed_dim=768, patch_size=16):
+        super().__init__()
+        self.patch_size = patch_size
+        # kernel = stride = patch_size: extract AND project in one op
+        self.proj = nn.Conv2d(in_channels, embed_dim,
+                              kernel_size=patch_size, stride=patch_size)
 
-def forward(self, x):
-    x = self.proj(x)       # (B, Embed, H/P, W/P)
-    x = x.flatten(2)       # (B, Embed, N)
-    x = x.transpose(1, 2)  # (B, N, Embed)
-    return x</code></pre>
-            </div>
+    def forward(self, x):
+        x = self.proj(x)       # (B, D, H/P, W/P)
+        x = x.flatten(2)       # (B, D, N)
+        return x.transpose(1, 2)  # (B, N, D)</code></pre>
+  </div>
+  <h3>2. Class Token and Positional Embedding</h3>
+  <p>
+    Following BERT, a learnable <strong>[CLS] token</strong> is prepended to the patch sequence; its final state
+    aggregates whole-image information for classification. Because attention is permutation-equivariant, we add
+    <strong>learnable 1D positional embeddings</strong> to restore spatial order. Our implementation also supports
+    <strong>bicubic interpolation</strong> of those embeddings, so a model trained at one resolution can be evaluated at
+    another &mdash; exactly the mechanism the paper uses for fine-tuning at higher resolution.
+  </p>
+</section>
 
-            <h3>2. Class Token & Position Embedding</h3>
-            <p>Following BERT, ViT prepends a learnable <strong>[CLS] token</strong> to the patch embeddings. This token aggregates information from the entire sequence via self-attention. Additionally, since Transformers have no inherent notion of order, learnable <strong>1D position embeddings</strong> are added to the sequence to retain spatial information.</p>
-
-            <div class="code-container">
-    <pre><code>class ClassToken(nn.Module):
-def __init__(self, embed_dim):
-    super().__init__()
-    self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dim))
-
-def forward(self, x):
-    B = x.shape[0]
-    cls_tokens = self.cls_token.expand(B, -1, -1)
-    return torch.cat((cls_tokens, x), dim=1)</code></pre>
-            </div>
-
-            <h3>3. Transformer Encoder</h3>
-            <p>The core is a standard Transformer encoder using a <strong>Pre-Norm</strong> architecture...</p>
-
-            <figure class="small-figure">
-                <img src="/img/vision_transformer/transformer_encoder.jpg" alt="Transformer Encoder Block" />
-                <figcaption>
-                    Figure 2: Encoder block with Residuals.
-                </figcaption>
-            </figure>
-
-            <div class="code-container">
+<section class="content-section">
+  <h2>The Transformer Encoder</h2>
+  <p>
+    The core is a standard Transformer encoder built in the <strong>pre-norm</strong> style: LayerNorm is applied
+    <em>before</em> each sub-layer, multi-head self-attention and a GELU MLP each sit inside a residual connection, and a
+    final LayerNorm closes the stack. Pre-norm keeps gradients well-behaved and makes deep stacks train stably.
+  </p>
+  <figure class="small-figure">
+    <img src="/img/vision_transformer/transformer_encoder.jpg" alt="Transformer encoder block with layer normalization, multi-head self-attention, an MLP, and residual connections" />
+    <figcaption>Figure 2: A single pre-norm encoder block &mdash; LayerNorm &rarr; Multi-Head Self-Attention &rarr; residual, then LayerNorm &rarr; MLP &rarr; residual. Diagram adapted from Dosovitskiy et al. (2021).</figcaption>
+  </figure>
+  <div class="code-container">
     <pre><code>class TransformerEncoderBlock(nn.Module):
-def __init__(self, embed_dim, num_heads, mlp_ratio=4, dropout=0.0):
-    super().__init__()
-    self.ln1 = nn.LayerNorm(embed_dim)
-    self.attn = nn.MultiheadAttention(embed_dim, num_heads,
-                                      dropout=dropout, batch_first=True)
-    self.ln2 = nn.LayerNorm(embed_dim)
+    """Pre-norm encoder block: LN -> MHSA -> residual, LN -> MLP -> residual."""
+    def __init__(self, embed_dim, num_heads, mlp_ratio=4, dropout=0.0):
+        super().__init__()
+        self.ln1 = nn.LayerNorm(embed_dim)
+        self.attn = nn.MultiheadAttention(embed_dim, num_heads,
+                                          dropout=dropout, batch_first=True)
+        self.ln2 = nn.LayerNorm(embed_dim)
+        hidden = int(embed_dim * mlp_ratio)
+        self.mlp = MLP(embed_dim, hidden, embed_dim, dropout)  # Linear-GELU-Linear
 
-    hidden_dim = int(embed_dim * mlp_ratio)
-    self.mlp = nn.Sequential(
-        nn.Linear(embed_dim, hidden_dim),
-        nn.GELU(),
-        nn.Dropout(dropout),
-        nn.Linear(hidden_dim, embed_dim),
-        nn.Dropout(dropout)
-    )
+    def forward(self, x):
+        x_norm = self.ln1(x)
+        attn_out, _ = self.attn(x_norm, x_norm, x_norm, need_weights=False)
+        x = x + attn_out                 # residual
+        return x + self.mlp(self.ln2(x)) # pre-norm + residual</code></pre>
+  </div>
+</section>
 
-def forward(self, x):
-    x_norm = self.ln1(x)
-    attn_out, _ = self.attn(x_norm, x_norm, x_norm)
-    x = x + attn_out  # Residual
+<section class="content-section">
+  <h2>A Config-Driven Model Family</h2>
+  <p>
+    The whole network is parameterised by a single <code>ViTConfig</code> dataclass, so <strong>one
+    <code>VisionTransformer</code> class scales across the entire ViT family</strong> by changing nothing but the config.
+    The same code path that runs our tiny CIFAR model instantiates the paper's full-scale variants from Table&nbsp;1.
+  </p>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr><th>Config</th><th>Layers</th><th>Hidden D</th><th>Heads</th><th>Patch</th><th>Params</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Mini-ViT (ours)</td><td>4</td><td>128</td><td>4</td><td>4</td><td>~0.8M</td></tr>
+        <tr><td>ViT-Base</td><td>12</td><td>768</td><td>12</td><td>16</td><td>86M</td></tr>
+        <tr><td>ViT-Large</td><td>24</td><td>1024</td><td>16</td><td>16</td><td>307M</td></tr>
+        <tr><td>ViT-Huge</td><td>32</td><td>1280</td><td>16</td><td>14</td><td>632M</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    The mini configuration deliberately shrinks the model to train on a laptop: 32&times;32 images, 4&times;4 patches (64
+    tokens), embedding dimension 128, 4 layers, and 4 heads &mdash; about <strong>809K parameters</strong>. We also swap
+    the paper's pre-training MLP head for a <strong>single linear layer</strong>: with only 10 CIFAR classes, the extra
+    head capacity would invite overfitting, so a linear projection acts as a structural regulariser.
+  </p>
+</section>
 
-    x_norm = self.ln2(x)
-    mlp_out = self.mlp(x_norm)
-    x = x + mlp_out   # Residual
-    return x</code></pre>
-            </div>
+<section class="content-section">
+  <h2>Going Beyond the Paper: A Hybrid CNN-Transformer</h2>
+  <p>
+    The ViT paper notes that patches don't have to come from raw pixels &mdash; they can come from a CNN's feature map.
+    We implemented this <strong>hybrid variant</strong>: a truncated <strong>ResNet-18</strong> backbone produces a
+    spatial feature map, which is flattened into a token sequence and projected to the embedding dimension, then fed to
+    the <em>same</em> encoder and head as the pure ViT. Because the rest of the model is modular, the swap is a single
+    embedding module &mdash; positional embeddings, encoder, and head are reused unchanged.
+  </p>
+  <div class="code-container">
+    <pre><code>class HybridEmbed(nn.Module):
+    """CNN feature map -> token sequence: (B, 3, H, W) -> (B, N, D)."""
+    def __init__(self, backbone, embed_dim):
+        super().__init__()
+        self.backbone = backbone               # truncated ResNet-18
+        with torch.no_grad():                  # infer feature-map shape once
+            feat = backbone(torch.zeros(1, 3, 224, 224))
+            self.num_patches = feat.shape[2] * feat.shape[3]
+        self.proj = nn.Linear(feat.shape[1], embed_dim)
 
-            <h3>4. Classification Head</h3>
-            <p>Finally, a classification head maps the [CLS] token's representation to the output classes. While the original paper uses an MLP during pre-training, we use a single linear layer for our CIFAR-10 model to act as a structural regularizer and prevent overfitting.</p>
-        </section>
+    def forward(self, x):
+        x = self.backbone(x)                   # (B, C, H', W')
+        x = x.flatten(2).transpose(1, 2)       # (B, N, C)
+        return self.proj(x)                    # (B, N, D)</code></pre>
+  </div>
+  <p>
+    This reintroduces convolutional locality at the front of the network &mdash; giving the Transformer a head start on
+    the spatial structure that pure ViT has to learn from scratch &mdash; and demonstrates the architecture's modularity
+    rather than just reproducing a fixed recipe.
+  </p>
+</section>
 
-        <section class="content-section">
-            <h2>Inference Pipeline</h2>
-            <p>Once trained, the inference process is straightforward. We implemented a pipeline that takes an image, processes it through the transformer, and outputs probabilities.</p>
-            <ol style="margin-left: 1.5rem; list-style-type: decimal;">
-                <li><strong>Input:</strong> Image tensor of shape (B, C, H, W).</li>
-                <li><strong>Patching:</strong> Image is split into patches and projected.</li>
-                <li><strong>Tokens:</strong> [CLS] token prepended; Position embeddings added.</li>
-                <li><strong>Encoder:</strong> Sequence passes through L layers of attention.</li>
-                <li><strong>Prediction:</strong> [CLS] token is extracted and projected to class logits.</li>
-            </ol>
+<section class="content-section">
+  <h2>Training Setup</h2>
+  <p>
+    The CIFAR-10 training pipeline mirrors the paper's recipe, adapted for small-scale compute:
+  </p>
+  <ul>
+    <li><strong>Optimiser:</strong> AdamW (weight decay 0.1) with a <strong>linear warmup then cosine decay</strong>
+      learning-rate schedule, base LR 3e-4.</li>
+    <li><strong>Regularisation:</strong> label smoothing (0.1), dropout in attention and MLP, and a single linear head.</li>
+    <li><strong>Augmentation:</strong> <code>RandomCrop(32, padding=4)</code> and horizontal flips, with per-channel
+      CIFAR normalisation.</li>
+    <li><strong>Schedule &amp; hardware:</strong> 20 epochs, batch size 64, a 90/10 train/val split, run on
+      <strong>Apple MPS</strong> (with CUDA / CPU fallbacks and early-stopping checkpointing on best validation accuracy).</li>
+  </ul>
+</section>
 
-            <div class="code-container">
-        <pre><code>@torch.no_grad()
-def predict(model, image, device):
-    model.eval()
-    image = image.to(device)
-    if image.dim() == 3: image = image.unsqueeze(0)
+<section class="content-section">
+  <h2>Results</h2>
+  <p>
+    Trained from scratch for 20 epochs, the 809K-parameter Mini-ViT reaches <strong>72.91% test accuracy</strong> on
+    CIFAR-10 (75.3% train / 72.5% validation at the final epoch). The loss curves converge smoothly and the train/val
+    accuracy lines track each other closely, separating only late in training &mdash; a <strong>modest ~3-point
+    generalisation gap</strong> rather than catastrophic overfitting, which is a respectable result for a pure
+    Transformer with no pre-training on a dataset this small.
+  </p>
+  <figure>
+    <img src="/img/vision_transformer/training_curves.png" alt="Training and validation cross-entropy loss and top-1 accuracy over 20 epochs, with a final test accuracy of 72.91 percent" />
+    <figcaption>Figure 3: Real training run (Mini-ViT, 809K params, Apple MPS). Loss converges smoothly; accuracy climbs to 75.3% train / 72.5% validation, with a final held-out <strong>test accuracy of 72.91%</strong>.</figcaption>
+  </figure>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr><th>Metric</th><th>Value</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Test accuracy</td><td>72.91%</td></tr>
+        <tr><td>Train / validation accuracy (final epoch)</td><td>75.3% / 72.5%</td></tr>
+        <tr><td>Total parameters</td><td>809,354</td></tr>
+        <tr><td>Epochs · batch size</td><td>20 · 64</td></tr>
+        <tr><td>Hardware</td><td>Apple MPS (laptop GPU)</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    Qualitatively, the model classifies most test images correctly, with its mistakes concentrated on the visually
+    similar pairs you'd expect &mdash; cats confused with dogs, automobiles with trucks.
+  </p>
+  <figure>
+    <img src="/img/vision_transformer/predictions.png" alt="Grid of eight CIFAR-10 test images with predicted versus true labels; seven correct, one cat misclassified as a dog" />
+    <figcaption>Figure 4: Sample predictions on held-out CIFAR-10 images (green = correct, red = wrong). Seven of eight are right; the single miss is a cat read as a dog &mdash; the classic fine-grained confusion.</figcaption>
+  </figure>
+</section>
 
-    logits = model(image)
-    probs = F.softmax(logits, dim=1)
-    pred_class = logits.argmax(dim=1)
+<section class="content-section">
+  <h2>Why Mini-ViT Underperforms CNNs on CIFAR-10</h2>
+  <p>
+    A well-tuned CNN clears ~90%+ on CIFAR-10, so ~73% is below a convolutional baseline. That gap is the whole point of
+    the experiment &mdash; it makes the paper's thesis tangible:
+  </p>
+  <ul>
+    <li><strong>No inductive biases:</strong> the ViT must <em>learn</em> locality and translation equivariance that
+      CNNs get for free, and 50K images isn't much to learn them from.</li>
+    <li><strong>Small dataset:</strong> the paper showed Transformers need upward of 14M images to match CNNs; CIFAR-10
+      is three orders of magnitude smaller.</li>
+    <li><strong>Low resolution:</strong> 32&times;32 images at 4&times;4 patches give just 64 tokens, limiting the
+      long-range context self-attention is designed to exploit.</li>
+    <li><strong>No pre-training:</strong> we train from scratch, whereas ViT's strength is transfer from large-scale
+      pre-training &mdash; the single biggest lever we deliberately left on the table.</li>
+  </ul>
+  <div class="highlight-box">
+    <p>
+      The takeaway isn't the absolute number &mdash; it's that a pure Transformer, implemented correctly from first
+      principles, <strong>does learn to see</strong>, and that its ceiling on small data is exactly the limitation the
+      paper predicts. The experiment reproduces the paper's <em>conclusion</em>, not just its code.
+    </p>
+  </div>
+</section>
 
-    return pred_class, probs</code></pre>
-            </div>
-        </section>
+<section class="content-section">
+  <h2>Discussion</h2>
+  <p><strong>Strengths of the ViT approach:</strong></p>
+  <ul>
+    <li><strong>Scalability:</strong> attention scales with data and compute far better than convolutions.</li>
+    <li><strong>Global receptive field:</strong> any patch can attend to any other from the very first layer.</li>
+    <li><strong>Architectural simplicity:</strong> a standard Transformer encoder with no vision-specific operators.</li>
+  </ul>
+  <p><strong>Weaknesses and limitations:</strong></p>
+  <ul>
+    <li><strong>Data hunger:</strong> needs large-scale pre-training to beat CNN baselines.</li>
+    <li><strong>Quadratic attention cost:</strong> <code>O(N&sup2;)</code> in the number of patches caps practical
+      resolution.</li>
+    <li><strong>Resolution coupling:</strong> positional embeddings are tied to a resolution (hence the interpolation
+      logic we implemented).</li>
+  </ul>
+  <p><strong>Where it goes next:</strong> data-efficient training recipes (DeiT), the hybrid CNN-Transformer we
+    prototyped, self-supervised pre-training (MAE, BEiT), and hierarchical/windowed attention (Swin) all directly target
+    the limitations this experiment surfaced.</p>
+</section>
 
-        <section class="content-section">
-            <h2>Experimental Setup (Mini-ViT)</h2>
-            <p>To demonstrate feasibility on consumer hardware (CPU/Laptop), we trained a miniaturized version of ViT on the CIFAR-10 dataset. The original ViT-Base is too large for this scale of data, so we adapted the architecture:</p>
+<section class="content-section">
+  <h2>Outcomes and Impact</h2>
+  <ul>
+    <li>Implemented the <strong>full Vision Transformer from scratch</strong> in PyTorch &mdash; patch embedding via a
+      Conv2d trick, learnable [CLS] token, interpolatable positional embeddings, a pre-norm encoder, and the
+      classification head &mdash; each annotated for clarity.</li>
+    <li>Designed a <strong>config-driven architecture</strong> where one model class spans Mini-ViT to ViT-Huge
+      (0.8M&ndash;632M parameters) by changing only a dataclass.</li>
+    <li>Built a <strong>hybrid CNN-Transformer</strong> extension with a truncated ResNet-18 backbone, reusing the
+      encoder and head unchanged.</li>
+    <li>Trained the Mini-ViT to <strong>72.91% CIFAR-10 test accuracy</strong> from scratch on a laptop GPU with a
+      tuned AdamW + warmup-cosine recipe, label smoothing, and augmentation &mdash; a modest ~3-point train/val gap.</li>
+    <li>Wrote up the implementation and analysis as a paper-style report, empirically <strong>reproducing the paper's
+      core finding</strong> that ViT's small-data ceiling stems from its lack of convolutional inductive bias.</li>
+  </ul>
+</section>
 
-            <div style="display: flex; gap: 2rem; flex-wrap: wrap; margin-bottom: 1rem;">
-                <div style="flex: 1;">
-                    <h4>Model Config</h4>
-                    <ul style="margin-left: 1.5rem; list-style-type: disc;">
-                        <li><strong>Image Size:</strong> 32x32 (vs 224)</li>
-                        <li><strong>Patch Size:</strong> 4x4 (64 patches)</li>
-                        <li><strong>Depth:</strong> 4 Layers</li>
-                        <li><strong>Embed Dim:</strong> 128</li>
-                        <li><strong>Heads:</strong> 4</li>
-                    </ul>
-                </div>
-                <div style="flex: 1;">
-                    <h4>Training Config</h4>
-                    <ul style="margin-left: 1.5rem; list-style-type: disc;">
-                        <li><strong>Epochs:</strong> 20</li>
-                        <li><strong>Optimizer:</strong> AdamW</li>
-                        <li><strong>Learning Rate:</strong> 3e-4</li>
-                        <li><strong>Schedule:</strong> Warmup + Cosine Decay</li>
-                        <li><strong>Augmentation:</strong> RandomCrop, Flip</li>
-                    </ul>
-                </div>
-            </div>
-
-            <div class="code-container">
-        <pre><code>def train_one_epoch(model, loader, criterion, optimizer, device):
-    model.train()
-    total_loss, correct, total = 0.0, 0, 0
-
-    for images, labels in loader:
-        images, labels = images.to(device), labels.to(device)
-        optimizer.zero_grad()
-
-        outputs = model(images)
-        loss = criterion(outputs, labels)
-
-        loss.backward()
-        optimizer.step()
-
-        total_loss += loss.item() * images.size(0)
-        correct += outputs.argmax(1).eq(labels).sum().item()
-        total += labels.size(0)
-
-    return total_loss / total, 100.0 * correct / total</code></pre>
-            </div>
-        </section>
-
-        <section class="content-section">
-            <h2>Results & Analysis</h2>
-
-            <div style="display: flex; justify-content: center; gap: 2rem; margin: 2rem 0; flex-wrap: wrap;">
-                <figure style="flex: 1; text-align: center; min-width: 300px;">
-                    <img src="/img/vision_transformer/training_curves.jpeg" alt="Training Curves" />
-                    <figcaption>
-                        Figure 3: Training/Validation Loss and Accuracy over 20 epochs.
-                    </figcaption>
-                </figure>
-            </div>
-
-            <p>
-                The training curves reveal a significant gap between Training Accuracy (<strong>80.23%</strong>) and Validation Accuracy (<strong>71.68%</strong>). This overfitting is expected and highlights the primary limitation of Vision Transformers: <strong>Data Hunger.</strong>
-            </p>
-
-            <figure>
-                <img src="/img/vision_transformer/model_predictions.jpeg" alt="Model Predictions" />
-                <figcaption>
-                    Figure 4: Sample predictions on CIFAR-10 test images.
-                </figcaption>
-            </figure>
-
-            <p><strong>Why does Mini-ViT underperform compared to CNNs on CIFAR-10?</strong></p>
-            <ul style="margin-left: 1.5rem; list-style-type: disc; margin-bottom: 1.5rem;">
-                <li><strong>Lack of Inductive Biases:</strong> CNNs inherently understand locality and translation. ViT must learn these spatial concepts from scratch, which is difficult with only 50k images.</li>
-                <li><strong>Low Resolution:</strong> At 32x32 resolution with 4x4 patches, the model only has 64 tokens to work with. This limits the "long-range" context that self-attention is designed to exploit.</li>
-                <li><strong>No Pre-training:</strong> ViT relies heavily on large-scale pre-training (ImageNet-21k, JFT-300M) to learn robust features. Training from scratch on a small dataset yields suboptimal results compared to Transfer Learning.</li>
-            </ul>
-        </section>
-
-        <section class="content-section">
-            <h2>Discussion</h2>
-            <p><strong>Strengths:</strong></p>
-            <ul style="margin-left: 1.5rem; list-style-type: disc;">
-                <li><strong>Scalability:</strong> ViT scales significantly better than CNNs as data and compute increase.</li>
-                <li><strong>Global Attention:</strong> Can capture relationships between distant parts of an image in the very first layer.</li>
-                <li><strong>Simplicity:</strong> Uses a standard Transformer encoder without complex vision-specific operators.</li>
-            </ul>
-
-            <p><strong>Weaknesses:</strong></p>
-            <ul style="margin-left: 1.5rem; list-style-type: disc;">
-                <li><strong>Quadratic Complexity:</strong> Attention costs grow quadratically with the number of patches, limiting high-resolution applications.</li>
-                <li><strong>Data Inefficiency:</strong> Requires massive datasets to beat CNN baselines.</li>
-            </ul>
-
-            <p><strong>Conclusion:</strong> This project successfully implemented a functional Vision Transformer from scratch. While the Mini-ViT did not break state-of-the-art records on CIFAR-10, it effectively demonstrated the mechanics of patch embedding, positional encoding, and self-attention in a computer vision context. Future work involves exploring data-efficient training recipes (like DeiT) or hybrid CNN-Transformer architectures.</p>
-        </section>
+<section class="content-section">
+  <h2>Conclusion</h2>
+  <p>
+    This project demonstrates that I can take a foundational deep-learning paper and rebuild it end-to-end &mdash; not
+    just wiring up a library call, but implementing every block, scaling it with a clean config abstraction, extending it
+    with a hybrid backbone, and then training and analysing it honestly. The Mini-ViT didn't break records on CIFAR-10,
+    and it wasn't meant to: it makes the mechanics of patch embedding, positional encoding, and self-attention concrete,
+    and it turns the paper's headline claim about data and inductive bias into a result you can see in the training
+    curves. That blend of <strong>faithful implementation, architectural curiosity, and honest evaluation</strong> is
+    exactly how I like to learn a hard idea deeply enough to build on it.
+  </p>
+</section>

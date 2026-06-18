@@ -194,10 +194,10 @@ export const PROJECTS: Project[] = [
     slug: "online-retail",
     index: "08",
     name: "Online Retail",
-    domain: "ETL · Cloud warehouse",
+    domain: "Analytics engineering · Cloud DW",
     summary:
-      "A high-performance ETL pipeline using Snowflake, Polars, and BigQuery to transform raw retail data into actionable business insights on a live Looker Studio dashboard.",
-    tech: ["GCP", "Snowflake", "Polars"],
+      "A dual-mode analytics pipeline that models ~540k retail transactions into a star schema with Polars, then answers real business questions — revenue trends, RFM segmentation, and cohort retention — surfaced on a live Looker Studio dashboard.",
+    tech: ["Python", "Polars", "Snowflake", "GCP", "SQL"],
     thumb: `${IMG}/online_retail.png`,
     repo: "https://github.com/madhusiddharths/Online_retail",
     hasCaseStudy: true,
@@ -206,10 +206,10 @@ export const PROJECTS: Project[] = [
     slug: "vision-transformer",
     index: "09",
     name: "Vision Transformer",
-    domain: "Deep learning · ViT",
+    domain: "Deep learning · Transformers",
     summary:
-      "An annotated PyTorch implementation of the Vision Transformer (ViT), training a miniature model on CIFAR-10 to demonstrate patch-based image classification.",
-    tech: ["PyTorch", "Matplotlib", "LaTeX"],
+      "A from-scratch PyTorch implementation of the Vision Transformer (ViT) — patch embedding, [CLS] token, pre-norm encoder — trained on CIFAR-10 to 72.9% test accuracy, plus a hybrid CNN-Transformer variant and the full ViT-Base/Large/Huge config family.",
+    tech: ["PyTorch", "Python", "Matplotlib", "LaTeX"],
     thumb: `${IMG}/vit.jpg`,
     repo: null,
     privateRepo: true,
@@ -267,13 +267,13 @@ export const PROJECTS: Project[] = [
     slug: "hotspot",
     index: "14",
     name: "Hotspot",
-    domain: "Geospatial · Risk modeling",
+    domain: "Geospatial health · Exposure modeling",
     summary:
-      "This dashboard monitors disease outbreaks across the state and uses recent travel history to estimate an individual's infection risk, offering timely and personalized health insights.",
-    tech: ["Python", "Pandas", "Plotly", "NumPy"],
+      "An interactive geospatial dashboard that maps weekly influenza activity across 56 Chicago ZIP codes and turns a user's own Google Timeline location history into a personalized, privacy-preserving exposure-risk estimate.",
+    tech: ["Python", "Streamlit", "Plotly", "Pandas", "GeoPandas"],
     thumb: `${IMG}/hotspot.png`,
     repo: "https://github.com/madhusiddharths/hotspot",
-    hasCaseStudy: false,
+    hasCaseStudy: true,
   },
   {
     slug: "image-classifier",
@@ -300,7 +300,7 @@ export const METRICS = [
   { value: 557, suffix: "M+", label: "Gaia DR3 stars rendered" },
   { value: 20, suffix: "M+", label: "e-commerce events processed" },
   { value: 20, prefix: "~", suffix: "K", label: "tweets classified & studied" },
-  { value: 12, suffix: "", label: "in-depth case studies" },
+  { value: 13, suffix: "", label: "in-depth case studies" },
 ];
 
 /* ---- capability matrix (skills) — same items as before, re-categorized ---- */

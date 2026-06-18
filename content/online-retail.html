@@ -1,113 +1,315 @@
+<!-- Live Dashboard Button -->
 <div class="project-demo-container">
-                <a href="https://lookerstudio.google.com/reporting/ec4c8755-2932-417a-be4d-14d03c93b6a6"
-                    class="project-demo-btn" target="_blank">
-                    <span class="btn-text">View Live Dashboard</span>
-                    <span class="btn-icon">🚀</span>
-                </a>
-            </div>
+  <a href="https://lookerstudio.google.com/reporting/ec4c8755-2932-417a-be4d-14d03c93b6a6"
+    class="project-demo-btn" target="_blank">
+    <span class="btn-text">View Live Dashboard</span>
+    <span class="btn-icon">🚀</span>
+  </a>
+</div>
 
-            <section class="content-section">
-                <h2>Overview</h2>
-                <p>
-                    This project implements a high-performance ETL (Extract, Transform, Load) pipeline designed to
-                    process
-                    large-scale online retail data. The system extracts raw transaction logs from
-                    <strong>Snowflake</strong>,
-                    processes them using <strong>Polars</strong> for high-speed in-memory transformation, and loads the
-                    cleaned data into
-                    <strong>Google BigQuery</strong>. The final output powers an interactive <strong>Looker
-                        Studio</strong> dashboard
-                    that tracks critical KPIs such as total revenue, order volume, and customer retention. This
-                    architecture ensures
-                    data consistency, scalability, and near real-time analytics readiness.
-                </p>
-            </section>
+<section class="content-section">
+  <h2>Overview</h2>
+  <p>
+    Online Retail is an <strong>end-to-end analytics project</strong> built on the UCI Online Retail dataset &mdash;
+    roughly <strong>540,000 transactions</strong> from a UK-based online gift retailer between December 2010 and
+    December 2011. It does two things deliberately: it <strong>engineers</strong> messy raw transaction logs into a
+    clean <strong>star schema</strong>, and then it <strong>answers concrete business questions</strong> on top of that
+    schema &mdash; revenue trends, geographic concentration, return rates, <strong>RFM customer segmentation</strong>,
+    and <strong>cohort retention</strong> &mdash; all the way through to a live Looker Studio dashboard.
+  </p>
+  <p>
+    What makes it more than a notebook is that the same pipeline runs <strong>two ways from one codebase</strong>. An
+    <strong>offline mode</strong> (the default) goes raw CSV &rarr; star schema &rarr; local Parquet &rarr; analysis,
+    with <strong>zero cloud credentials required</strong>, so anyone can clone the repo and reproduce every number. A
+    <strong>cloud mode</strong> swaps the endpoints for the real warehouse stack: extract from
+    <strong>Snowflake</strong>, transform in <strong>Polars</strong>, and load into <strong>Google BigQuery</strong>
+    (partitioned and clustered) feeding Looker Studio reporting views. The transform in the middle is identical &mdash;
+    only the source and sink change.
+  </p>
+</section>
 
-            <section class="content-section">
-                <h2>Data Extraction & Architecture</h2>
-                <p>
-                    The pipeline begins by establishing a secure connection to a Snowflake data warehouse using a custom
-                    python client.
-                    Raw data—containing invoicing details, stock codes, and customer information—is fetched and
-                    immediately converted
-                    into <strong>Polars DataFrames</strong>. This choice of technology is crucial; Polars offers
-                    multithreaded query execution,
-                    making it significantly faster than traditional Pandas workflows for the heavy lifting required in
-                    the transformation phase.
-                </p>
-            </section>
+<section class="content-section">
+  <h2>The Dataset and the Questions</h2>
+  <p>
+    The raw data is a single flat table of invoice line items: an invoice number, stock code, description, quantity,
+    unit price, timestamp, customer ID, and country. It is famously messy &mdash; cancellations encoded as negative
+    quantities, ~135k rows with no customer ID, the same product spelled several different ways, and non-product
+    "service" lines (postage, bank charges, manual adjustments) mixed in with real sales. Turning that into trustworthy
+    analytics is most of the work.
+  </p>
+  <p>
+    The project is organised around the questions a real merchandising or growth team would actually ask:
+  </p>
+  <ul>
+    <li><strong>How much money are we really making?</strong> Gross vs. net revenue, average order value, and how much
+      comes back as returns.</li>
+    <li><strong>Where does revenue concentrate?</strong> By month (seasonality) and by country (geographic risk).</li>
+    <li><strong>Which products carry the business</strong> &mdash; and which ones get returned?</li>
+    <li><strong>Who are our customers?</strong> RFM segmentation into Champions, Loyal, At&nbsp;Risk, Hibernating, and
+      more.</li>
+    <li><strong>Do customers come back?</strong> Monthly cohort retention over the following year.</li>
+  </ul>
+</section>
 
-            <section class="content-section">
-                <h2>Transformation: The Star Schema</h2>
-                <p>
-                    To optimize the data for analytical querying, the raw dataset is transformed into a <strong>Star
-                        Schema</strong> model
-                    within the <code>clean_data.py</code> module. This process involves:
-                </p>
-                <ul>
-                    <li><strong>Data Cleaning:</strong> Standardizing timestamps, casting types (Int64/Float64), and
-                        handling null values for customer integrity.</li>
-                    <li><strong>Logic Segregation:</strong> Splitting the raw stream into two distinct Fact tables:
-                        <code>fact_sales</code> (completed transactions) and <code>fact_returns</code> (cancellations
-                        and refunds).</li>
-                    <li><strong>Dimensional Modeling:</strong> creating distinct Dimension tables:
-                        <ul>
-                            <li><code>dim_products</code>: Unique stock codes and descriptions.</li>
-                            <li><code>dim_customers</code>: Customer IDs and country mapping.</li>
-                            <li><code>dim_date</code>: A comprehensive date dimension breaking down invoices by year,
-                                month, day, and week.</li>
-                        </ul>
-                    </li>
-                </ul>
-                </p>
-            </section>
+<section class="content-section">
+  <h2>Architecture &mdash; A Dual-Mode Pipeline</h2>
+  <p>
+    The orchestrator (<code>run_pipeline.py</code>) exposes a simple CLI &mdash; <code>--source {csv|snowflake}</code>
+    and <code>--sink {local|bigquery}</code> &mdash; so the source and destination are pluggable while the
+    transformation in between never changes. This is the key design decision: the cleaning logic is a
+    <strong>pure function</strong> over Polars DataFrames, completely decoupled from where the bytes come from or go.
+  </p>
+  <div class="code-container">
+    <pre><code># Offline: no credentials, fully reproducible
+python run_pipeline.py                                   # CSV -> star schema -> data/*.parquet
+python analysis.py                                       # -> insights.md + looker_exports/*.csv
 
-            <section class="content-section">
-                <h2>Cloud Integration (BigQuery)</h2>
-                <p>
-                    Once transformed, the pipeline utilizes the <code>google.cloud.bigquery</code> library to upload the
-                    datasets.
-                    The system employs a <strong>WRITE_TRUNCATE</strong> strategy, ensuring that the analytical tables
-                    in BigQuery
-                    always reflect the most up-to-date state of the transformed data without duplication. This seamless
-                    integration
-                    bridges the gap between raw python processing and enterprise-grade data warehousing.
-                </p>
-            </section>
+# Cloud: the production stack
+python run_pipeline.py --source snowflake --sink bigquery</code></pre>
+  </div>
+  <p>
+    Because the offline path needs no cloud account, the whole project is <strong>reproducible on a laptop</strong> and
+    the test suite runs without secrets &mdash; while the cloud path demonstrates the real
+    Snowflake&nbsp;&rarr;&nbsp;Polars&nbsp;&rarr;&nbsp;BigQuery&nbsp;&rarr;&nbsp;Looker architecture.
+  </p>
+</section>
 
-            <section class="content-section">
-                <h2>Dashboard & Insights</h2>
-                <p>
-                    The processed data feeds into a Looker Studio dashboard, providing a comprehensive view of business
-                    performance.
-                    Key metrics visualized include a <strong>Total Sales volume of 8.9M</strong> and <strong>18,532
-                        distinct orders</strong>.
-                    The dashboard features trend lines for revenue over time, comparative bar charts for customer
-                    lifetime value,
-                    and a breakdown of revenue per product.
-                </p>
-            </section>
+<section class="content-section">
+  <h2>Transformation &mdash; The Star Schema</h2>
+  <p>
+    The heart of the pipeline (<code>clean_data.py</code>) reshapes the flat invoice stream into a classic
+    <strong>star schema</strong> with <strong>surrogate keys</strong> on every dimension
+    (<code>PRODUCT_KEY</code>, <code>CUSTOMER_KEY</code>, <code>DATE_KEY</code>) referenced by the facts. I chose
+    <strong>Polars</strong> over pandas deliberately: its multithreaded, query-optimised execution chews through
+    half a million rows of casting, grouping, and joining far faster, and its strict typing surfaces dirty data
+    instead of silently coercing it.
+  </p>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr><th>Type</th><th>Table</th><th>Grain</th><th>Notes</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Fact</td><td><code>fact_sales</code></td><td>one sold line item</td><td><code>TOTAL_PRICE = QUANTITY &times; UNITPRICE</code></td></tr>
+        <tr><td>Fact</td><td><code>fact_returns</code></td><td>one returned line item</td><td>invoices starting <code>C</code> or negative quantity</td></tr>
+        <tr><td>Dim</td><td><code>dim_products</code></td><td>one row per <code>STOCKCODE</code></td><td>canonical description</td></tr>
+        <tr><td>Dim</td><td><code>dim_customers</code></td><td>one row per <code>CUSTOMERID</code></td><td>incl. guest bucket (<code>-1</code>)</td></tr>
+        <tr><td>Dim</td><td><code>dim_date</code></td><td>one row per calendar day</td><td><strong>continuous</strong> range, with quarter / weekday / weekend</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    Splitting sales and returns into two fact tables &mdash; rather than letting negative quantities lurk inside one
+    &mdash; means every downstream metric can choose gross, returns, or net explicitly, and return rate becomes a clean
+    join rather than a fragile filter.
+  </p>
+</section>
 
-            <section class="content-section">
-                <div class="image-grid grid-1">
-                    <figure>
-                        <img src="/img/online_retail/dashboard.png" alt="Retail Analytics Dashboard" />
-                        <figcaption>Figure 1: Full Retail Analytics Dashboard showing Sales, Returns, and Customer
-                            metrics.</figcaption>
-                    </figure>
-                </div>
-            </section>
+<section class="content-section">
+  <h2>Data-Quality Decisions That Defend the Numbers</h2>
+  <p>
+    The dataset's quirks are well known; the difference is that here <strong>each one is handled explicitly and covered
+    by a test</strong>, so the headline figures are defensible rather than accidental.
+  </p>
+  <ul>
+    <li><strong>Missing CustomerID (~135k rows)</strong> are <strong>bucketed to a guest customer (<code>-1</code>)</strong>,
+      not dropped &mdash; silently discarding them would erase roughly <strong>£1.5M of real revenue</strong> and break
+      reconciliation.</li>
+    <li><strong>Dimension grain is enforced.</strong> About <strong>650 stock codes</strong> carry multiple
+      descriptions and a few customers appear under several countries; dimensions collapse to one row per natural key
+      using the most-frequent value.</li>
+    <li><strong>Service and adjustment lines</strong> (<code>POST</code>, <code>DOT</code>, <code>M</code>,
+      <code>AMAZONFEE</code>, <code>BANK&nbsp;CHARGES</code>, gift cards&hellip;) are excluded from product facts via the
+      pattern <code>^\d{5}[A-Za-z]?$</code>, so product analytics never mix in postage or fees.</li>
+    <li><strong>Unparseable dates</strong> are counted and logged rather than silently nulled &mdash; data loss is
+      always visible, never hidden.</li>
+    <li><strong>Exact-duplicate rows</strong> are dropped by default (and logged), with a <code>--keep-duplicates</code>
+      flag that makes the choice explicit and reversible.</li>
+  </ul>
+  <div class="highlight-box">
+    <p>
+      The throughline: every transformation that removes or reshapes a row is <strong>logged, tested, or reversible</strong>.
+      That is what lets the dashboard claim <strong>£10.2M gross revenue</strong> with a straight face &mdash; the
+      number is traceable back to a documented decision at every step.
+    </p>
+  </div>
+</section>
 
-            <section class="content-section">
-                <h2>Conclusion</h2>
-                <p>
-                    Building this pipeline reinforced my expertise in modern <strong>Data Engineering</strong>
-                    practices.
-                    By integrating <strong>Snowflake</strong>, <strong>Polars</strong>, and <strong>BigQuery</strong>,
-                    I created a solution that is both robust and scalable. The project demonstrates the ability to take
-                    raw,
-                    unstructured logs and convert them into actionable business intelligence, highlighting proficiency
-                    in
-                    schema design, cloud infrastructure, and data visualization.
-                </p>
-            </section>
+<section class="content-section">
+  <h2>Cloud Integration &mdash; Snowflake to BigQuery</h2>
+  <p>
+    In cloud mode, raw transactions are seeded into Snowflake (<code>RAW_ONLINE_RETAIL</code>) and pulled out over
+    Snowflake's <strong>Arrow transport</strong> straight into Polars &mdash; no row-by-row cursor, just columnar
+    batches. After the identical star-schema transform, <code>load_bigquery.py</code> lands the tables in BigQuery using
+    a <strong>WRITE_TRUNCATE</strong> strategy, so the analytical tables always reflect the latest clean state with no
+    duplication on re-run.
+  </p>
+  <p>
+    The BigQuery tables are <strong>partitioned and clustered</strong> for cheap, fast reporting queries, and
+    authentication uses Application Default Credentials (<code>gcloud auth application-default login</code>). A small
+    <code>scripts/check_connections.py</code> verifies connectivity to either warehouse before a run, so failures are
+    caught at the door rather than mid-pipeline.
+  </p>
+</section>
+
+<section class="content-section">
+  <h2>Headline KPIs</h2>
+  <p>
+    With a trustworthy schema in place, the metrics fall out cleanly. Across the full year the business did
+    <strong>£10.23M in gross revenue</strong> over <strong>19,771 orders</strong>, with an
+    <strong>average order value of £517</strong>. Returns are material at <strong>4.6% of gross value</strong> &mdash;
+    enough that net revenue (£9.75M) should always be reported alongside gross, never buried.
+  </p>
+  <div class="highlight-box">
+    <p>
+      <strong>£10.23M</strong> gross revenue&nbsp;·&nbsp;<strong>£9.75M</strong> net after returns&nbsp;·&nbsp;<strong>19,771</strong>
+      orders&nbsp;·&nbsp;<strong>£517</strong> AOV&nbsp;·&nbsp;<strong>4.6%</strong> return rate&nbsp;·&nbsp;<strong>4,334</strong>
+      identified customers.
+    </p>
+  </div>
+  <figure>
+    <img src="/img/online_retail/revenue_by_month.png" alt="Line chart of monthly gross revenue showing a sharp pre-Christmas peak in November 2011" />
+    <figcaption>Figure 1: Monthly gross revenue. Sales climb through the autumn to a £1.45M peak in November 2011 &mdash; nearly double the £0.79M monthly average &mdash; as the retailer's gift catalogue hits the pre-Christmas run-up.</figcaption>
+  </figure>
+</section>
+
+<section class="content-section">
+  <h2>Where the Revenue Comes From</h2>
+  <p>
+    Two facts dominate the geography and the catalogue. First, the business is <strong>heavily UK-concentrated</strong>:
+    the United Kingdom alone is <strong>85% of gross revenue</strong> (£8.71M), with the Netherlands, EIRE, Germany, and
+    France trailing far behind &mdash; a real, quantified concentration risk a leadership team would want flagged.
+  </p>
+  <figure>
+    <img src="/img/online_retail/revenue_by_country.png" alt="Horizontal bar chart of revenue by country, with the United Kingdom dwarfing all others at 85 percent" />
+    <figcaption>Figure 2: Revenue by country. The UK dwarfs every other market &mdash; the top eight countries combined still don't approach it &mdash; making geographic diversification an obvious strategic lever.</figcaption>
+  </figure>
+  <p>
+    Second, revenue is spread across a long tail of decorative gift lines, led by the
+    <strong>Regency Cakestand 3 Tier</strong> (£174k) and a cluster of seasonal and homeware bestsellers:
+  </p>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr><th>Stock code</th><th>Description</th><th>Units</th><th>Revenue</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>22423</td><td>Regency Cakestand 3 Tier</td><td>13,851</td><td>£174,157</td></tr>
+        <tr><td>23843</td><td>Paper Craft, Little Birdie</td><td>80,995</td><td>£168,470</td></tr>
+        <tr><td>85123A</td><td>White Hanging Heart T-Light Holder</td><td>37,641</td><td>£104,463</td></tr>
+        <tr><td>47566</td><td>Party Bunting</td><td>18,283</td><td>£99,445</td></tr>
+        <tr><td>85099B</td><td>Jumbo Bag Red Retrospot</td><td>48,371</td><td>£94,160</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="content-section">
+  <h2>RFM Customer Segmentation</h2>
+  <p>
+    To turn 4,334 anonymous customer IDs into something actionable, <code>analysis.py</code> computes
+    <strong>Recency, Frequency, and Monetary</strong> scores per customer &mdash; quintile-scored with Polars'
+    <code>qcut</code>, recency reversed so recent buyers rank high &mdash; and maps the combined score onto named
+    business segments: <strong>Champions, Loyal, Recent&nbsp;/&nbsp;Promising, At&nbsp;Risk, Needs&nbsp;Attention</strong>,
+    and <strong>Hibernating&nbsp;/&nbsp;Lost</strong>.
+  </p>
+  <p>
+    The segmentation reveals the usual e-commerce shape: a large <strong>Recent&nbsp;/&nbsp;Promising</strong> cohort
+    (2,149 customers, £5.77M) that the business is still trying to convert into loyalty, a small but valuable
+    <strong>Champions</strong> core (459 customers), and an <strong>At&nbsp;Risk</strong> group worth targeted win-back
+    spend before they lapse entirely.
+  </p>
+  <figure>
+    <img src="/img/online_retail/rfm_segments.png" alt="Horizontal bar chart of revenue by RFM customer segment with customer counts labelled" />
+    <figcaption>Figure 3: RFM segments by revenue, annotated with each segment's customer count &mdash; the gap between population and revenue is exactly where retention and win-back budgets should be aimed.</figcaption>
+  </figure>
+</section>
+
+<section class="content-section">
+  <h2>Cohort Retention</h2>
+  <p>
+    The retention question gets a proper cohort treatment: customers are grouped by their <strong>first-purchase
+    month</strong>, then tracked across each subsequent month to measure what fraction return. The analysis is computed
+    entirely in Polars and exported in long format so Looker Studio can pivot it into a heatmap without any data
+    blending.
+  </p>
+  <figure>
+    <img src="/img/online_retail/cohort_retention.png" alt="Cohort retention heatmap: acquisition month on the y-axis, months since first order on the x-axis, retention percentage shaded per cell" />
+    <figcaption>Figure 4: Monthly cohort retention. Each row is an acquisition cohort; each cell is the share still ordering N months later. The Dec&nbsp;2010 cohort is the standout &mdash; it holds in the mid-30s for a year and surges back to 50% in month&nbsp;11 as those first-time gift buyers return for the next Christmas.</figcaption>
+  </figure>
+  <p>
+    That seasonal echo &mdash; first-Christmas buyers reactivating the following Christmas &mdash; is the kind of
+    insight that only a cohort view surfaces, and it directly informs when to spend on re-engagement.
+  </p>
+</section>
+
+<section class="content-section">
+  <h2>The Looker Studio Reporting Layer</h2>
+  <p>
+    The reporting layer is shaped so that <strong>every chart reads from a single, pre-aggregated source</strong> &mdash;
+    no Looker Studio data blending, which is slow and brittle. <code>analysis.py</code> writes four purpose-built export
+    tables, each of which connects to Looker either as a CSV upload (offline) or as a BigQuery <code>vw_*</code> view
+    (cloud), via <code>sql/reporting_views.sql</code>.
+  </p>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr><th>Source table</th><th>Powers</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>sales_obt</code></td><td>revenue scorecards, monthly trend, country geo map, top products</td></tr>
+        <tr><td><code>product_performance</code></td><td>return-rate table, units sold vs. returned</td></tr>
+        <tr><td><code>rfm_customers</code></td><td>segment bar / pie, RFM scatter, revenue per segment</td></tr>
+        <tr><td><code>cohort_retention</code></td><td>retention pivot / heatmap (cohort &times; month offset)</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <figure>
+    <img src="/img/online_retail/dashboard.png" alt="Full Looker Studio retail analytics dashboard showing sales, returns, and customer metrics" />
+    <figcaption>Figure 5: The live Looker Studio dashboard &mdash; revenue and order scorecards, the monthly trend, geographic breakdown, and product performance, all driven by the pre-aggregated export tables.</figcaption>
+  </figure>
+</section>
+
+<section class="content-section">
+  <h2>Testing and CI</h2>
+  <p>
+    Because the transform is a pure function over Polars DataFrames, the <strong>entire test suite runs with no
+    credentials</strong> &mdash; the cleaning logic is exercised directly against in-memory fixtures. GitHub Actions runs
+    <strong><code>ruff</code> linting and <code>pytest</code> on every push</strong>, so a regression in the grain
+    enforcement, the service-line filter, or the returns split fails the build instead of quietly corrupting a KPI
+    weeks later.
+  </p>
+</section>
+
+<section class="content-section">
+  <h2>Outcomes and Impact</h2>
+  <ul>
+    <li>Built a <strong>dual-mode analytics pipeline</strong> from one codebase &mdash; an offline, credential-free path
+      for reproducibility and a cloud Snowflake&nbsp;&rarr;&nbsp;Polars&nbsp;&rarr;&nbsp;BigQuery path for the real
+      stack.</li>
+    <li>Modelled <strong>~540k raw transactions</strong> into a tested star schema with surrogate keys, splitting sales
+      from returns so every metric can be reported gross, net, or as a return rate.</li>
+    <li>Made the numbers <strong>defensible</strong> through explicit, logged, and tested data-quality decisions &mdash;
+      guest bucketing alone preserves ~£1.5M of otherwise-lost revenue.</li>
+    <li>Delivered real analytics &mdash; <strong>RFM segmentation</strong> and <strong>monthly cohort retention</strong>
+      &mdash; not just descriptive totals.</li>
+    <li><strong>Key Metrics:</strong> surfaced <strong>£10.23M gross / £9.75M net revenue</strong> across
+      <strong>19,771 orders</strong> (£517 AOV, 4.6% return rate); quantified an <strong>85% UK revenue
+      concentration</strong> and a <strong>+84% pre-Christmas seasonal peak</strong> (£1.45M vs. £0.79M average); and
+      segmented <strong>4,334 customers</strong> across six RFM cohorts.</li>
+    <li>Shipped it all to a <strong>live Looker Studio dashboard</strong> with a blend-free reporting layer and
+      green CI on every push.</li>
+  </ul>
+</section>
+
+<section class="content-section">
+  <h2>Conclusion</h2>
+  <p>
+    Online Retail is the project I point to when I want to show that I think about data as a <strong>system, not a
+    notebook</strong> &mdash; one where the cleaning is decoupled and tested, the schema is modelled for analysis, every
+    questionable row is handled on purpose, and the output is a dashboard a stakeholder can actually trust. It pairs the
+    <strong>data engineer's discipline</strong> (a pure, tested transform behind a pluggable Snowflake/BigQuery
+    pipeline) with the <strong>analyst's instinct</strong> for the questions that move a business: where revenue
+    concentrates, who the best customers are, and whether they come back.
+  </p>
+</section>

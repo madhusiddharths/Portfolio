@@ -1,0 +1,255 @@
+<!-- Live Demo Button -->
+    <div class="project-demo-container">
+      <a href="https://madhusiddharths-hotspot-streamlit-app-ndfk0y.streamlit.app" class="project-demo-btn" target="_blank" rel="noopener noreferrer">
+        <span class="btn-text">Launch Live Dashboard</span>
+        <span class="btn-icon">🦠</span>
+      </a>
+    </div>
+
+    <section class="content-section">
+      <h2>Overview</h2>
+      <p>
+        Health Hotspot Tracker is an interactive <strong>geospatial surveillance dashboard</strong> that turns raw public-health
+        data into a live picture of where influenza is spreading across Chicago — and, uniquely, into a <strong>personalized
+        exposure-risk estimate</strong> computed from a user's own location history. It overlays weekly influenza-like-illness (ILI)
+        activity on a <strong>56-ZIP-code choropleth map</strong>, lets you click any neighborhood to drill into its metrics, and
+        moves through the entire <strong>2024 season — 36 weeks, 131,896 lab-tested cases</strong> — with a single slider.
+      </p>
+      <p>
+        The standout feature is the <strong>personal exposure model</strong>: upload a Google <em>Timeline</em> export and the app
+        reconstructs where you spent time, spatially joins each location to a Chicago ZIP code, weights it by how contact-heavy the
+        activity was, and multiplies it against that ZIP's real case rate to produce a contact-weighted probability of exposure —
+        all processed locally, with nothing ever uploaded. I built the entire system end-to-end: the data engineering across
+        <strong>five public datasets</strong>, the geospatial pipeline, the exposure model, and the deployed Streamlit front end.
+      </p>
+    </section>
+
+    <section class="content-section">
+      <h2>Problem and Goal</h2>
+      <p>
+        Public influenza surveillance is published, but it's nearly unusable for an individual. The numbers live in dense CSVs and
+        PDFs, they're reported at the city level, and they answer the question <em>"how bad is flu season overall?"</em> — not the
+        question a real person actually asks: <strong>"how much risk am I personally carrying around, given where I've been?"</strong>
+        A citywide case count tells you nothing about your own neighborhood, and nothing at all about the bus you took or the hours
+        you spent in a crowded building.
+      </p>
+      <p>
+        I set out to close that gap. The goal was a tool that does two things well: <strong>(1)</strong> make official surveillance
+        legible and explorable at the neighborhood level, so anyone can see where activity is concentrated this week; and
+        <strong>(2)</strong> translate that population-level signal into a <strong>personal, contact-aware risk estimate</strong> grounded
+        in the user's own movement — without ever sending their location data anywhere.
+      </p>
+    </section>
+
+    <section class="content-section">
+      <h2>The Geospatial Centerpiece</h2>
+      <p>
+        The heart of the dashboard is a ZIP-code choropleth of Chicago. Weekly ILI activity (a 1–10 intensity level) is rendered
+        across <strong>56 ZIP codes</strong> with a <code>YlOrRd</code> color scale, so the hardest-hit neighborhoods read instantly as
+        the deepest red. Behind it, <strong>112 individual ZIP-boundary GeoJSON files</strong> are merged into a single
+        <code>FeatureCollection</code> at load time and matched to the data on the <code>postal-code</code> property.
+      </p>
+      <figure>
+        <img src="/img/hotspot/choropleth.png" alt="Choropleth map of Chicago showing influenza-like-illness activity by ZIP code at the 2024 season peak" />
+        <figcaption>Figure 1: The dashboard's core view — weekly ILI activity across 56 Chicago ZIP codes at the season peak (MMWR week 2, Jan 7 2024). Darker ZIPs carry higher influenza activity; clicking any ZIP drives the metric panel and trend charts for that neighborhood.</figcaption>
+      </figure>
+      <p>
+        The map is fully interactive. <strong>Clicking a ZIP</strong> is wired through Plotly's selection events
+        (<code>on_select="rerun"</code>), which captures the clicked region and rebinds every downstream metric and chart to that
+        neighborhood. When the page first loads, the app doesn't pick an arbitrary default — it computes the
+        <strong>hardest-hit ZIP for the selected week</strong> (the <code>argmax</code> of ILI activity) and selects it automatically, so the
+        user lands on the most relevant area instead of a hardcoded one.
+      </p>
+    </section>
+
+    <section class="content-section">
+      <h2>Metric Cards &amp; Neighborhood Drill-Down</h2>
+      <p>
+        Alongside the map sits a panel of six live metric cards that recompute for whatever ZIP and week are selected, turning a
+        dense surveillance table into an at-a-glance briefing:
+      </p>
+      <ul>
+        <li><strong>ILI activity level</strong> for the selected ZIP (1–10).</li>
+        <li><strong>Cases vs. last week</strong> — a signed week-over-week percentage change, so the trend direction is immediate.</li>
+        <li><strong>Lab-tested cases</strong> citywide for the week.</li>
+        <li><strong>Most-affected age group</strong>, pulled from CDC age-stratified rates.</li>
+        <li><strong>Personal exposure probability</strong> for the week (the model described below).</li>
+        <li><strong>Percent of tests positive</strong>, the standard surveillance positivity signal.</li>
+      </ul>
+      <p>
+        A week selector lets the user scrub across the whole MMWR calendar, and every card, the map, and all four charts update in
+        lockstep — the entire dashboard is a single coherent view of one neighborhood, one week.
+      </p>
+    </section>
+
+    <section class="content-section">
+      <h2>The Differentiator — Personal Exposure Probability</h2>
+      <p>
+        Most outbreak dashboards stop at population statistics. This one goes a step further and answers a personal question. A user
+        can upload their own Google <em>Timeline</em> JSON — the location history Android phones record — and the app converts it into
+        a <strong>contact-weighted exposure probability</strong>. The pipeline is a real geospatial-ML problem solved end to end:
+      </p>
+      <ul>
+        <li><strong>Parsing:</strong> the Timeline export is flattened into a stream of timestamped events — activity records, Wi-Fi
+        scans, position fixes, and place visits — each carrying a latitude/longitude where available.</li>
+        <li><strong>Spatial join:</strong> using <strong>GeoPandas</strong> and <strong>Shapely</strong>, each coordinate is point-in-polygon
+        matched against the Chicago ZIP boundaries, then forward-filled between fixes so a continuous track of "which ZIP was I in"
+        is reconstructed from sparse GPS samples.</li>
+        <li><strong>Contact weighting:</strong> consecutive events are collapsed into dwell intervals, and each interval's risk is
+        accumulated as <code>time × activity_weight × local_case_rate</code>. The activity weights encode contact intensity —
+        <strong>crowded rail transit (5×)</strong> and stationary indoor time (2×) carry far more risk per minute than running or
+        cycling (0.5×).</li>
+        <li><strong>Local case rate:</strong> <code>local_case_rate</code> is that ZIP's weekly lab-tested cases divided by its
+        population (from 2021 Chicago counts), and surveillance is matched with a <strong>2-week reporting lag</strong> to align
+        exposure with when cases were actually detected.</li>
+        <li><strong>Probability mapping:</strong> the accumulated risk is squashed into a 0–100% probability with a saturating curve,
+        <code>1 − exp(−risk / 600)</code>, so risk grows quickly at first and then plateaus rather than running off to certainty.</li>
+      </ul>
+      <div class="highlight-box">
+        <p>
+          <strong>Privacy by design.</strong> Nothing a user uploads ever leaves their session — the Timeline file is parsed in
+          memory and discarded, no personal data is committed to the repo, and the default view runs on a small
+          <strong>synthetic sample timeline</strong> so the demo works out of the box without anyone's real location history.
+        </p>
+      </div>
+    </section>
+
+    <section class="content-section">
+      <h2>Seasonal &amp; Demographic Analytics</h2>
+      <p>
+        Below the map, four linked charts give the population-level context behind a single week's snapshot. The seasonal curve
+        traces every one of the <strong>36 weeks of the 2024 season</strong>, making the <strong>6,332-case January peak</strong> and the
+        long decline into summer immediately legible.
+      </p>
+      <figure>
+        <img src="/img/hotspot/season_curve.png" alt="Area chart of weekly citywide lab-tested influenza cases across the 2024 season, peaking in January" />
+        <figcaption>Figure 2: Citywide lab-tested influenza cases across the full 2024 season (36 weeks). The model surfaces the January peak of 6,332 weekly cases and the steady decline through spring and summer.</figcaption>
+      </figure>
+      <p>
+        A horizontal age-rate chart breaks the selected week down by demographic, drawn straight from <strong>CDC FluSurv-NET</strong>
+        hospitalization rates. The story it tells is the expected — and clinically important — one: severity is heavily skewed
+        toward the elderly, with the <strong>85+ group hospitalized at roughly 25 per 100,000</strong> at the peak.
+      </p>
+      <figure>
+        <img src="/img/hotspot/age_breakdown.png" alt="Horizontal bar chart of weekly influenza infection rate by age group, highest for the 85-plus group" />
+        <figcaption>Figure 3: Weekly influenza hospitalization rate by age group (CDC FluSurv-NET). Risk concentrates sharply in older age bands — the panel that powers the dashboard's "most-affected age" metric card.</figcaption>
+      </figure>
+      <p>
+        A fourth chart resolves the week's positive tests into <strong>influenza subtypes</strong> (H1N1, H3N2, Influenza B, and
+        unsubtyped A), so the dominant strain in circulation is visible at a glance — useful epidemiological context that mirrors
+        how public-health teams actually read a season.
+      </p>
+      <figure>
+        <img src="/img/hotspot/subtypes.png" alt="Bar chart of influenza subtype mix for the peak week, dominated by unsubtyped influenza A" />
+        <figcaption>Figure 4: Influenza subtype mix for the peak week — unsubtyped influenza A dominates the positive tests, with H1N1, H3N2, and Influenza B trailing.</figcaption>
+      </figure>
+    </section>
+
+    <section class="content-section">
+      <h2>Data Engineering</h2>
+      <p>
+        The dashboard fuses <strong>five independent public datasets</strong>, each with its own schema, grain, and quirks, into one
+        coherent view. All loading and shaping lives in a single <code>data_processing.py</code> module that acts as the project's
+        <strong>single source of truth</strong>, cleanly separated from the UI:
+      </p>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr><th>Dataset</th><th>Source</th><th>Role</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Weekly flu surveillance</td><td>Chicago Dept. of Public Health</td><td>Citywide cases, positivity, subtypes</td></tr>
+            <tr><td>ILI activity by ZIP</td><td>CDPH</td><td>Choropleth intensity (2,016 ZIP-weeks)</td></tr>
+            <tr><td>Age-stratified rates</td><td>CDC FluSurv-NET</td><td>Demographic breakdown</td></tr>
+            <tr><td>Population counts</td><td>Chicago (2021)</td><td>Per-ZIP denominators for case rates</td></tr>
+            <tr><td>ZIP boundaries</td><td>Public GeoJSON</td><td>Map geometry &amp; spatial joins</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Each loader does real cleanup rather than assuming tidy input: surveillance weeks are derived from the genuine
+        <code>MMWR_WEEK</code> field instead of a fabricated index; ZIP codes are filtered to Chicago's <code>60601–60661</code> range;
+        the population file's non-numeric aggregate rows (citywide totals) are coerced out without relying on hardcoded row indices;
+        and the 112 boundary files are merged and CRS-normalized to <code>EPSG:4326</code> for correct spatial joins. The result is a
+        dataset that <strong>actually agrees with itself</strong> across five sources reported on different calendars and geographies.
+      </p>
+    </section>
+
+    <section class="content-section">
+      <h2>Architecture &amp; Performance</h2>
+      <p>
+        The app is a single-page <strong>Streamlit</strong> application, <strong>migrated from an earlier multi-page Dash build</strong> — a
+        deliberate simplification that collapsed a multi-callback Dash app into one reactive script that's far easier to reason about
+        and deploy. The architecture keeps two concerns strictly apart: <code>data_processing.py</code> owns every dataset and the
+        exposure model, while <code>streamlit_app.py</code> is pure presentation, so the analytics can be tested and reused
+        independently of the UI.
+      </p>
+      <p>
+        Because loading five datasets and merging 112 GeoJSON files on every interaction would make the app crawl, the expensive
+        work is wrapped in <strong>Streamlit's <code>@st.cache_data</code></strong> — the full dashboard bundle is computed once and reused
+        across reruns, and an uploaded timeline is parsed once and cached against its bytes. Every map click, week change, and slider
+        move then re-renders instantly off the cached data. The whole thing is deployed on <strong>Streamlit Community Cloud</strong>
+        with a <code>Procfile</code> fallback for any host, and ships with a <code>pytest</code> smoke-test suite.
+      </p>
+    </section>
+
+    <section class="content-section">
+      <h2>Engineering Challenges Solved</h2>
+      <ul>
+        <li><strong>Reconciling five mismatched public datasets:</strong> surveillance (citywide, MMWR weeks), ILI activity (per-ZIP),
+        CDC rates (per age group), population (per ZIP, 2021), and geometry (112 files) all report on different grains. Built a
+        single data layer that normalizes calendars, filters to the right geography, and joins them into one consistent model.</li>
+        <li><strong>Sparse GPS → continuous ZIP track:</strong> a Timeline export has irregular, gappy location fixes. Solved with a
+        GeoPandas point-in-polygon spatial join plus forward-filling between fixes, reconstructing a continuous "which ZIP, when"
+        track from sparse samples while ignoring gaps longer than four hours as "device off."</li>
+        <li><strong>Turning movement into a defensible risk number:</strong> designed an interpretable exposure model that combines
+        dwell time, activity-specific contact weights, and real local case rates, then maps the result through a saturating
+        probability curve — every term is inspectable rather than a black box.</li>
+        <li><strong>Dash → Streamlit migration:</strong> rebuilt a multi-page, multi-callback Dash app as a single reactive Streamlit
+        script, removing callback-graph complexity while preserving full interactivity (click-to-select, scrubbing, live upload).</li>
+        <li><strong>Interaction latency:</strong> eliminated per-click recomputation of the five-dataset bundle and GeoJSON merge with
+        <code>@st.cache_data</code>, keeping every map click and slider move instant.</li>
+        <li><strong>Privacy with a working demo:</strong> kept all real location data out of the repo and processed uploads only in
+        memory, while shipping a synthetic sample timeline so the exposure feature still works for anyone on first load.</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h2>Tech Stack</h2>
+      <div class="tech-stack-container">
+        <div class="tech-category"><strong>Application &amp; UI</strong>Streamlit (single-page, cached), deployed on Streamlit Community Cloud with a Procfile fallback.</div>
+        <div class="tech-category"><strong>Visualization</strong>Plotly — interactive choropleth (Mapbox/Carto), line, area, and bar charts with click-to-select events.</div>
+        <div class="tech-category"><strong>Data</strong>pandas &amp; NumPy for loading, cleaning, and reshaping five public datasets into one model.</div>
+        <div class="tech-category"><strong>Geospatial</strong>GeoPandas &amp; Shapely for ZIP-boundary point-in-polygon spatial joins and CRS handling.</div>
+        <div class="tech-category"><strong>Engineering</strong>Separated data/UI layers, <code>@st.cache_data</code> performance caching, and a pytest smoke-test suite.</div>
+      </div>
+    </section>
+
+    <section class="content-section">
+      <h2>Outcomes &amp; Impact</h2>
+      <ul>
+        <li>Shipped a deployed, end-to-end geospatial health product — data engineering, spatial modeling, and an interactive front
+        end — designed and built solo.</li>
+        <li>Mapped <strong>weekly ILI activity across 56 Chicago ZIP codes</strong> over the full <strong>36-week 2024 season</strong>
+        (<strong>131,896 lab-tested cases</strong>), with click-to-drill-down on every neighborhood.</li>
+        <li>Fused <strong>five mismatched public datasets</strong> and merged <strong>112 ZIP-boundary GeoJSON files</strong> into one
+        self-consistent, reactive dashboard.</li>
+        <li>Built a privacy-preserving <strong>personal exposure model</strong> that converts a user's own Google Timeline into a
+        contact-weighted infection-risk probability via a GeoPandas spatial pipeline — entirely on-device, nothing uploaded.</li>
+        <li>Re-architected the project from a <strong>multi-page Dash app into a single cached Streamlit application</strong>, cutting
+        complexity while keeping interaction latency near-instant.</li>
+        <li><strong>Key figures:</strong> 56 ZIP codes · 36 surveillance weeks · 131,896 season cases · a 6,332-case January peak ·
+        112 GeoJSON boundaries · 5 fused datasets · ~2.8M residents covered.</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h2>Conclusion</h2>
+      <p>
+        Health Hotspot Tracker is the project I point to when I want to show that I can take messy, real-world public data and turn
+        it into something genuinely useful — not a notebook, but a deployed tool a person can open and act on. It pairs solid data
+        engineering across five sources with a real geospatial modeling problem and a privacy-first product decision, then wraps it
+        all in an interactive interface that stays fast. It's a compact demonstration of how I work: start from a real question,
+        respect the data and the user, and ship something that answers it.
+      </p>
+    </section>
