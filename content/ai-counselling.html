@@ -4,9 +4,9 @@
         AI-Counselling is a full-stack, production-grade multimodal AI companion that delivers empathetic mental-health
         support across <strong>text, voice, and video</strong>. I designed and built the entire system end-to-end: a Next.js 15 / React 19
         frontend authenticated via Clerk, a FastAPI inference backend running on Python 3.12, MongoDB Atlas for persistence,
-        and Google Cloud Storage for media. The backend orchestrates six distinct AI/ML components — Google Gemini 2.5 Flash
-        for generation, FAISS-backed DSM-5 retrieval, Wav2Vec2 ensemble speech-emotion recognition, DeepFace facial-emotion
-        analysis, Google Speech-to-Text, and Google Cloud Text-to-Speech — behind a single conversational interface.
+        and Google Cloud Storage for media. The system orchestrates six distinct AI/ML components — Google Gemini 2.5 Flash
+        for generation, FAISS-backed DSM-5 retrieval, Wav2Vec2 ensemble speech-emotion recognition, in-browser face-api.js
+        facial-emotion analysis, Google Speech-to-Text, and Google Cloud Text-to-Speech — behind a single conversational interface.
       </p>
       <p>
         Engineering-wise, the system is a <strong>real-time multimodal fusion pipeline</strong>: raw audio and video streams are
@@ -40,23 +40,31 @@
       <ul>
         <li><strong>Text:</strong> A streaming React chat UI calls <code>POST /respond</code>, which routes to a small-talk shortcut or a full RAG + memory + history prompt depending on intent.</li>
         <li><strong>Voice:</strong> A custom React hook records WebM audio in fixed-duration chunks and uploads them to GCS under per-user prefixes; the backend ingests recent chunks, runs tone analysis and STT, and returns a synthesized voice reply.</li>
-        <li><strong>Video:</strong> The browser captures camera + mic via the MediaRecorder API and uploads the WebM blob to FastAPI, which performs frame-sampled facial-emotion detection alongside the voice pipeline for full multimodal fusion.</li>
+        <li><strong>Video:</strong> The browser captures camera + mic, runs facial-emotion detection entirely on-device with face-api.js at ~1 fps, and uploads <em>only</em> the audio track. The per-frame emotion labels are sent alongside as a compact JSON list, which the backend fuses with the voice-tone and transcript signals — full multimodal fusion with no video ever leaving the device.</li>
       </ul>
     </section>
 
     <section class="content-section">
       <h2>System Architecture</h2>
       <p>
-        The platform is split across three deployable services: a Next.js frontend (Vercel-ready, also containerized via
-        <code>Dockerfile.frontend</code>), a FastAPI inference backend (containerized via <code>Dockerfile</code>, orchestrated locally with
-        <code>docker-compose</code>), and managed cloud dependencies (MongoDB Atlas, Google Cloud Storage, Google Generative AI,
-        Google Speech/TTS). Authentication is handled by Clerk on both client and server, with a webhook route under
-        <code>/api/webhooks/clerk</code> that syncs user lifecycle events into MongoDB. All media writes are namespaced under
-        <code>users/&lt;clerk_user_id&gt;/</code> prefixes in GCS for tenant isolation.
+        The platform is split across three tiers. The <strong>Next.js 15 frontend deploys to Vercel</strong> and now does real work
+        of its own — Clerk auth, the chat/voice/video UI, and on-device facial-emotion inference. The
+        <strong>FastAPI inference backend is containerized with Docker and deployed to a Hugging Face Space</strong> (the
+        <code>Dockerfile</code> + <code>docker-compose</code> still run it locally). Around them sit managed cloud dependencies:
+        MongoDB Atlas, Google Cloud Storage, Google Generative AI, and Google Speech/TTS.
+      </p>
+      <p>
+        The browser talks to the Space <strong>directly</strong> — the backend ships a permissive CORS layer, and the Space URL is
+        inlined into the bundle at build time — so there is no proxy hop between client and inference. Authentication is handled by
+        Clerk on both client and server, with a webhook route under <code>/api/webhooks/clerk</code> that syncs user lifecycle
+        events into MongoDB. All media writes are namespaced under <code>users/&lt;clerk_user_id&gt;/</code> prefixes in GCS for
+        tenant isolation. A deliberate architectural decision — moving facial-emotion detection from the server into the browser —
+        let the backend image drop TensorFlow, OpenCV, and the DeepFace detector models, shrinking it from <strong>~6–8 GB to ~2.5 GB</strong>
+        so it fits a free-tier Space and wakes from idle quickly.
       </p>
       <figure>
-        <img src="/img/ai_counceling/architecture_light.png" alt="AI-Counselling architecture diagram" />
-        <figcaption>Figure 1: End-to-end architecture — Next.js client, FastAPI inference layer, and managed cloud dependencies fused through a shared multimodal prompt.</figcaption>
+        <img src="/img/ai_counceling/architecture.svg" alt="AI-Counselling architecture diagram — browser/Vercel tier, FastAPI inference on Hugging Face Spaces, and managed cloud services" />
+        <figcaption>Figure 1: End-to-end architecture — a Next.js/Vercel browser tier (with in-browser face-api.js emotion detection), a FastAPI inference layer on Hugging Face Spaces, and managed cloud services, fused through a shared multimodal Gemini prompt.</figcaption>
       </figure>
     </section>
 
@@ -118,17 +126,20 @@
     </section>
 
     <section class="content-section">
-      <h2>Video Emotion Detection</h2>
+      <h2>In-Browser Facial-Emotion Detection</h2>
       <p>
-        Uploaded video is decoded with OpenCV. Rather than analyzing every frame, the pipeline samples at <strong>~1 fps up to a 60-frame
-        cap</strong>, computing a stride from the source FPS, which keeps end-to-end latency bounded regardless of clip length.
+        Facial-emotion detection runs <strong>entirely in the browser</strong> with face-api.js (<code>@vladmandic/face-api</code>),
+        so a user's camera feed never leaves their device. The library and its two models — <strong>TinyFaceDetector</strong> (face
+        localization) and <strong>FaceExpressionNet</strong> (7-class expression head) — are <strong>dynamically imported</strong> so they
+        never load during SSR, and the weights are served statically from <code>/public/models</code> and cached once per page.
       </p>
       <p>
-        Each sampled frame is run through <strong>DeepFace</strong> with <code>enforce_detection=False</code> so motion blur or off-angle frames
-        degrade gracefully into a "No face" label instead of throwing. Per-frame labels are aggregated by frequency to produce
-        a dominant emotion, and the frontend can additionally pre-compute frame-level emotions in-browser and pass them to the
-        backend via the <code>client_emotions</code> form field — a hybrid edge/server design that lets the backend skip redundant inference
-        when the client has already done the work.
+        During a live session a lightweight loop runs at <strong>~1 fps</strong>: it grabs the current video frame, detects a single
+        face, takes the top expression, and keeps it only when its probability clears a <strong>0.3 confidence gate</strong> — filtering
+        out blurry or ambiguous frames. The accepted labels accumulate in memory and are sent to the backend as a compact
+        <code>client_emotions</code> JSON list, where they're aggregated by frequency into a single dominant emotion that feeds the
+        fusion prompt. This <strong>edge-compute design</strong> is what let the backend shed TensorFlow, OpenCV, and DeepFace — it removes
+        per-frame server round-trips entirely and keeps inference latency on the client, where the frames already are.
       </p>
     </section>
 
@@ -147,10 +158,10 @@
     <section class="content-section">
       <h2>LLM Prompting, Routing & Safety</h2>
       <p>
-        The orchestration layer fuses five distinct signals — user transcript, facial-emotion summary, Wav2Vec2 tone phases,
-        DSM-5 retrieval chunks, onboarding profile, recent chat history, and long-term memory summary — into a single
-        structured Gemini 2.5 Flash prompt with explicit style rules (match the user's energy, cap at 3 sentences, never give
-        medical advice, never lecture).
+        The orchestration layer fuses seven distinct signals — user transcript, browser-computed facial-emotion summary,
+        Wav2Vec2 tone phases, DSM-5 retrieval chunks, onboarding profile, recent chat history, and long-term memory summary —
+        into a single structured Gemini 2.5 Flash prompt with explicit style rules (match the user's energy, cap at 3 sentences,
+        never give medical advice, never lecture).
       </p>
       <p>
         Two routing layers sit in front of generation: a <strong>crisis-keyword detector</strong> short-circuits to a hardcoded safety
@@ -173,10 +184,9 @@
       </p>
       <ul>
         <li><code>POST /respond</code> — text chat with crisis routing, small-talk routing, RAG context, recent history, and long-term memory.</li>
-        <li><code>POST /detect_video_emotions</code> — accepts a video upload, runs facial-emotion sampling + tone analysis + STT + Gemini fusion.</li>
+        <li><code>POST /detect_video_emotions</code> — accepts the session audio plus the browser's <code>client_emotions</code> list; runs tone analysis + STT, fuses them with the supplied face emotions through Gemini, and returns the reply with TTS audio.</li>
         <li><code>POST /process_multimodal</code> — combines GCS-stored voice frames with frontend-collected video emotions for low-latency multimodal turns.</li>
         <li><code>GET /process_speech</code> — batch-processes a user's recent GCS audio chunks and returns transcript, tone, response, and TTS audio.</li>
-        <li><code>POST /analyze_frame</code> — single-frame DeepFace inference for live edge-side emotion previews.</li>
         <li><code>POST /api/audio</code> &amp; <code>POST /api/uploadVideo</code> — Clerk-authenticated Next.js routes that stream media into GCS.</li>
         <li><code>POST /api/webhooks/clerk</code> — verifies Svix-signed Clerk webhooks and syncs user lifecycle into MongoDB.</li>
       </ul>
@@ -191,19 +201,20 @@
         <li><strong>Unbounded conversation context:</strong> Stuffing full history into every prompt explodes cost and latency. Solved with a Gemini-summarized rolling user profile, separating long-term identity from short-term turn context.</li>
         <li><strong>Off-topic clinical responses to small talk:</strong> Early prototypes responded to "hi" with therapy frameworks. Added a small-talk classifier and a separate, strict casual-reply prompt path.</li>
         <li><strong>Crisis safety:</strong> Implemented deterministic keyword routing that bypasses the LLM entirely for self-harm indicators, returning a fixed, professionally-framed safety response — no model output, no risk of an unsafe completion.</li>
+        <li><strong>Fitting a heavy ML backend on free infra:</strong> A server-side DeepFace + OpenCV + TensorFlow vision stack pushed the image past what a free-tier host could run. Moved facial-emotion inference into the browser with face-api.js, cutting the backend image from ~6–8 GB to ~2.5 GB, eliminating per-frame upload round-trips, and keeping camera frames on-device for privacy.</li>
       </ul>
     </section>
 
     <section class="content-section">
       <h2>Tech Stack</h2>
       <ul>
-        <li><strong>Frontend:</strong> Next.js 15 (App Router), React 19, TypeScript, Tailwind CSS, Clerk (auth + webhooks), MediaRecorder API.</li>
+        <li><strong>Frontend:</strong> Next.js 15 (App Router), React 19, TypeScript, Tailwind CSS, Clerk (auth + webhooks), MediaRecorder API, react-markdown + KaTeX for chat rendering.</li>
         <li><strong>Backend:</strong> FastAPI, Uvicorn, Python 3.12, Pydantic, structured logging with stdout/stderr redirection.</li>
-        <li><strong>AI / ML:</strong> Google Gemini 2.5 Flash, Wav2Vec2 (HuggingFace Transformers + PyTorch), DeepFace, Sentence Transformers (<code>all-mpnet-base-v2</code>), FAISS (<code>IndexFlatIP</code>).</li>
+        <li><strong>AI / ML:</strong> Google Gemini 2.5 Flash, Wav2Vec2 (HuggingFace Transformers + PyTorch), Sentence Transformers (<code>all-mpnet-base-v2</code>), FAISS (<code>IndexFlatIP</code>).</li>
         <li><strong>Speech &amp; Audio:</strong> Librosa, pydub, FFmpeg, Google SpeechRecognition, Google Cloud Text-to-Speech.</li>
-        <li><strong>Vision:</strong> OpenCV for frame sampling and decoding.</li>
+        <li><strong>Vision (browser):</strong> face-api.js (<code>@vladmandic/face-api</code>) — TinyFaceDetector + FaceExpressionNet — running fully on-device, with no server-side computer-vision dependencies.</li>
         <li><strong>Data &amp; Storage:</strong> MongoDB Atlas (PyMongo + Mongoose), Google Cloud Storage with Application Default Credentials.</li>
-        <li><strong>Infra &amp; DevOps:</strong> Dockerfile + Dockerfile.frontend, docker-compose, Vercel deployment config, pre-commit hooks, ESLint.</li>
+        <li><strong>Infra &amp; DevOps:</strong> Hugging Face Spaces (Docker SDK) for the backend, Vercel for the frontend, Dockerfile + docker-compose for local orchestration, pre-commit hooks, ESLint.</li>
       </ul>
       <p>
         The ML stack is intentionally modular: every modality emits interpretable intermediate outputs (transcripts, emotion phases,
@@ -216,10 +227,11 @@
       <h2>Outcomes &amp; Impact</h2>
       <ul>
         <li>Shipped a working, end-to-end multimodal AI product spanning <strong>frontend, backend, ML, data, and cloud infrastructure</strong> — designed, implemented, and deployed solo.</li>
-        <li>Integrated <strong>6 distinct AI/ML systems</strong> (Gemini, Wav2Vec2, DeepFace, MPNet/FAISS RAG, Google STT, Google TTS) behind a single conversational interface with shared safety and personalization layers.</li>
+        <li>Integrated <strong>6 distinct AI/ML systems</strong> (Gemini, Wav2Vec2, face-api.js, MPNet/FAISS RAG, Google STT, Google TTS) behind a single conversational interface with shared safety and personalization layers.</li>
         <li>Built a fault-tolerant audio pipeline that recovers from partial browser uploads via FFmpeg salvage, eliminating a major real-world failure mode.</li>
-        <li>Reduced inference latency on video turns by sampling frames at ~1 fps with a 60-frame cap and supporting client-side emotion pre-computation, avoiding redundant DeepFace inference server-side.</li>
+        <li>Cut the backend container from <strong>~6–8 GB to ~2.5 GB</strong> by moving facial-emotion inference into the browser with face-api.js — dropping TensorFlow, OpenCV, and DeepFace, removing per-frame server round-trips, and keeping camera frames fully on-device.</li>
         <li>Designed a self-contained vector index with manifest-hashed cache invalidation, removing external vector-DB dependencies and keeping retrieval entirely in-process.</li>
+        <li>Deployed the split stack to production-style infra — <strong>FastAPI backend on Hugging Face Spaces (Docker)</strong> and <strong>Next.js frontend on Vercel</strong> — with the browser calling the inference Space directly over CORS.</li>
         <li>Maintained an estimated end-to-end multimodal response latency of <strong>~11 to 30 seconds</strong> per request. The project was initially developed during the <strong>MHacks (University of Michigan)</strong> hackathon.</li>
       </ul>
     </section>

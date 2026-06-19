@@ -10,7 +10,7 @@ import {
 import { loadCaseStudy } from "@/lib/case-study";
 import { CaseStudyToc } from "@/components/case-study-toc";
 import { ReadingProgress } from "@/components/reading-progress";
-import { GithubIcon, ArrowUpRight, ArrowIcon, LockIcon } from "@/components/icons";
+import { GithubIcon, ArrowUpRight, ArrowIcon, LockIcon, LiveIcon } from "@/components/icons";
 import "./fieldnotes.css";
 
 type Params = { slug: string };
@@ -78,8 +78,13 @@ export default async function CaseStudyPage({
           <p className="cs-summary">{project.summary}</p>
 
           <div className="cs-hero-actions">
+            {project.live && (
+              <a href={project.live} target="_blank" rel="noopener noreferrer" className="btn btn-primary" data-cursor="live">
+                <LiveIcon width={17} height={17} /> Live app
+              </a>
+            )}
             {project.repo ? (
-              <a href={project.repo} target="_blank" rel="noopener noreferrer" className="btn btn-primary" data-cursor="source">
+              <a href={project.repo} target="_blank" rel="noopener noreferrer" className={`btn ${project.live ? "btn-ghost" : "btn-primary"}`} data-cursor="source">
                 <GithubIcon width={17} height={17} /> View source
               </a>
             ) : (

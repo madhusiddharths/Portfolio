@@ -1,0 +1,135 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 900" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#8e8aa8"/>
+    </marker>
+    <marker id="arrowboth" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#6366f1"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1440" height="900" rx="18" fill="#f7f7fb"/>
+  <text x="40" y="46" font-size="21" font-weight="700" fill="#322f49">AI-Counselling — end-to-end multimodal architecture</text>
+
+  <!-- ============ LAYER 1: BROWSER / VERCEL ============ -->
+  <rect x="40" y="70" width="1360" height="190" rx="14" fill="#ffffff" stroke="#e6e4f0"/>
+  <text x="60" y="98" font-size="13" font-weight="700" letter-spacing="0.06em" fill="#6d6a86">BROWSER · VERCEL — Next.js 15 / React 19 · Clerk auth</text>
+
+  <!-- User -->
+  <rect x="95" y="130" width="140" height="84" rx="10" fill="#fbfbfe" stroke="#cbc7ea"/>
+  <text x="165" y="178" text-anchor="middle" font-size="15" font-weight="600" fill="#2c2937">User</text>
+
+  <!-- Clerk UI -->
+  <rect x="300" y="130" width="250" height="84" rx="10" fill="#fbfbfe" stroke="#cbc7ea"/>
+  <text x="425" y="168" text-anchor="middle" font-size="15" font-weight="600" fill="#2c2937">Onboarding + Chat UI</text>
+  <text x="425" y="188" text-anchor="middle" font-size="11.5" fill="#6b6786">streaming text · voice · video</text>
+
+  <!-- face-api.js -->
+  <rect x="610" y="130" width="300" height="84" rx="10" fill="#fbfbfe" stroke="#cbc7ea"/>
+  <text x="760" y="168" text-anchor="middle" font-size="15" font-weight="600" fill="#2c2937">face-api.js · in-browser</text>
+  <text x="760" y="188" text-anchor="middle" font-size="11.5" fill="#6b6786">TinyFaceDetector + FaceExpressionNet (~1 fps)</text>
+
+  <!-- MediaRecorder -->
+  <rect x="980" y="130" width="300" height="84" rx="10" fill="#fbfbfe" stroke="#cbc7ea"/>
+  <text x="1130" y="168" text-anchor="middle" font-size="15" font-weight="600" fill="#2c2937">MediaRecorder</text>
+  <text x="1130" y="188" text-anchor="middle" font-size="11.5" fill="#6b6786">audio capture + video preview</text>
+
+  <!-- ============ LAYER 2: FASTAPI / HUGGING FACE SPACES ============ -->
+  <rect x="40" y="300" width="1360" height="380" rx="14" fill="#ffffff" stroke="#e6e4f0"/>
+  <text x="60" y="328" font-size="13" font-weight="700" letter-spacing="0.06em" fill="#6d6a86">FASTAPI INFERENCE · HUGGING FACE SPACES (Docker)</text>
+
+  <!-- Gateway / routing -->
+  <rect x="500" y="345" width="420" height="48" rx="10" fill="#eef1ff" stroke="#6366f1"/>
+  <text x="710" y="374" text-anchor="middle" font-size="14.5" font-weight="600" fill="#312e81">Routing + Safety — crisis · small-talk · style rules</text>
+
+  <!-- Signal extractors -->
+  <rect x="95" y="440" width="280" height="66" rx="10" fill="#fbfbfe" stroke="#cbc7ea"/>
+  <text x="235" y="470" text-anchor="middle" font-size="14.5" font-weight="600" fill="#2c2937">Wav2Vec2 tone ensemble</text>
+  <text x="235" y="489" text-anchor="middle" font-size="11" fill="#6b6786">1 s chunks · VAD gate · majority vote</text>
+
+  <rect x="405" y="440" width="220" height="66" rx="10" fill="#fbfbfe" stroke="#cbc7ea"/>
+  <text x="515" y="470" text-anchor="middle" font-size="14.5" font-weight="600" fill="#2c2937">Speech-to-Text</text>
+  <text x="515" y="489" text-anchor="middle" font-size="11" fill="#6b6786">FFmpeg salvage · 50 s segs</text>
+
+  <rect x="675" y="440" width="280" height="66" rx="10" fill="#fbfbfe" stroke="#cbc7ea"/>
+  <text x="815" y="470" text-anchor="middle" font-size="14.5" font-weight="600" fill="#2c2937">DSM-5 RAG</text>
+  <text x="815" y="489" text-anchor="middle" font-size="11" fill="#6b6786">MPNet 768-d · FAISS IP · top-5</text>
+
+  <rect x="990" y="440" width="290" height="66" rx="10" fill="#fbfbfe" stroke="#cbc7ea"/>
+  <text x="1135" y="470" text-anchor="middle" font-size="14.5" font-weight="600" fill="#2c2937">Long-term memory</text>
+  <text x="1135" y="489" text-anchor="middle" font-size="11" fill="#6b6786">Gemini profile summarizer</text>
+
+  <!-- Gemini fusion -->
+  <rect x="470" y="560" width="360" height="72" rx="10" fill="#ece8fe" stroke="#8b5cf6" stroke-width="1.5"/>
+  <text x="650" y="592" text-anchor="middle" font-size="16" font-weight="700" fill="#4c1d95">Gemini 2.5 Flash</text>
+  <text x="650" y="613" text-anchor="middle" font-size="11.5" fill="#6d5bb8">multimodal fusion → reply</text>
+
+  <!-- TTS -->
+  <rect x="990" y="565" width="290" height="62" rx="10" fill="#fbfbfe" stroke="#cbc7ea"/>
+  <text x="1135" y="592" text-anchor="middle" font-size="14.5" font-weight="600" fill="#2c2937">Google Cloud TTS</text>
+  <text x="1135" y="611" text-anchor="middle" font-size="11" fill="#6b6786">Journey → Wavenet · base64 MP3</text>
+
+  <!-- ============ LAYER 3: MANAGED CLOUD ============ -->
+  <rect x="40" y="720" width="1360" height="150" rx="14" fill="#ffffff" stroke="#e6e4f0"/>
+  <text x="60" y="748" font-size="13" font-weight="700" letter-spacing="0.06em" fill="#6d6a86">MANAGED CLOUD</text>
+
+  <rect x="95" y="768" width="300" height="72" rx="10" fill="#fbfbfe" stroke="#cbc7ea"/>
+  <text x="245" y="800" text-anchor="middle" font-size="14.5" font-weight="600" fill="#2c2937">Google Cloud Storage</text>
+  <text x="245" y="819" text-anchor="middle" font-size="11" fill="#6b6786">per-user media (audio / video)</text>
+
+  <rect x="440" y="768" width="270" height="72" rx="10" fill="#fbfbfe" stroke="#cbc7ea"/>
+  <text x="575" y="800" text-anchor="middle" font-size="14.5" font-weight="600" fill="#2c2937">Google AI APIs</text>
+  <text x="575" y="819" text-anchor="middle" font-size="11" fill="#6b6786">Gemini · Speech · TTS</text>
+
+  <rect x="755" y="768" width="240" height="72" rx="10" fill="#fbfbfe" stroke="#cbc7ea"/>
+  <text x="875" y="800" text-anchor="middle" font-size="14.5" font-weight="600" fill="#2c2937">DSM-5 index</text>
+  <text x="875" y="819" text-anchor="middle" font-size="11" fill="#6b6786">embeddings cache (.npy)</text>
+
+  <rect x="1100" y="768" width="280" height="72" rx="10" fill="#fbfbfe" stroke="#cbc7ea"/>
+  <text x="1240" y="800" text-anchor="middle" font-size="14.5" font-weight="600" fill="#2c2937">MongoDB Atlas</text>
+  <text x="1240" y="819" text-anchor="middle" font-size="11" fill="#6b6786">profiles · history · memory</text>
+
+  <!-- ============ EDGES ============ -->
+  <g fill="none" stroke="#8e8aa8" stroke-width="2">
+    <!-- User -> Clerk UI -->
+    <path d="M235 172 H300" marker-end="url(#arrow)"/>
+
+    <!-- Browser <-> FastAPI gateway (double) -->
+    <path d="M700 260 V343" stroke="#6366f1" marker-start="url(#arrowboth)" marker-end="url(#arrowboth)"/>
+
+    <!-- Media upload: MediaRecorder -> GCS (orthogonal via gutters) -->
+    <path d="M1130 214 V282 H60 V803 H93" marker-end="url(#arrow)"/>
+
+    <!-- gateway -> signal bus -> each signal -->
+    <path d="M710 393 V418 H235 M235 418 V438" marker-end="url(#arrow)"/>
+    <path d="M515 418 V438" marker-end="url(#arrow)"/>
+    <path d="M815 418 V438" marker-end="url(#arrow)"/>
+    <path d="M1135 418 V438" marker-end="url(#arrow)"/>
+    <path d="M235 418 H1135"/>
+
+    <!-- signals -> Gemini (fan-in) -->
+    <path d="M235 506 L520 560" marker-end="url(#arrow)"/>
+    <path d="M515 506 L600 560" marker-end="url(#arrow)"/>
+    <path d="M815 506 L720 560" marker-end="url(#arrow)"/>
+    <path d="M1135 506 L800 560" marker-end="url(#arrow)"/>
+
+    <!-- Gemini -> TTS -->
+    <path d="M830 596 H988" marker-end="url(#arrow)"/>
+
+    <!-- data access (vertical) -->
+    <path d="M240 506 V766" stroke-dasharray="5 4" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+    <path d="M845 506 V766" stroke-dasharray="5 4" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+    <path d="M1280 472 H1330 V766" stroke-dasharray="5 4" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+    <path d="M620 632 L575 766" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
+  </g>
+
+  <!-- edge labels -->
+  <g font-size="12" fill="#6f6b8a">
+    <text x="715" y="305" >requests + client_emotions[]  ⇄  reply + TTS audio</text>
+    <text x="66" y="276" >media upload (Next.js API → GCS)</text>
+    <text x="250" y="660" text-anchor="middle">read frames</text>
+    <text x="860" y="660" text-anchor="middle">retrieve</text>
+    <text x="1345" y="640" text-anchor="middle">read / write</text>
+    <text x="560" y="712" text-anchor="middle">LLM calls</text>
+  </g>
+</svg>

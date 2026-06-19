@@ -90,6 +90,7 @@ export type Project = {
   thumb: string;
   repo: string | null;
   paper?: string;
+  live?: string; // live/demo URL — renders a "Live app" button on the case study
   privateRepo?: boolean;
   hasCaseStudy: boolean; // false → routes to /work/coming-soon
   featured?: boolean;
@@ -160,6 +161,8 @@ export const PROJECTS: Project[] = [
     tech: ["FastAPI", "GCP", "MongoDB", "TypeScript", "Docker", "Node.js"],
     thumb: `${IMG}/ai_chatbot.png`,
     repo: "https://github.com/madhusiddharths/aicounselling",
+    // TODO: deployment is building — swap this for the real live URL when ready.
+    live: "/work/coming-soon/",
     hasCaseStudy: true,
     featured: true,
   },
