@@ -20,7 +20,7 @@ export const PROFILE = {
     "https://drive.google.com/file/d/1Y4gP7sZf8AtwZOJoax-9yc3QV_pC2Qce/view?usp=share_link",
   analystResume:
     "https://drive.google.com/file/d/1xSb2ku446YpYCXYIn-rxIrh_UdjQMRm5/view?usp=share_link",
-  email: "madhusiddharths2@gmail.com",
+  email: "madhusiddharths1@outlook.com",
   github: "https://github.com/madhusiddharths",
   linkedin: "https://www.linkedin.com/in/madhu-siddharth-suthagar/",
   discord: "https://discord.com/users/1275184185610604637",
