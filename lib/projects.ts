@@ -32,7 +32,7 @@ export const TECH: Record<string, string> = {
   Python: `${ICON}/Python.png`,
   R: `${ICON}/R.png`,
   C: `${ICON}/C.png`,
-  "C++": `${ICON}/C++ (CPlusPlus).png`,
+  "C++": `${ICON}/cpp.png`,
   Java: `${ICON}/Java.png`,
   SQL: `${ICON}/MySQL.png`,
   PostgreSQL: `${ICON}/PostgresSQL.png`,
@@ -106,7 +106,7 @@ export const PROJECTS: Project[] = [
     domain: "Real-time streaming · Agentic AI",
     summary:
       "Real-time financial intelligence platform that streams market data through Kafka and Delta Lake, then uses an agentic AI investigator to explain anomalies in plain language.",
-    tech: ["Apache Kafka", "Apache Airflow", "Databricks", "Kubernetes", "FastAPI", "PostgreSQL"],
+    tech: ["Apache Kafka", "Apache Airflow", "Databricks", "Kubernetes", "FastAPI", "PostgreSQL", "Python"],
     thumb: `${IMG}/pulsetrade.png`,
     repo: "https://github.com/madhusiddharths/pulsetrade",
     hasCaseStudy: true,
@@ -119,7 +119,7 @@ export const PROJECTS: Project[] = [
     domain: "3D visualization · 557M+ stars",
     summary:
       "A cloud-native 3D visualization platform that dynamically queries and renders 557M+ Gaia DR3 stars with real-time kinematic projection using serverless BigQuery and GPU acceleration.",
-    tech: ["Polars", "Apache Spark", "FastAPI", "Three.js", "GCP", "Docker"],
+    tech: ["Polars", "Apache Spark", "FastAPI", "Three.js", "GCP", "Docker", "Python", "JavaScript"],
     thumb: `${IMG}/stars.jpg`,
     repo: "https://github.com/madhusiddharths/galaxy_explorer",
     hasCaseStudy: true,
@@ -132,7 +132,7 @@ export const PROJECTS: Project[] = [
     domain: "Experimentation · 20M+ events",
     summary:
       "An end-to-end data pipeline and machine learning system that processes 20M+ e-commerce events to validate A/B tests and predict cart abandonment in real-time.",
-    tech: ["Python", "dbt", "FastAPI", "Streamlit", "Docker"],
+    tech: ["Python", "dbt", "FastAPI", "Streamlit", "Docker", "SQL"],
     thumb: `${IMG}/growth_retention.png`,
     repo: "https://github.com/madhusiddharths/growth_retention",
     hasCaseStudy: true,
@@ -145,7 +145,7 @@ export const PROJECTS: Project[] = [
     domain: "Medical imaging · GANs",
     summary:
       "This project uses deep learning, image processing, and GANs to predict and model the progression of Alzheimer's disease from MRI scans.",
-    tech: ["PyTorch", "Pandas", "Matplotlib", "OpenCV", "Docker", "Flask"],
+    tech: ["PyTorch", "Pandas", "Matplotlib", "OpenCV", "Docker", "Flask", "Python"],
     thumb: `${IMG}/alzheimers.jpg`,
     repo: "https://github.com/madhusiddharths/alzheimers_progression",
     hasCaseStudy: true,
@@ -158,7 +158,7 @@ export const PROJECTS: Project[] = [
     domain: "Multimodal AI · Wellbeing",
     summary:
       "An AI-powered chatbot that analyzes a person's video, audio, and tone to assess their mental state and provide personalized counseling.",
-    tech: ["FastAPI", "GCP", "MongoDB", "TypeScript", "Docker", "Node.js"],
+    tech: ["FastAPI", "GCP", "MongoDB", "TypeScript", "Docker", "Node.js", "Python"],
     thumb: `${IMG}/ai_chatbot.png`,
     repo: "https://github.com/madhusiddharths/aicounselling",
     // TODO: deployment is building — swap this for the real live URL when ready.
@@ -186,7 +186,7 @@ export const PROJECTS: Project[] = [
     domain: "Federated learning · Privacy",
     summary:
       "A hybrid Federated Learning framework integrating Transformers and XGBoost with LoRA adapters for efficient, privacy-preserving IoT intrusion detection.",
-    tech: ["PyTorch", "Pandas", "LaTeX"],
+    tech: ["PyTorch", "Pandas", "LaTeX", "Python"],
     thumb: `${IMG}/fed_iot.png`,
     repo: null,
     privateRepo: true,
@@ -225,7 +225,7 @@ export const PROJECTS: Project[] = [
     domain: "Vector search · Computer vision",
     summary:
       "AI-based image retrieval using ResNet-50 feature extraction and FAISS vector indexing for fast similarity search.",
-    tech: ["PyTorch", "Pandas", "Streamlit", "Docker"],
+    tech: ["PyTorch", "Pandas", "Streamlit", "Docker", "Python"],
     thumb: `${IMG}/image_retrieval.png`,
     repo: "https://github.com/madhusiddharths/image_retrieval/tree/main",
     hasCaseStudy: true,
@@ -261,7 +261,7 @@ export const PROJECTS: Project[] = [
     domain: "Classification · Health",
     summary:
       "SymptoScan is designed to classify four closely related illnesses—flu, COVID-19, the common cold, and allergies—using a meta-classifier approach.",
-    tech: ["Pandas", "NumPy", "Kaggle", "Plotly", "scikit-learn"],
+    tech: ["Pandas", "NumPy", "Kaggle", "Plotly", "scikit-learn", "Python"],
     thumb: `${IMG}/symptoscan.jpeg.png.webp`,
     repo: "https://github.com/madhusiddharths/SymptoScan",
     hasCaseStudy: false,
@@ -285,7 +285,7 @@ export const PROJECTS: Project[] = [
     domain: "Transfer learning · CV",
     summary:
       "A human-versus-horse classifier built using transfer learning, leveraging a VGG19 model pretrained on ImageNet for improved accuracy.",
-    tech: ["TensorFlow", "OpenCV", "Streamlit", "Keras", "NumPy"],
+    tech: ["TensorFlow", "OpenCV", "Streamlit", "Keras", "NumPy", "Python"],
     thumb: `${IMG}/ImageNet.webp`,
     repo: "https://github.com/madhusiddharths/VGG19-Trannsfer-learning",
     hasCaseStudy: false,

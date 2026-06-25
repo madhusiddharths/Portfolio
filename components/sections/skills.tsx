@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { SKILLS, techIcon } from "@/lib/projects";
 import { SectionHeading } from "@/components/section-heading";
 import { Reveal } from "@/components/reveal";
@@ -25,13 +26,15 @@ export function Skills() {
                 {group.items.map((item) => {
                   const icon = techIcon(item);
                   return (
-                    <li key={item} className="matrix-chip" data-cursor="">
-                      {icon ? (
-                        <img src={icon} alt="" loading="lazy" width={18} height={18} />
-                      ) : (
-                        <span className="matrix-chip-dot" aria-hidden="true" />
-                      )}
-                      <span>{item}</span>
+                    <li key={item}>
+                      <Link href={`/work/?skill=${encodeURIComponent(item)}`} className="matrix-chip" data-cursor="filter projects">
+                        {icon ? (
+                          <img src={icon} alt="" loading="lazy" width={18} height={18} />
+                        ) : (
+                          <span className="matrix-chip-dot" aria-hidden="true" />
+                        )}
+                        <span>{item}</span>
+                      </Link>
                     </li>
                   );
                 })}

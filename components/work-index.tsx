@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams, useRouter } from "next/navigation";
 import {
   motion,
   useMotionValue,
@@ -25,7 +26,15 @@ function mobilePeekActive() {
   return typeof window !== "undefined" && window.matchMedia("(max-width: 680px)").matches;
 }
 
-export function WorkIndex({ projects }: { projects: Project[] }) {
+function WorkIndexContent({ projects }: { projects: Project[] }) {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const skillFilter = searchParams.get("skill");
+
+  const displayedProjects = skillFilter
+    ? projects.filter((p) => p.tech.includes(skillFilter))
+    : projects;
+
   const [active, setActive] = useState<Project | null>(null); // desktop hover
   const [peek, setPeek] = useState<Project | null>(null); // touch press-and-hold preview
   const reduce = useReducedMotion();
@@ -98,49 +107,66 @@ export function WorkIndex({ projects }: { projects: Project[] }) {
 
   return (
     <div className="work-index" onMouseMove={onMove} onMouseLeave={() => setActive(null)}>
-      <ol className="work-list">
-        {projects.map((p) => (
-          <li key={p.slug}>
-            <Link
-              href={rowHref(p)}
-              className="work-row"
-              data-cursor={p.hasCaseStudy ? "read" : "soon"}
-              onMouseEnter={() => setActive(p)}
-              onFocus={() => setActive(p)}
-              onTouchStart={(e) => onTouchStart(e, p)}
-              onTouchMove={onTouchMove}
-              onTouchEnd={onTouchEnd}
-              onTouchCancel={onTouchCancel}
-              onClick={onRowClick}
-              onContextMenu={(e) => {
-                if (mobilePeekActive()) e.preventDefault(); // suppress long-press callout on phones only
-              }}
-              aria-label={`${p.name} — ${p.domain}`}
-            >
-              <span className="work-row-rail" aria-hidden="true" />
-              <span className="work-row-index u-mono">{p.index}</span>
+      {skillFilter && displayedProjects.length > 0 && (
+        <div style={{ marginBottom: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <p className="u-mono" style={{ margin: 0 }}>Filtered by skill: <strong style={{ color: 'var(--accent)' }}>{skillFilter}</strong></p>
+          <button onClick={() => router.push(window.location.pathname)} className="btn btn-ghost" style={{ padding: '0.5rem 1rem' }}>Clear filter</button>
+        </div>
+      )}
 
-              <span className="work-row-body">
-                <span className="work-row-headline">
-                  <span className="work-row-name">{p.name}</span>
-                  {p.privateRepo && (
-                    <span className="work-tag work-tag-lock u-mono">
-                      <LockIcon width={11} height={11} /> private
-                    </span>
-                  )}
-                  {!p.hasCaseStudy && <span className="work-tag work-tag-soon u-mono">soon</span>}
+      {displayedProjects.length === 0 && skillFilter ? (
+        <div style={{ padding: '4rem 1rem', textAlign: 'center', border: '1px dashed var(--edge)', borderRadius: '8px' }}>
+          <h3 style={{ marginBottom: '1rem', fontSize: '1.25rem' }}>Academic / Foundational Skill</h3>
+          <p style={{ maxWidth: '600px', margin: '0 auto 2rem', color: 'var(--ink-mute)' }}>
+            I built a strong foundation in <strong style={{ color: 'var(--accent)' }}>{skillFilter}</strong> during my coursework. While it doesn't feature in these recent case studies, it informs my approach to software engineering.
+          </p>
+          <button onClick={() => router.push(window.location.pathname)} className="btn btn-primary">View All Projects</button>
+        </div>
+      ) : (
+        <ol className="work-list">
+          {displayedProjects.map((p) => (
+            <li key={p.slug}>
+              <Link
+                href={rowHref(p)}
+                className="work-row"
+                data-cursor={p.hasCaseStudy ? "read" : "soon"}
+                onMouseEnter={() => setActive(p)}
+                onFocus={() => setActive(p)}
+                onTouchStart={(e) => onTouchStart(e, p)}
+                onTouchMove={onTouchMove}
+                onTouchEnd={onTouchEnd}
+                onTouchCancel={onTouchCancel}
+                onClick={onRowClick}
+                onContextMenu={(e) => {
+                  if (mobilePeekActive()) e.preventDefault(); // suppress long-press callout on phones only
+                }}
+                aria-label={`${p.name} — ${p.domain}`}
+              >
+                <span className="work-row-rail" aria-hidden="true" />
+                <span className="work-row-index u-mono">{p.index}</span>
+
+                <span className="work-row-body">
+                  <span className="work-row-headline">
+                    <span className="work-row-name">{p.name}</span>
+                    {p.privateRepo && (
+                      <span className="work-tag work-tag-lock u-mono">
+                        <LockIcon width={11} height={11} /> private
+                      </span>
+                    )}
+                    {!p.hasCaseStudy && <span className="work-tag work-tag-soon u-mono">soon</span>}
+                  </span>
+                  <span className="work-row-domain">{p.domain}</span>
                 </span>
-                <span className="work-row-domain">{p.domain}</span>
-              </span>
 
-              <span className="work-row-tech u-mono">{p.tech.slice(0, 3).join(" / ")}</span>
-              <span className="work-row-go" aria-hidden="true">
-                <ArrowUpRight width={18} height={18} />
-              </span>
-            </Link>
-          </li>
-        ))}
-      </ol>
+                <span className="work-row-tech u-mono">{p.tech.slice(0, 3).join(" / ")}</span>
+                <span className="work-row-go" aria-hidden="true">
+                  <ArrowUpRight width={18} height={18} />
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ol>
+      )}
 
       <AnimatePresence>
         {showPreview && (
@@ -213,5 +239,13 @@ export function WorkIndex({ projects }: { projects: Project[] }) {
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+export function WorkIndex({ projects }: { projects: Project[] }) {
+  return (
+    <Suspense fallback={<div className="work-list-loading" />}>
+      <WorkIndexContent projects={projects} />
+    </Suspense>
   );
 }
