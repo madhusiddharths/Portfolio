@@ -117,7 +117,7 @@ function WorkIndexContent({ projects }: { projects: Project[] }) {
       {displayedProjects.length === 0 && skillFilter ? (
         <div style={{ padding: '4rem 1rem', textAlign: 'center', border: '1px dashed var(--edge)', borderRadius: '8px' }}>
           <h3 style={{ marginBottom: '1rem', fontSize: '1.25rem' }}>Academic / Foundational Skill</h3>
-          <p style={{ maxWidth: '600px', margin: '0 auto 2rem', color: 'var(--ink-mute)' }}>
+          <p className="page-hero-lead" style={{ margin: '0 auto 2rem', maxWidth: '600px' }}>
             I built a strong foundation in <strong style={{ color: 'var(--accent)' }}>{skillFilter}</strong> during my coursework. While it doesn't feature in these recent case studies, it informs my approach to software engineering.
           </p>
           <button onClick={() => router.push(window.location.pathname)} className="btn btn-primary">View All Projects</button>

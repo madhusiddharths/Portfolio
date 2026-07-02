@@ -193,8 +193,8 @@
   border: 1px solid transparent;
   font-family: var(--font-sans);
   font-size: 0.94rem;
-  font-weight: 500;
-  letter-spacing: -0.01em;
+  font-weight: 600;
+  letter-spacing: 0;
   cursor: pointer;
   white-space: nowrap;
   transition: background-color 0.35s var(--ease-out), color 0.35s var(--ease-out),
