@@ -1,12 +1,4 @@
-<!-- Live Demo Button -->
-      <div class="project-demo-container">
-        <a href="/work/coming-soon/" class="project-demo-btn" target="_blank">
-          <span class="btn-text">Try Live App</span>
-          <span class="btn-icon">🚀</span>
-        </a>
-      </div>
-
-      <section class="content-section">
+<section class="content-section">
         <h2>Overview</h2>
         <p>
           PulseTrade is a real-time financial intelligence platform that ingests live market data and news, processes
@@ -68,6 +60,18 @@
           articles with no ticker match (~87% of headlines), and publishes <code>NewsArticle</code> messages to
           <code>market-news</code>.
         </p>
+        <figure>
+          <img src="/img/pulsetrade/kafka-stock-prices-topic.png"
+            alt="Confluent Cloud console showing live StockTick messages flowing through the stock-prices topic" />
+          <figcaption>Figure 2: Proof of ingestion &mdash; live <code>StockTick</code> messages landing in the
+            <code>stock-prices</code> topic on Confluent Cloud.</figcaption>
+        </figure>
+        <figure>
+          <img src="/img/pulsetrade/kafka-market-news-topic.png"
+            alt="Confluent Cloud console showing ticker-tagged NewsArticle messages in the market-news topic" />
+          <figcaption>Figure 3: Ticker-tagged <code>NewsArticle</code> messages in the <code>market-news</code> topic
+            &mdash; already filtered down to the ~13% of headlines that match a tracked ticker.</figcaption>
+        </figure>
         <p>
           <strong>Why Finnhub over yfinance:</strong> early prototyping used the yfinance library, but it broke
           repeatedly with internal <code>currentTradingPeriod KeyError</code> failures because it scrapes Yahoo's
@@ -102,6 +106,12 @@
           trigger lets the notebook run as a scheduled micro-batch consumer rather than a long-running stream, which
           suits Free Edition's serverless model.
         </p>
+        <figure>
+          <img src="/img/pulsetrade/bronze-tables-first-rows.png"
+            alt="Databricks table view of the first raw rows landing in the bronze Delta tables" />
+          <figcaption>Figure 4: First rows in bronze &mdash; raw Kafka events, append-only, treated as an audit
+            log.</figcaption>
+        </figure>
         <p>
           <strong>Silver transformations (<code>02_bronze_to_silver_stocks</code>,
             <code>03_bronze_to_silver_news</code>):</strong>
@@ -118,6 +128,12 @@
           with <code>HF_HUB_DISABLE_XET=1</code> set inside the UDF body so workers fall back to plain HTTP rather
           than the Xet protocol that Volumes don't fully support.
         </p>
+        <figure>
+          <img src="/img/pulsetrade/silver-news-finbert-sentiment.png"
+            alt="Silver news table rows showing FinBERT sentiment scores per matched ticker" />
+          <figcaption>Figure 5: Silver news rows with FinBERT sentiment attached inside a Pandas UDF, one row per
+            matched ticker.</figcaption>
+        </figure>
         <p>
           <strong>Gold aggregation (<code>04_silver_to_gold</code>):</strong> Silver stock data is aggregated into
           5-minute windows producing OHLC, mean price, price standard deviation, mean change percentage, and mean
@@ -127,6 +143,12 @@
           <code>foreachBatch</code>, treating each micro-batch as a static snapshot &mdash; no watermark complexity,
           and idempotent via <code>MERGE INTO</code> on <code>(ticker, window_start)</code>.
         </p>
+        <figure>
+          <img src="/img/pulsetrade/gold-5min-features.png"
+            alt="Gold Delta table showing 5-minute aggregated feature windows with OHLC, volatility, and news sentiment" />
+          <figcaption>Figure 6: Gold 5-minute feature windows &mdash; OHLC, volatility, and joined news sentiment per
+            ticker. The seam between data engineering and AI.</figcaption>
+        </figure>
       </section>
 
       <section class="content-section">
@@ -152,6 +174,12 @@
           always completes &mdash; partial failures still produce a stub report with diagnostic context. The agent's
           output is markdown structured into four sections: Summary, Evidence, Likely Cause, and Recommended Action.
         </p>
+        <figure>
+          <img src="/img/pulsetrade/dashboard-agent-brief.png"
+            alt="A completed agent investigation brief rendered in the dashboard with verdict, evidence, likely cause, and recommended action" />
+          <figcaption>Figure 7: A completed agent brief rendered in the dashboard &mdash; verdict, evidence bullets,
+            likely cause, and recommended action.</figcaption>
+        </figure>
         <p>
           <strong>Grounded reasoning, not rubber-stamping:</strong> in an early end-to-end test, the agent was sent a
           synthetic <code>price_spike</code> trigger on a window where the gold data showed all four OHLC values
@@ -210,20 +238,39 @@
       <section class="content-section">
         <h2>Layer 6 &mdash; Serving on Kubernetes</h2>
         <p>
-          The agent and dashboard are containerized and deployed to a GKE cluster. The Databricks pipeline stays in
-          Databricks; the Kafka stays in Confluent &mdash; only the stateless services move to Kubernetes. Multi-stage
-          Docker builds produce final images around 150 MB, run as non-root, and are pushed to Google Artifact Registry
-          by GitHub Actions on every push to main. Helm charts under <code>infra/helm/pulsetrade/</code> render the
-          Deployment, Service, Ingress, ConfigMap, and Secret resources, with API keys handled as GCP-managed
-          Kubernetes secrets.
+          The demo stack &mdash; the agent API, the dashboard, and Postgres &mdash; is containerized and deployed to
+          an ephemeral GKE cluster of two e2-small nodes. The Databricks pipeline stays in Databricks; the Kafka
+          stays in Confluent &mdash; only the serving stack moves to Kubernetes, with Postgres running in-cluster
+          for the demo (<code>ADR-008</code>, <code>ADR-009</code>). Multi-stage Docker builds produce final images
+          around 150 MB, run as non-root, and are pushed to Google Artifact Registry by CI on main. Helm charts
+          under <code>infra/helm/pulsetrade/</code> render the Deployment, Service, Ingress, ConfigMap, and Secret
+          resources; each service runs one replica, sized to the two-node demo cluster. The api Deployment uses
+          <code>strategy: Recreate</code> &mdash; two e2-small nodes can't host the old and new pod side by side
+          during a rolling update, so Recreate trades a few seconds of downtime for deploys that never wedge in
+          Pending.
         </p>
         <p>
-          An <code>ingress-nginx</code> controller fronts the cluster: <code>/api/*</code> routes to the FastAPI
-          deployment (three replicas for headroom), <code>/dashboard/*</code> routes to the Streamlit app, and
-          <code>/metrics</code> stays internal for Prometheus scraping. The CI pipeline lints, runs pytest, builds
-          the images, pushes them, and does a <code>helm upgrade</code> against the cluster &mdash; the standard modern
-          deploy loop.
+          An <code>ingress-nginx</code> controller fronts the cluster with <strong>two Ingress resources sharing one
+            ingress class</strong> &mdash; one controller, one load balancer, one IP. <code>/api/*</code> routes to
+          FastAPI with the path-stripping rewrite, and the Streamlit dashboard serves at root. The split exists
+          because <code>rewrite-target</code> is a per-Ingress annotation: in the single-Ingress version, the rewrite
+          that strips <code>/api</code> also mangled Streamlit's websocket path and blanked the dashboard.
+          <code>/metrics</code> stays internal for Prometheus scraping.
         </p>
+        <p>
+          CI/CD is two workflows with an honest split. <code>ci.yml</code> runs on every push: ruff &rarr; offline
+          pytest (heavy integrations stubbed, no credentials needed) &rarr; helm lint + render guard &rarr; amd64
+          buildx, pushing <code>:sha</code>/<code>:latest</code> images to Artifact Registry on main.
+          <code>deploy.yml</code> is manual-trigger only &mdash; auth, cluster credentials,
+          <code>helm upgrade --wait</code> &mdash; and ran green against the live cluster; because the cluster is
+          ephemeral, the deploy stage is demonstrated with evidence rather than left running.
+        </p>
+        <figure>
+          <img src="/img/pulsetrade/k8s-pods-services-first-deploy.png"
+            alt="kubectl output showing PulseTrade pods and services running after the first Kubernetes deploy" />
+          <figcaption>Figure 8: First Kubernetes deploy &mdash; api, dashboard, and postgres pods and services
+            up.</figcaption>
+        </figure>
       </section>
 
       <section class="content-section">
@@ -240,6 +287,12 @@
           dashboards visualize agent latency at p50/p95/p99, investigations per hour, error rate by endpoint, and
           Postgres connection pool saturation.
         </p>
+        <figure>
+          <img src="/img/pulsetrade/api-investigate-smoke-loop.png"
+            alt="Terminal and metrics view of a smoke-test loop firing repeated POST /investigate requests" />
+          <figcaption>Figure 9: A smoke-test loop against <code>POST /investigate</code> &mdash; the load run watched
+            through the metrics stack.</figcaption>
+        </figure>
         <p>
           <strong>Evidently AI</strong> runs in the nightly Airflow DAG and detects data drift. It compares this
           week's gold feature distribution to last week's &mdash; if <code>mean_news_sentiment</code>,
@@ -255,9 +308,63 @@
           The user-facing layer is a multi-page Streamlit app that auto-refreshes every 30 seconds. The
           <strong>Live Prices</strong> page renders OHLC charts per ticker straight from gold via the Databricks SQL
           Connector. The <strong>News Sentiment</strong> page shows sentiment trend lines and article volume over
-          time. The <strong>Investigations</strong> page browses the agent reports stored in Postgres, with a manual
-          trigger button so users can fire investigations on demand without curl.
+          time. The <strong>Investigations</strong> page browses the agent reports stored in Postgres, and a
+          dedicated <strong>Trigger</strong> page fires investigations on demand without curl.
         </p>
+        <figure>
+          <img src="/img/pulsetrade/gke-dashboard-home.png"
+            alt="PulseTrade dashboard home page served from the GKE cluster" />
+          <figcaption>Figure 10: The dashboard home page, served from the GKE cluster.</figcaption>
+        </figure>
+        <figure>
+          <img src="/img/pulsetrade/gke-dashboard-trigger.png"
+            alt="The dedicated Trigger page for firing an investigation on demand" />
+          <figcaption>Figure 11: The Trigger page &mdash; fire an investigation on any ticker without touching
+            curl.</figcaption>
+        </figure>
+      </section>
+
+      <section class="content-section">
+        <h2>Live on GKE &mdash; Receipts, Then Teardown</h2>
+        <p>
+          The final session put the whole serving stack on a public ingress IP and verified every route from outside
+          the cluster: <code>/api/health</code> returning 200 through the rewrite, the FastAPI docs at
+          <code>/api/docs</code>, Streamlit at root, and <code>/_stcore/health</code> answering <code>ok</code>
+          &mdash; the websocket path proven unrewritten, minutes after the old single-Ingress version briefly ran
+          again and demonstrated the very bug the split fixes.
+        </p>
+        <figure>
+          <img src="/img/pulsetrade/gke-dashboard-live.gif"
+            alt="Animated capture of the PulseTrade dashboard running live on GKE through the public ingress IP" />
+          <figcaption>Figure 12: PulseTrade live on GKE, served through the public ingress IP.</figcaption>
+        </figure>
+        <p>
+          The cluster is <strong>ephemeral by design</strong>. The whole cloud session &mdash; create &rarr; deploy
+          &rarr; verify &rarr; capture evidence &rarr; destroy &rarr; prove $0 &mdash; is one runbook, and a full
+          session costs about $0.25. That cost discipline is why the live link above points to a coming-soon page
+          rather than a URL quietly racking up node-hours.
+        </p>
+        <p>
+          The session also produced an unplanned resilience test: Databricks Free Edition was unreachable the entire
+          time. The on-cluster investigation adapted &mdash; <code>get_recent_gold</code> failed,
+          <code>get_news_for_window</code> failed, and the agent fell back to two parallel
+          <code>tavily_web_search</code> calls that succeeded. That parallel-call turn exposed a real bug (Gemini
+          rejects a tool response with an empty <code>name</code>; the <code>ToolMessage</code> wasn't setting it),
+          which was fixed during the session, and the failed report was kept in Postgres with its full error trail
+          as evidence.
+        </p>
+        <figure>
+          <img src="/img/pulsetrade/gke-dashboard-investigations.png"
+            alt="Investigations page on the live GKE deployment listing agent investigations" />
+          <figcaption>Figure 13: The Investigations page on the live cluster &mdash; agent reports read straight from
+            in-cluster Postgres.</figcaption>
+        </figure>
+        <figure>
+          <img src="/img/pulsetrade/gke-dashboard-investigation-detail.png"
+            alt="Investigation detail view showing the agent's verdict and evidence on the live GKE deployment" />
+          <figcaption>Figure 14: An investigation detail view on the live deployment &mdash; verdict, evidence, and
+            the agent's tool trail.</figcaption>
+        </figure>
       </section>
 
       <section class="content-section">
@@ -299,6 +406,17 @@
             with an opaque <code>403 ACCESS_TOKEN_SCOPE_INSUFFICIENT</code>. Passing <code>google_api_key</code>
             explicitly bypasses ADC entirely.
           </li>
+          <li>
+            <strong>Readiness gates on Postgres only.</strong> <code>/ready</code> answers from a Postgres check and
+            time-boxes the Databricks probe at 3 seconds, reporting warehouse status without gating on it. A stale
+            image whose readiness hung on the warehouse during an outage &mdash; racing the kubelet's 10-second
+            probe timeout &mdash; is what taught this.
+          </li>
+          <li>
+            <strong>Two Ingresses, one class.</strong> <code>rewrite-target</code> applies per-Ingress, so the
+            <code>/api</code> path-strip lives on its own Ingress and can never mangle Streamlit's websocket path.
+            One controller, one load balancer, one IP.
+          </li>
         </ul>
       </section>
 
@@ -313,7 +431,9 @@
           <li><strong>Storage:</strong> Postgres 16 (investigations + agent state), Delta Lake (analytical)</li>
           <li><strong>Orchestration:</strong> Apache Airflow on Docker Compose, Databricks Jobs API</li>
           <li><strong>Serving:</strong> Streamlit, Uvicorn, GKE, Helm, ingress-nginx, Google Artifact Registry</li>
-          <li><strong>CI/CD:</strong> GitHub Actions, Docker multi-stage builds, GitHub-managed Kubernetes secrets</li>
+          <li><strong>CI/CD:</strong> GitHub Actions (<code>ci.yml</code> on push, manual-trigger
+            <code>deploy.yml</code>), Docker multi-stage builds, Google Artifact Registry, Kubernetes Secrets
+            rendered by Helm</li>
           <li><strong>Observability:</strong> Prometheus, Grafana, LangSmith, Evidently AI, structlog</li>
         </ul>
         <p>
@@ -332,6 +452,7 @@
           Delta Lake, an agentic reasoning layer, and a containerized serving stack. The decisions documented along
           the way (Finnhub over yfinance, batch-windowing inside <code>foreachBatch</code>, explicit Gemini auth,
           bronze as audit log) reflect what gets you from a tutorial that runs once to a system that runs reliably
-          every five minutes.
+          every five minutes &mdash; and, on the day an entire upstream vanished, one that degraded honestly instead
+          of falling over.
         </p>
       </section>

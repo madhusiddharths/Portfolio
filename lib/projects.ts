@@ -109,6 +109,8 @@ export const PROJECTS: Project[] = [
     tech: ["Apache Kafka", "Apache Airflow", "Databricks", "Kubernetes", "FastAPI", "PostgreSQL", "Python"],
     thumb: `${IMG}/pulsetrade.png`,
     repo: "https://github.com/madhusiddharths/pulsetrade",
+    // TODO: GKE deploys are ephemeral by design — swap for a persistent live URL when one exists.
+    live: "/work/coming-soon/",
     hasCaseStudy: true,
     featured: true,
   },
