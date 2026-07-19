@@ -17,9 +17,9 @@ export const PROFILE = {
   analystNote:
     "For analyst-focused roles, a tailored Data Analyst resume is available.",
   resume:
-    "https://docs.google.com/document/d/1vSXY5vQq6MzzLWcgp6Grp4i8TB5QjzEo/edit?usp=share_link&ouid=105411796859966559609&rtpof=true&sd=true",
+    "https://docs.google.com/document/d/1lMamT23XtATengJA4aIyfKyjG2JJld9J/edit?usp=share_link&ouid=105411796859966559609&rtpof=true&sd=true",
   analystResume:
-    "https://docs.google.com/document/d/19SR4XT89PuZSj2cfEhh1VyW1brmfiB_g/edit?usp=share_link&ouid=105411796859966559609&rtpof=true&sd=true",
+    "https://docs.google.com/document/d/1k-H_59dL_5XADCEsP8n0rhiJq-vAlozU/edit?usp=share_link&ouid=105411796859966559609&rtpof=true&sd=true",
   email: "madhusiddharths1@outlook.com",
   github: "https://github.com/madhusiddharths",
   linkedin: "https://www.linkedin.com/in/madhu-siddharth-suthagar/",
