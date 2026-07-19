@@ -331,12 +331,16 @@
           the cluster: <code>/api/health</code> returning 200 through the rewrite, the FastAPI docs at
           <code>/api/docs</code>, Streamlit at root, and <code>/_stcore/health</code> answering <code>ok</code>
           &mdash; the websocket path proven unrewritten, minutes after the old single-Ingress version briefly ran
-          again and demonstrated the very bug the split fixes.
+          again and demonstrated the very bug the split fixes. The capture below walks the live deployment
+          end-to-end: the dashboard home, the Investigations archive, a full agent brief, and a fresh investigation
+          fired from the Trigger page that completes on-cluster in 3 ReAct iterations and 2 tool calls.
         </p>
         <figure>
           <img src="/img/pulsetrade/gke-dashboard-live.gif"
-            alt="Animated capture of the PulseTrade dashboard running live on GKE through the public ingress IP" />
-          <figcaption>Figure 12: PulseTrade live on GKE, served through the public ingress IP.</figcaption>
+            alt="Animated walkthrough of the PulseTrade dashboard live on GKE: home, Investigations archive, an agent brief, and a live investigation fired from the Trigger page" />
+          <figcaption>Figure 12: PulseTrade live on GKE through the public ingress IP &mdash; home, the
+            Investigations archive, a full agent brief, and a live investigation fired from the Trigger
+            page.</figcaption>
         </figure>
         <p>
           The cluster is <strong>ephemeral by design</strong>. The whole cloud session &mdash; create &rarr; deploy
@@ -351,20 +355,9 @@
           <code>tavily_web_search</code> calls that succeeded. That parallel-call turn exposed a real bug (Gemini
           rejects a tool response with an empty <code>name</code>; the <code>ToolMessage</code> wasn't setting it),
           which was fixed during the session, and the failed report was kept in Postgres with its full error trail
-          as evidence.
+          as evidence &mdash; it is still there in the Investigations archive the capture above scrolls through,
+          alongside the Tavily-fallback brief it produced.
         </p>
-        <figure>
-          <img src="/img/pulsetrade/gke-dashboard-investigations.png"
-            alt="Investigations page on the live GKE deployment listing agent investigations" />
-          <figcaption>Figure 13: The Investigations page on the live cluster &mdash; agent reports read straight from
-            in-cluster Postgres.</figcaption>
-        </figure>
-        <figure>
-          <img src="/img/pulsetrade/gke-dashboard-investigation-detail.png"
-            alt="Investigation detail view showing the agent's verdict and evidence on the live GKE deployment" />
-          <figcaption>Figure 14: An investigation detail view on the live deployment &mdash; verdict, evidence, and
-            the agent's tool trail.</figcaption>
-        </figure>
       </section>
 
       <section class="content-section">
