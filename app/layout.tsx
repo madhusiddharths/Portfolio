@@ -2,10 +2,12 @@ import type { Metadata } from "next";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import "./globals.css";
+import "lenis/dist/lenis.css";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { PlotBackdrop } from "@/components/plot-backdrop";
 import { Cursor } from "@/components/cursor";
+import { SmoothScroll } from "@/components/smooth-scroll";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://madhusiddharth.dev"),
@@ -51,11 +53,13 @@ export default function RootLayout({
         <a href="#main" className="skip-link">
           Skip to content
         </a>
-        <PlotBackdrop />
-        <Cursor />
-        <SiteHeader />
-        {children}
-        <SiteFooter />
+        <SmoothScroll>
+          <PlotBackdrop />
+          <Cursor />
+          <SiteHeader />
+          {children}
+          <SiteFooter />
+        </SmoothScroll>
       </body>
     </html>
   );

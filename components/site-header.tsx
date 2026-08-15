@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useLenis } from "lenis/react";
 import { PROFILE } from "@/lib/projects";
 import { ThemeToggle } from "./theme-toggle";
 import { ArrowUpRight } from "./icons";
@@ -16,6 +17,9 @@ const NAV = [
 export function SiteHeader() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  // undefined when smooth scrolling isn't mounted (reduced motion) — the
+  // optional calls below then no-op and the body lock alone does the work.
+  const lenis = useLenis();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -24,12 +28,17 @@ export function SiteHeader() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  // Lock the page behind the open menu panel: the body lock stops native
+  // scrolling, and stopping Lenis stops it consuming wheel/touch on top.
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
+    if (open) lenis?.stop();
+    else lenis?.start();
     return () => {
       document.body.style.overflow = "";
+      lenis?.start();
     };
-  }, [open]);
+  }, [open, lenis]);
 
   return (
     <header className={`site-header ${scrolled ? "is-scrolled" : ""}`}>
@@ -42,7 +51,9 @@ export function SiteHeader() {
           </span>
         </Link>
 
-        <nav className={`site-nav ${open ? "is-open" : ""}`} aria-label="Primary">
+        {/* data-lenis-prevent: the mobile panel scrolls on its own (overflow-y:
+            auto), so Lenis must leave gestures inside it alone. */}
+        <nav className={`site-nav ${open ? "is-open" : ""}`} aria-label="Primary" data-lenis-prevent>
           <ul>
             {NAV.map((item, i) => (
               <li key={item.href}>

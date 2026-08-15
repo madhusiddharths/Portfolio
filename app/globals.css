@@ -126,12 +126,22 @@
 
 html {
   -webkit-text-size-adjust: 100%;
+  /* Fallback path only — native smooth anchors for no-JS and reduced motion.
+     When Lenis mounts it adds `.lenis` and drives anchors itself; the two
+     smooth behaviours fight if both are live, so the class turns this off. */
   scroll-behavior: smooth;
   scroll-padding-top: 8rem;
   /* Contain any horizontal overflow at the root so mobile can't pan sideways.
      `clip` (not `hidden`) avoids creating a scroll container, so it leaves the
      sticky TOC / metadata rails on case-study pages working. */
   overflow-x: clip;
+}
+
+html.lenis {
+  scroll-behavior: auto;
+  /* syncTouch consumes touchmove, so keep the browser's own pull-to-refresh
+     and bounce from competing with it. */
+  overscroll-behavior-y: none;
 }
 
 body {

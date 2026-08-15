@@ -1,0 +1,323 @@
+{
+  "communities": {
+    "0": [
+      "app_work_slug_page",
+      "app_work_slug_page_casestudypage",
+      "app_work_slug_page_generatemetadata",
+      "app_work_slug_page_generatestaticparams",
+      "app_work_slug_page_params",
+      "app_work_slug_page_study_projects",
+      "components_case_study_toc",
+      "components_case_study_toc_casestudytoc",
+      "components_icons_liveicon",
+      "components_reading_progress",
+      "components_reading_progress_readingprogress",
+      "lib_case_study",
+      "lib_case_study_decodeentities",
+      "lib_case_study_loadcasestudy",
+      "lib_case_study_slugify",
+      "lib_case_study_tocitem",
+      "lib_projects",
+      "lib_projects_case_study_slugs",
+      "lib_projects_certs",
+      "lib_projects_featured",
+      "lib_projects_getproject",
+      "lib_projects_projects",
+      "lib_projects_rationale_164",
+      "lib_projects_skills",
+      "lib_projects_tech",
+      "lib_projects_techicon"
+    ],
+    "1": [
+      "framer_motion",
+      "geist",
+      "next",
+      "package",
+      "package_dependencies",
+      "package_dependencies_framer_motion",
+      "package_dependencies_geist",
+      "package_dependencies_next",
+      "package_dependencies_react",
+      "package_dependencies_react_dom",
+      "package_description",
+      "package_name",
+      "package_private",
+      "package_scripts",
+      "package_scripts_build",
+      "package_scripts_dev",
+      "package_scripts_lint",
+      "package_scripts_serve",
+      "package_scripts_start",
+      "package_version",
+      "react",
+      "react_dom"
+    ],
+    "2": [
+      "app_page",
+      "app_page_home",
+      "components_count_up",
+      "components_count_up_countup",
+      "components_count_up_countupprops",
+      "components_intro",
+      "components_intro_intro",
+      "components_magnetic",
+      "components_magnetic_magnetic",
+      "components_magnetic_magneticprops",
+      "components_sections_certifications_certifications",
+      "components_sections_contact",
+      "components_sections_contact_contact",
+      "components_sections_hero",
+      "components_sections_hero_hero",
+      "components_sections_skills_skills",
+      "components_sections_work_work",
+      "components_status_clock",
+      "components_status_clock_statusclock",
+      "lib_projects_metrics",
+      "lib_projects_profile"
+    ],
+    "3": [
+      "ref",
+      "ref_dom",
+      "ref_dom_iterable",
+      "ref_esnext",
+      "tsconfig_compileroptions",
+      "tsconfig_compileroptions_allowjs",
+      "tsconfig_compileroptions_esmoduleinterop",
+      "tsconfig_compileroptions_incremental",
+      "tsconfig_compileroptions_isolatedmodules",
+      "tsconfig_compileroptions_jsx",
+      "tsconfig_compileroptions_lib",
+      "tsconfig_compileroptions_module",
+      "tsconfig_compileroptions_moduleresolution",
+      "tsconfig_compileroptions_noemit",
+      "tsconfig_compileroptions_paths",
+      "tsconfig_compileroptions_plugins",
+      "tsconfig_compileroptions_resolvejsonmodule",
+      "tsconfig_compileroptions_skiplibcheck",
+      "tsconfig_compileroptions_strict",
+      "tsconfig_compileroptions_target",
+      "tsconfig_paths"
+    ],
+    "4": [
+      "app_not_found",
+      "app_not_found_notfound",
+      "components_icons",
+      "components_icons_arrowupright",
+      "components_icons_discordicon",
+      "components_icons_githubicon",
+      "components_icons_iconprops",
+      "components_icons_linkedinicon",
+      "components_icons_mailicon",
+      "components_icons_moonicon",
+      "components_icons_sunicon",
+      "components_site_header",
+      "components_site_header_nav",
+      "components_social_links",
+      "components_social_links_links",
+      "components_theme_toggle",
+      "components_theme_toggle_themetoggle"
+    ],
+    "5": [
+      "app_work_coming_soon_page",
+      "app_work_coming_soon_page_comingsoon",
+      "app_work_coming_soon_page_metadata",
+      "components_icons_arrowicon",
+      "components_reveal",
+      "components_reveal_reveal",
+      "components_reveal_revealprops",
+      "components_section_heading",
+      "components_section_heading_props",
+      "components_section_heading_sectionheading",
+      "components_sections_certifications",
+      "components_sections_skills",
+      "components_sections_work"
+    ],
+    "6": [
+      "package_devdependencies",
+      "package_devdependencies_tailwindcss",
+      "package_devdependencies_tailwindcss_postcss",
+      "package_devdependencies_types_node",
+      "package_devdependencies_types_react",
+      "package_devdependencies_types_react_dom",
+      "package_devdependencies_typescript",
+      "tailwindcss",
+      "tailwindcss_postcss",
+      "types_node",
+      "types_react",
+      "types_react_dom",
+      "typescript"
+    ],
+    "7": [
+      "app_layout",
+      "app_layout_metadata",
+      "app_layout_rootlayout",
+      "components_cursor",
+      "components_cursor_cursor",
+      "components_plot_backdrop",
+      "components_plot_backdrop_plotbackdrop",
+      "components_site_footer",
+      "components_site_footer_sitefooter",
+      "components_site_header_siteheader",
+      "components_social_links_sociallinks"
+    ],
+    "8": [
+      "app_work_page",
+      "app_work_page_metadata",
+      "app_work_page_workpage",
+      "components_icons_lockicon",
+      "components_work_index",
+      "components_work_index_mobilepeekactive",
+      "components_work_index_rowhref",
+      "components_work_index_workindex",
+      "components_work_index_workindexcontent",
+      "lib_projects_project"
+    ],
+    "9": [
+      "ref_next",
+      "ref_next_env_d_ts",
+      "ref_next_types_ts",
+      "ref_node_modules",
+      "ref_out",
+      "ref_ts",
+      "ref_tsx",
+      "tsconfig",
+      "tsconfig_exclude",
+      "tsconfig_include"
+    ],
+    "10": [
+      "next_config",
+      "next_config_nextconfig"
+    ],
+    "11": [
+      "postcss_config",
+      "postcss_config_config"
+    ]
+  },
+  "cohesion": {
+    "0": 0.13230769230769232,
+    "1": 0.09090909090909091,
+    "2": 0.14285714285714285,
+    "3": 0.09523809523809523,
+    "4": 0.18382352941176472,
+    "5": 0.3076923076923077,
+    "6": 0.15384615384615385,
+    "7": 0.23636363636363636,
+    "8": 0.26666666666666666,
+    "9": 0.2,
+    "10": 1.0,
+    "11": 1.0
+  },
+  "gods": [
+    {
+      "id": "tsconfig_compileroptions",
+      "label": "compilerOptions",
+      "degree": 16
+    },
+    {
+      "id": "components_reveal_reveal",
+      "label": "Reveal()",
+      "degree": 9
+    },
+    {
+      "id": "components_icons_arrowicon",
+      "label": "ArrowIcon()",
+      "degree": 7
+    },
+    {
+      "id": "lib_projects_profile",
+      "label": "PROFILE",
+      "degree": 7
+    },
+    {
+      "id": "components_icons_arrowupright",
+      "label": "ArrowUpRight()",
+      "degree": 6
+    },
+    {
+      "id": "package_scripts",
+      "label": "scripts",
+      "degree": 6
+    },
+    {
+      "id": "app_work_slug_page_casestudypage",
+      "label": "CaseStudyPage()",
+      "degree": 5
+    },
+    {
+      "id": "lib_case_study_loadcasestudy",
+      "label": "loadCaseStudy()",
+      "degree": 5
+    },
+    {
+      "id": "lib_projects_techicon",
+      "label": "techIcon()",
+      "degree": 5
+    },
+    {
+      "id": "lib_projects_projects",
+      "label": "PROJECTS",
+      "degree": 5
+    }
+  ],
+  "surprises": [
+    {
+      "source": "generateMetadata()",
+      "target": "getProject()",
+      "source_files": [
+        "app/work/[slug]/page.tsx",
+        "lib/projects.ts"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "connects across different repos/directories; peripheral node `generateMetadata()` unexpectedly reaches hub `getProject()`"
+    },
+    {
+      "source": "Skills()",
+      "target": "techIcon()",
+      "source_files": [
+        "components/sections/skills.tsx",
+        "lib/projects.ts"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "connects across different repos/directories; bridges separate communities"
+    },
+    {
+      "source": "CaseStudyPage()",
+      "target": "loadCaseStudy()",
+      "source_files": [
+        "app/work/[slug]/page.tsx",
+        "lib/case-study.ts"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "connects across different repos/directories"
+    },
+    {
+      "source": "CaseStudyPage()",
+      "target": "getProject()",
+      "source_files": [
+        "app/work/[slug]/page.tsx",
+        "lib/projects.ts"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "connects across different repos/directories"
+    },
+    {
+      "source": "CaseStudyPage()",
+      "target": "techIcon()",
+      "source_files": [
+        "app/work/[slug]/page.tsx",
+        "lib/projects.ts"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "connects across different repos/directories"
+    }
+  ],
+  "tokens": {
+    "input": 0,
+    "output": 0
+  }
+}
