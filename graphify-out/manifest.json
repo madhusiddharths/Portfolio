@@ -145,8 +145,8 @@
     "semantic_hash": "83c3f352f27c2b51f2cfba8c48eb3332"
   },
   "lib/projects.ts": {
-    "mtime": 1784484984.2051122,
-    "ast_hash": "8d023c41394e2a3550918fb1c7d0857f",
+    "mtime": 1787202855.1936576,
+    "ast_hash": "4ce110f2c85529d27ab959dbfd1fd808",
     "semantic_hash": ""
   },
   "next.config.mjs": {

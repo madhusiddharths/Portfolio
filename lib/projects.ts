@@ -11,7 +11,7 @@ export const PROFILE = {
   role: "Data Scientist",
   location: "GMT+0",
   available: true,
-  building: "PulseTrade",
+  building: "DEM simulator",
   tagline: "I develop scalable models that drive real-world impact.",
   bio: "As a Data Scientist, I design and build end-to-end data systems that turn large, complex datasets into actionable insights and predictive models. My work spans data engineering, exploratory analysis, and applied machine learning, with a focus on reliability and real-world impact. I enjoy uncovering patterns at scale, optimizing analytical workflows, and translating technical results into clear, decision-ready insights for both technical and non-technical stakeholders.",
   analystNote:
