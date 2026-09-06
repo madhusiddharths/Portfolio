@@ -37,7 +37,8 @@
       </p>
       <ul>
         <li><strong>The data-engineering problem:</strong> reduce a 1.8-billion-row, 157-column raw catalogue into a
-          clean, trustworthy, physically meaningful dataset — on a single machine — without ever loading it whole.</li>
+          clean, trustworthy, physically meaningful dataset — on hardware I already owned, with no managed cloud
+          cluster — without ever loading it whole.</li>
         <li><strong>The serving-cost problem:</strong> drive interactive 3D exploration <em>and</em> on-the-fly
           analytics over hundreds of millions of stars from a browser, at low latency and near-zero marginal cost. The
           naive cloud approach — point a warehouse query at the whole catalogue every time a user moves a slider —
@@ -82,10 +83,30 @@
     <section class="content-section">
       <h2>Data Engineering Pipeline</h2>
       <p>
-        The reduction from 1.8 billion raw sources to a 557 M-star serving catalogue runs as a multi-stage
-        <strong>Polars</strong> pipeline. Polars' lazy, multi-threaded, larger-than-memory execution let me process the
-        catalogue <strong>one Parquet shard at a time</strong> on a single machine — never holding more than a partition
-        in memory — while staying in a columnar format end to end.
+        The reduction from 1.8 billion raw sources to a 557 M-star serving catalogue runs as a multi-stage pipeline that
+        <strong>starts on PySpark and finishes on Polars</strong>. The first filtering and partitioning pass ran
+        distributed, on a Spark cluster I assembled from the machines I had; every stage after it runs on Polars, whose
+        lazy, multi-threaded, larger-than-memory execution lets me process the catalogue
+        <strong>one Parquet shard at a time</strong> on a single machine — never holding more than a partition in
+        memory — while staying in a columnar format end to end.
+      </p>
+
+      <p class="subsection-title">First pass on a bare-metal Spark cluster</p>
+      <p>
+        A 1.8-billion-row catalogue is the textbook case for distributed compute, so the first filtering and
+        partitioning pass was written in <strong>PySpark</strong> and run on a Spark standalone cluster built out of
+        five laptops: a Mac running the master alongside a worker, one Linux machine, and three Windows machines meant
+        to join through WSL. The WSL nodes never came up as workers, so the cluster that actually ran the pass was the
+        Mac and the Linux box.
+      </p>
+      <p>
+        It worked — that two-node cluster did the first filtering and partitioning of the raw catalogue. But the Linux
+        machine was old enough that the throughput it contributed barely moved the needle over the Mac on its own, while
+        the coordination and shuffle overhead of running distributed was paid in full either way. Distributed compute
+        only wins when the workers are worth what it costs to coordinate them, and at this scale on this hardware they
+        weren't. So past that first pass I dropped the cluster and rewrote the remaining stages in Polars, where one
+        machine's cores work over a columnar format with no cross-machine traffic at all — which is what the rest of
+        this section describes.
       </p>
 
       <p class="subsection-title">Column projection — 157 → ~12</p>
@@ -318,6 +339,10 @@ WHERE  distance_ly &gt; 0;</code></pre>
     <section class="content-section">
       <h2>Engineering Challenges Solved</h2>
       <ul>
+        <li><strong>Distributed compute that didn't pay for itself:</strong> the first filtering and partitioning pass
+          ran on a PySpark standalone cluster assembled from five laptops, but only two nodes ever joined and the older
+          one added little throughput while the coordination overhead was paid in full. Measured it, then moved every
+          remaining stage onto single-node Polars.</li>
         <li><strong>1.8 billion rows on one machine:</strong> the raw catalogue can't be loaded whole. Solved with a
           shard-at-a-time Polars pipeline in columnar, Zstandard-compressed Parquet — memory stays flat regardless of
           catalogue size.</li>
@@ -386,8 +411,9 @@ WHERE  distance_ly &gt; 0;</code></pre>
     <section class="content-section">
       <h2>Tech Stack</h2>
       <ul>
-        <li><strong>Data engineering:</strong> Polars (larger-than-memory, shard-at-a-time processing), NumPy,
-          Zstandard-compressed Parquet, HEALPix spatial indexing.</li>
+        <li><strong>Data engineering:</strong> PySpark (standalone cluster; first filtering and partitioning pass),
+          Polars (larger-than-memory, shard-at-a-time processing), NumPy, Zstandard-compressed Parquet, HEALPix spatial
+          indexing.</li>
         <li><strong>Warehouse:</strong> Google BigQuery (external tables, native clustered tables, precomputed
           aggregates, dry-run cost estimation), Google Cloud Storage data lake.</li>
         <li><strong>Machine learning:</strong> HDBSCAN 6D phase-space clustering, scikit-learn (<code>StandardScaler</code>).</li>
@@ -404,8 +430,8 @@ WHERE  distance_ly &gt; 0;</code></pre>
       <h2>Outcomes &amp; Impact</h2>
       <ul>
         <li>Engineered a <strong>750+ GB, ~1.8-billion-source, 157-column</strong> raw Gaia DR3 catalogue down to a
-          clean, physically meaningful <strong>557 M-star, 13-column</strong> serving table — entirely on a single
-          machine.</li>
+          clean, physically meaningful <strong>557 M-star, 13-column</strong> serving table — entirely on local
+          commodity hardware, a PySpark cluster for the first pass and single-node Polars for the rest.</li>
         <li>Cut interactive query cost from a <strong>~77 GB / ~$0.38 full scan on every interaction</strong> to
           cluster-pruned reads, and pushed density and HR analytics into precomputed tables scanned in
           <strong>kilobytes</strong>.</li>
