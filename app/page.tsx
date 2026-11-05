@@ -5,15 +5,15 @@ import { BuildSection, SwarmCount } from "@/components/agent/swarm";
 import { B } from "@/components/agent/b";
 import { SecHead as Head } from "@/components/agent/sec-head";
 
-/** Home section header — "//02.00 SEC_WORK INDEX (02/05)". */
+/** Home section header — a shell line ("madhu@agent:~$ cat work.md"), eyebrow, title. */
 function SecHead({ n, sec, eyebrow, title, children }: { n: string; sec: string; eyebrow: string; title: string; children?: React.ReactNode }) {
   return (
-    <Head index={`//${n}.00 ${sec} INDEX (${n}/05)`} eyebrow={eyebrow} title={title}>
+    <Head index={`madhu@agent:~$ cat ${sec.replace("SEC_", "").toLowerCase()}.md  # ${n}/05`} eyebrow={eyebrow} title={title}>
       {children}
     </Head>
   );
 }
-import { TaskCard, BuildCredit } from "@/components/agent/live";
+import { RunStatus, RunUsage, BuildCredit } from "@/components/agent/live";
 import { StatusClock } from "@/components/status-clock";
 import { ArrowIcon, ArrowUpRight, GithubIcon, LinkedinIcon, DiscordIcon, MailIcon, LockIcon } from "@/components/icons";
 
@@ -21,6 +21,7 @@ import { ArrowIcon, ArrowUpRight, GithubIcon, LinkedinIcon, DiscordIcon, MailIco
 const SENTENCES = PROFILE.bio.split(/(?<=\.)\s+/);
 const QUOTE = SENTENCES[SENTENCES.length - 1];
 const BIO = SENTENCES.slice(0, -1);
+const TOOLS = ["LangGraph", "MCP", "Claude API", "vLLM", "PyTorch", "Apache Kafka", "Apache Spark", "Docker"];
 const FOCUS = ["Agent orchestration", "Tool integration", "Model fine-tuning", "Evaluation", "Production deployment"];
 const SOCIAL = [
   { label: "GitHub", href: PROFILE.github, Icon: GithubIcon },
@@ -31,56 +32,113 @@ const SOCIAL = [
 export default function Home() {
   return (
     <AgentShell>
-        {/* ── HERO ─────────────────────────────────────────────────────── */}
+        {/* ── HERO · a model playground ─────────────────────────────── */}
         <BuildSection id="home" sec="SEC_HOME" className="hero">
-          <div className="wrap hero-grid">
-            <div className="hero-main">
-              <B as="p" kind="type" label="p.status" className="hero-status">
-                <span className="live-dot" /> available for work <span className="sep">/</span> {PROFILE.location} <StatusClock />{" "}
-                <span className="sep">/</span> building <em>{PROFILE.building}</em>
-              </B>
+          <div className="wrap">
+            <B as="p" kind="type" label="p.env" className="hero-status">
+              <span className="live-dot" /> available for work <span className="sep">/</span> {PROFILE.location} <StatusClock />{" "}
+              <span className="sep">/</span> building <em>{PROFILE.building}</em>
+            </B>
 
-              <div className="hero-title">
-                <B kind="block" label="svg.wordmark" className="hero-word" aria-hidden="true">
-                  Portfolio
-                </B>
-                <B as="p" kind="type" label="span.script" className="hero-hello">
-                  Hello, I&apos;m
-                </B>
-                <B as="h1" kind="fill" label="h1.name" className="hero-name">
-                  <span>Madhu Siddharth.</span>
-                </B>
+            <B kind="frame" label="div.playground" className="pg">
+              <div className="pg-bar">
+                <span className="pg-name">playground</span>
+                <span className="pg-run">run_01JD4M · madhu-v2</span>
+                <RunStatus />
               </div>
 
-              <B as="p" kind="type" label="p.role" className="hero-role">
-                <i aria-hidden="true" /> {PROFILE.role} · agentic workflows · end-to-end automation
-              </B>
-              <B as="p" kind="type" label="p.tagline" className="hero-tagline">
-                I develop <mark>scalable models</mark> that drive real-world impact.
-              </B>
+              <div className="pg-grid">
+                <div className="pg-thread">
+                  <div className="pg-msg">
+                    <span className="pg-role">system</span>
+                    <B as="p" kind="para" label="msg.system" className="pg-system">
+                      You are Madhu Siddharth, an AI engineer. You design agentic workflows where models plan, call tools and act
+                      on their own — and you measure honestly where they hold up.
+                    </B>
+                  </div>
+                  <div className="pg-msg">
+                    <span className="pg-role">user</span>
+                    <B as="p" kind="type" label="msg.user" className="pg-user">
+                      Who are you, and what do you ship?
+                    </B>
+                  </div>
+                  <div className="pg-msg pg-out">
+                    <span className="pg-role">
+                      assistant <i className="pg-caret" aria-hidden="true" />
+                    </span>
+                    <B as="p" kind="type" label="span.hello" className="pg-hello">
+                      Hello, I&apos;m
+                    </B>
+                    <B as="h1" kind="fill" label="h1.name" className="hero-name">
+                      <span>Madhu Siddharth.</span>
+                    </B>
+                    <B as="p" kind="type" label="p.role" className="hero-role">
+                      <i aria-hidden="true" /> {PROFILE.role} · agentic workflows · end-to-end automation
+                    </B>
+                    <B as="p" kind="type" label="p.tagline" className="hero-tagline">
+                      I develop <mark>scalable models</mark> that drive real-world impact.
+                    </B>
+                    <B kind="block" label="tool_calls" className="pg-calls" data-ops="create,paint,resize,place">
+                      <span className="pg-calls-h">tool_calls · 3</span>
+                      <a href={`mailto:${PROFILE.email}`} className="pg-call pg-call-go">
+                        <code>contact</code>
+                        <span>(to=&quot;madhu&quot;)</span>
+                        <ArrowIcon width={14} height={14} />
+                      </a>
+                      <a href="#work" className="pg-call">
+                        <code>open_work</code>
+                        <span>(featured=6)</span>
+                      </a>
+                      <a href={PROFILE.resume} target="_blank" rel="noopener noreferrer" className="pg-call">
+                        <code>get_resume</code>
+                        <span>()</span>
+                        <ArrowUpRight width={12} height={12} />
+                      </a>
+                    </B>
+                  </div>
+                </div>
 
-              <B kind="block" label="div.actions" className="hero-actions">
-                <a href={`mailto:${PROFILE.email}`} className="btn btn-red">
-                  Initiate contact <ArrowIcon width={16} height={16} />
-                </a>
-                <a href="#work" className="btn btn-line">
-                  Explore work
-                </a>
-                <a href={PROFILE.resume} target="_blank" rel="noopener noreferrer" className="btn btn-text">
-                  Résumé <ArrowUpRight width={14} height={14} />
-                </a>
-              </B>
-            </div>
-
-            <B as="aside" kind="list" label="aside.task-card" className="hero-task" aria-label="Build progress">
-              <TaskCard />
+                <aside className="pg-config" aria-label="Run configuration">
+                  <B kind="list" label="cfg.model" className="pg-field">
+                    <span className="pg-k">model</span>
+                    <span className="pg-v">madhu-v2</span>
+                    <span className="pg-k">role</span>
+                    <span className="pg-v">{PROFILE.role}</span>
+                    <span className="pg-k">temperature</span>
+                    <span className="pg-v pg-temp">
+                      <i style={{ ["--t" as string]: 0.2 }} /> 0.2
+                    </span>
+                  </B>
+                  <B kind="list" label="cfg.tools" className="pg-field pg-tools">
+                    <span className="pg-k">
+                      tools <b>{TOOLS.length}</b>
+                    </span>
+                    <ul>
+                      {TOOLS.map((t, i) => {
+                        const icon = techIcon(t);
+                        return (
+                          <li key={t} style={{ ["--i" as string]: i }}>
+                            <Link href={`/work/?skill=${encodeURIComponent(t)}`} title={`Projects using ${t}`}>
+                              <span className="pg-check" aria-hidden="true" />
+                              {icon && <img src={icon} alt="" width={14} height={14} loading="lazy" />}
+                              {t}
+                            </Link>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </B>
+                  <B kind="block" label="cfg.usage" className="pg-field" data-ops="create,paint,place">
+                    <span className="pg-k">this run</span>
+                    <RunUsage />
+                  </B>
+                </aside>
+              </div>
             </B>
-          </div>
 
-          <div className="wrap">
             <dl className="hero-metrics">
-              {METRICS.map((m) => (
-                <B key={m.label} kind="block" label="dl.metric" className="metric">
+              {METRICS.map((m, i) => (
+                <B key={m.label} kind="block" label="eval.metric" className="metric" data-ops={i % 2 ? "create,paint,place" : "create,paint"}>
                   <dt>
                     <SwarmCount value={m.value} prefix={m.prefix} suffix={m.suffix} />
                   </dt>
@@ -276,7 +334,7 @@ export default function Home() {
                   Feel free to drop me an email if you believe we&apos;d make a great team and would like to collaborate. Let&apos;s
                   make our work together not only productive but also enjoyable!
                 </B>
-                <B kind="block" label="div.actions" className="contact-actions">
+                <B kind="block" label="div.actions" className="contact-actions" data-ops="create,paint">
                   <a href={`mailto:${PROFILE.email}`} className="btn btn-red">
                     <MailIcon width={16} height={16} /> Get in touch
                   </a>
@@ -287,23 +345,32 @@ export default function Home() {
                   ))}
                 </B>
               </div>
-              <B as="dl" kind="list" label="dl.details" className="contact-details">
-                <div style={{ ["--i" as string]: 0 }}>
-                  <dt>Email</dt>
-                  <dd>
-                    <a href={`mailto:${PROFILE.email}`}>{PROFILE.email}</a>
-                  </dd>
+              <B kind="block" label="req.contact" className="req">
+                <div className="req-bar">
+                  <span className="req-verb">POST</span>
+                  <span className="req-path">/v1/contact</span>
+                  <span className="req-ok">200 OK</span>
                 </div>
-                <div style={{ ["--i" as string]: 1 }}>
-                  <dt>Role</dt>
-                  <dd>{PROFILE.role}</dd>
-                </div>
-                <div style={{ ["--i" as string]: 2 }}>
-                  <dt>Status</dt>
-                  <dd>
-                    <span className="live-dot" /> Open to opportunities
-                  </dd>
-                </div>
+                <pre className="req-body">
+                  <code>
+                    {"{\n"}
+                    {"  "}<span className="j-k">&quot;to&quot;</span>: <a href={`mailto:${PROFILE.email}`} className="j-s">&quot;{PROFILE.email}&quot;</a>,{"\n"}
+                    {"  "}<span className="j-k">&quot;role&quot;</span>: <span className="j-s">&quot;{PROFILE.role}&quot;</span>,{"\n"}
+                    {"  "}<span className="j-k">&quot;status&quot;</span>: <span className="j-s">&quot;open_to_opportunities&quot;</span>,{"\n"}
+                    {"  "}<span className="j-k">&quot;timezone&quot;</span>: <span className="j-s">&quot;{PROFILE.location}&quot;</span>,{"\n"}
+                    {"  "}<span className="j-k">&quot;channels&quot;</span>: [
+                    {SOCIAL.map((x, i) => (
+                      <span key={x.label}>
+                        <a href={x.href} target="_blank" rel="noopener noreferrer" className="j-s">
+                          &quot;{x.label.toLowerCase()}&quot;
+                        </a>
+                        {i < SOCIAL.length - 1 ? ", " : ""}
+                      </span>
+                    ))}
+                    ]{"\n"}
+                    {"}"}
+                  </code>
+                </pre>
               </B>
             </div>
           </div>

@@ -6,6 +6,12 @@
       "runtimeExecutable": "npx",
       "runtimeArgs": ["serve", "out", "-l", "3123"],
       "port": 3123
+    },
+    {
+      "name": "next-dev",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["next", "dev", "-p", "3124"],
+      "port": 3124
     }
   ]
 }

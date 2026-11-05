@@ -66,13 +66,26 @@ function CursorLayer({ engine }: { engine: SwarmEngine }) {
         const c = engine.cursors[a.id];
         const st = agents[a.id];
         return (
-          <motion.div key={a.id} className="swarm-cursor" data-status={st.status} style={{ x: c.x, y: c.y, opacity: c.o, color: a.color, ["--c" as string]: a.color }}>
+          <motion.div
+            key={a.id}
+            className="swarm-cursor"
+            data-status={st.status}
+            data-op={st.status === "working" ? (st.op ?? undefined) : undefined}
+            style={{ x: c.x, y: c.y, opacity: c.o, color: a.color, ["--c" as string]: a.color }}
+          >
             <svg width="18" height="20" viewBox="0 0 18 20" className="swarm-arrow">
               <path d="M1.5 1.5 L16 9.2 L9.4 10.9 L6.2 17.6 Z" fill="currentColor" stroke="#050507" strokeWidth="1.4" strokeLinejoin="round" />
             </svg>
             <span className="swarm-tag">
               {a.name}
-              {st.status === "working" && <i className="swarm-typing"><b /><b /><b /></i>}
+              {st.status === "working" && st.op && <span className="swarm-op">{st.op}</span>}
+              {st.status === "working" && (st.op === "write" || st.op === "paint") && (
+                <i className="swarm-typing">
+                  <b />
+                  <b />
+                  <b />
+                </i>
+              )}
             </span>
           </motion.div>
         );

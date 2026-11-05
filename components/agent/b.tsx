@@ -1,6 +1,6 @@
 import type { ComponentPropsWithoutRef, ElementType } from "react";
 
-export type BuildKind = "type" | "para" | "fill" | "block" | "list" | "media";
+export type BuildKind = "type" | "para" | "fill" | "block" | "list" | "media" | "frame";
 
 /**
  * One node of the swarm build. Renders `as` (default div) with the wireframe

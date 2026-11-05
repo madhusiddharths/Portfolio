@@ -1,16 +1,16 @@
 "use client";
 
-import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import "@/app/agent.css";
 import { AnimatePresence, motion } from "motion/react";
 import { Swarm, useSwarm, useSwarmState } from "./swarm";
-import { AGENTS, type Speaker } from "./engine";
-import { route, SUGGESTIONS } from "@/lib/intent-router";
-import { PROJECTS } from "@/lib/projects";
+import { ObsWindow } from "./observe";
+import { route } from "@/lib/intent-router";
+import { PROFILE, PROJECTS } from "@/lib/projects";
 
-/** A browser tab. `href` starting with "#" scrolls to a section on this page. */
+/** A route in the navigator. `href` starting with "#" scrolls to a section on this page. */
 export type Tab = { id: string; label: string; href: string; path?: string };
 
 export const TABS: Tab[] = [
@@ -23,9 +23,10 @@ export const TABS: Tab[] = [
 ];
 
 /**
- * The agentic-browser frame shared by every route. On the home page the tabs
- * are its sections (scroll-spied); elsewhere they are pages, `current` marks
- * the open one and `path` fills the address bar.
+ * The agentic-browser frame shared by every route: one-row browser chrome,
+ * the page, and a side rail of two windows — observability on top, the
+ * navigator / ask box below. On the home page the navigator lists its
+ * sections (scroll-spied); elsewhere they are pages and `current` marks one.
  */
 export function AgentShell({
   children,
@@ -44,37 +45,42 @@ export function AgentShell({
   return (
     <Swarm className="ag" task={task}>
       <div className="ag-ambient" aria-hidden="true" />
-      <Chrome tabs={tabs} current={current} fixedPath={path} onConsole={() => setOpen((o) => !o)} consoleOpen={open} />
+      <Chrome tabs={tabs} current={current} fixedPath={path} onRail={() => setOpen((o) => !o)} railOpen={open} />
       <div className="ag-body">
         <main id="main" className="ag-main">
           {children}
         </main>
-        <Console open={open} onClose={() => setOpen(false)} />
+        <aside className="rail" data-open={open ? "true" : undefined} aria-label="Swarm tools">
+          <button type="button" className="rail-close" onClick={() => setOpen(false)} aria-label="Close panel">
+            ✕
+          </button>
+          <ObsWindow />
+          <NavWindow tabs={tabs} current={current} onDone={() => setOpen(false)} />
+        </aside>
       </div>
     </Swarm>
   );
 }
 
 /* ---------------------------------------------------------------------------
-   Browser chrome — traffic lights, tabs (= sections), address bar, build bar
+   Browser chrome — one row: lights, history, reload, address, build control
    --------------------------------------------------------------------------- */
 function Chrome({
   tabs,
   current,
   fixedPath,
-  onConsole,
-  consoleOpen,
+  onRail,
+  railOpen,
 }: {
   tabs: Tab[];
   current?: string;
   fixedPath?: string;
-  onConsole: () => void;
-  consoleOpen: boolean;
+  onRail: () => void;
+  railOpen: boolean;
 }) {
   const engine = useSwarm();
   const spied = useSwarmState((s) => s.active);
   const active = current ?? spied;
-  const sections = useSwarmState((s) => s.sections);
   const enabled = useSwarmState((s) => s.enabled);
   const done = useSwarmState((s) => s.done);
   const total = useSwarmState((s) => s.total);
@@ -84,52 +90,12 @@ function Chrome({
 
   return (
     <header className="chrome">
-      <div className="chrome-row chrome-tabs-row">
+      <div className="chrome-row">
         <span className="chrome-lights" aria-hidden="true">
           <i />
           <i />
           <i />
         </span>
-        <nav className="chrome-tabs" aria-label="Sections">
-          {tabs.map((t) => {
-            const local = t.href.startsWith("#");
-            const phase = local
-              ? (sections[t.id] ?? "idle")
-              : t.id === active
-                ? building
-                  ? "building"
-                  : "done"
-                : "idle";
-            const inner = (
-              <>
-                <span className="chrome-tab-icon" data-phase={phase} aria-hidden="true" />
-                <span>{t.label}</span>
-                {active === t.id && <motion.span layoutId="tab-active" className="chrome-tab-bg" transition={{ type: "spring", stiffness: 420, damping: 36 }} />}
-              </>
-            );
-            return local ? (
-              <a
-                key={t.id}
-                href={t.href}
-                className="chrome-tab"
-                aria-current={active === t.id ? "true" : undefined}
-                onClick={(e) => {
-                  e.preventDefault();
-                  engine.scrollTo(t.href);
-                }}
-              >
-                {inner}
-              </a>
-            ) : (
-              <Link key={t.id} href={t.href} className="chrome-tab" aria-current={active === t.id ? "page" : undefined}>
-                {inner}
-              </Link>
-            );
-          })}
-        </nav>
-      </div>
-
-      <div className="chrome-row chrome-address-row">
         <div className="chrome-nav" aria-hidden="true">
           <button tabIndex={-1} type="button" className="chrome-btn" disabled>
             <Chev d="left" />
@@ -166,7 +132,7 @@ function Chrome({
               </>
             ) : (
               <>
-                <span className="chrome-ok" /> {enabled ? "built by 4 agents" : "static render"}
+                <span className="chrome-ok" /> {enabled ? "built by 6 agents" : "static render"}
               </>
             )}
           </span>
@@ -182,7 +148,7 @@ function Chrome({
             Replay build
           </button>
         )}
-        <button type="button" className="chrome-pill chrome-console-toggle" aria-expanded={consoleOpen} onClick={onConsole}>
+        <button type="button" className="chrome-pill chrome-rail-toggle" aria-expanded={railOpen} onClick={onRail}>
           <span className="live-dot" /> Swarm
         </button>
       </div>
@@ -199,45 +165,75 @@ function Chev({ d }: { d: "left" | "right" }) {
 }
 
 /* ---------------------------------------------------------------------------
-   Swarm console — agents, build progress, live log, and an ask box that runs
-   the deterministic intent router.
+   Navigator — the site's menu as a command palette. Rows are routes; typing
+   filters them, and Enter either opens the highlighted match or hands the
+   text to the deterministic intent router (a tech, a project, "résumé", …).
    --------------------------------------------------------------------------- */
-const WHO: Record<Speaker, { label: string; color: string }> = {
-  ...Object.fromEntries(AGENTS.map((a) => [a.id, { label: a.name, color: a.color }])),
-  user: { label: "You", color: "#f2f0ea" },
-  router: { label: "Router", color: "#ff4b3e" },
-  system: { label: "System", color: "#6f6e78" },
-} as Record<Speaker, { label: string; color: string }>;
+type Row = { id: string; label: string; hint: string; href: string; external?: boolean; local?: boolean };
 
-function Console({ open, onClose }: { open: boolean; onClose: () => void }) {
+function NavWindow({ tabs, current, onDone }: { tabs: Tab[]; current?: string; onDone: () => void }) {
   const engine = useSwarm();
   const router = useRouter();
-  const agents = useSwarmState((s) => s.agents);
-  const log = useSwarmState((s) => s.log);
-  const done = useSwarmState((s) => s.done);
-  const total = useSwarmState((s) => s.total);
-  const enabled = useSwarmState((s) => s.enabled);
-  const logRef = useRef<HTMLOListElement>(null);
+  const spied = useSwarmState((s) => s.active);
+  const sections = useSwarmState((s) => s.sections);
+  const active = current ?? spied;
   const [q, setQ] = useState("");
+  const [sel, setSel] = useState(0);
+  const input = useRef<HTMLInputElement>(null);
   const clearMatch = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    const el = logRef.current;
-    if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
-  }, [log.length]);
+  const rows: Row[] = useMemo(() => {
+    const base: Row[] = tabs.map((t) => ({
+      id: t.id,
+      label: t.label,
+      hint: t.href.startsWith("#") ? `#${t.id}` : t.href.replace(/\/$/, "") || "/",
+      href: t.href,
+      local: t.href.startsWith("#"),
+    }));
+    if (!tabs.some((t) => t.href === "/work/")) base.push({ id: "index", label: "all projects", hint: "/work", href: "/work/" });
+    base.push({ id: "resume", label: "résumé", hint: "doc ↗", href: PROFILE.resume, external: true });
+    base.push({ id: "github", label: "github", hint: "↗", href: PROFILE.github, external: true });
+    return base;
+  }, [tabs]);
 
-  function run(text: string) {
-    const ask = text.trim();
-    if (!ask) return;
+  const s = q.trim().toLowerCase();
+  const shown = s ? rows.filter((r) => r.label.includes(s) || r.id.includes(s)) : rows;
+  const selIdx = Math.min(sel, Math.max(0, shown.length - 1));
+
+  // "/" or ⌘K focuses the ask box
+  useEffect(() => {
+    const onKey = (e: globalThis.KeyboardEvent) => {
+      const t = e.target as HTMLElement;
+      const typing = t.closest("input, textarea, [contenteditable]");
+      if ((e.key === "k" && (e.metaKey || e.ctrlKey)) || (e.key === "/" && !typing)) {
+        e.preventDefault();
+        input.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  function go(r: Row) {
+    engine.log("user", `open ${r.label}`);
+    if (r.external) window.open(r.href, "_blank", "noopener,noreferrer");
+    else if (r.local) engine.scrollTo(r.href);
+    else router.push(r.href);
     setQ("");
-    engine.log("user", ask);
-    const r = route(ask);
+    onDone();
+  }
+
+  function ask(text: string) {
+    const said = text.trim();
+    if (!said) return;
+    setQ("");
+    engine.log("user", said);
+    const r = route(said);
     const args = Object.entries(r.args)
       .map(([k, v]) => `${k}=${Array.isArray(v) ? `[${v.length}]` : JSON.stringify(v)}`)
       .join(", ");
     engine.log("router", `${r.tool}(${args}) · p=${r.conf.toFixed(2)}`, "accent");
 
-    const narrow = window.matchMedia("(max-width: 1279px)").matches;
     switch (r.tool) {
       case "scroll":
         engine.log("planner", r.say);
@@ -280,101 +276,111 @@ function Console({ open, onClose }: { open: boolean; onClose: () => void }) {
       default:
         engine.log("system", r.say, "dim");
     }
-    if (narrow && r.tool !== "none") onClose();
+    if (r.tool !== "none") onDone();
   }
 
   function submit(e: FormEvent) {
     e.preventDefault();
-    run(q);
+    // a typed filter that narrows to a route → open it; anything else → router
+    if (s && shown.length > 0 && shown.length <= 2) go(shown[selIdx]);
+    else ask(q);
   }
 
-  const pct = total ? Math.round((done / total) * 100) : 0;
+  function onKey(e: KeyboardEvent<HTMLInputElement>) {
+    if (!shown.length) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setSel((v) => (v + 1) % shown.length);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setSel((v) => (v - 1 + shown.length) % shown.length);
+    }
+  }
 
   return (
-    <aside className="console" data-open={open ? "true" : undefined} aria-label="Swarm console">
-      <div className="console-head">
-        <span className="console-title">
-          <span className="live-dot" /> swarm console
+    <section className="win win-nav" aria-label="Navigator">
+      <div className="win-head">
+        <span className="win-title">
+          <NavIcon /> navigate
         </span>
-        <span className="console-sid">sid 0x4d53</span>
-        <button type="button" className="console-close" onClick={onClose} aria-label="Close console">
-          ✕
-        </button>
+        <span className="win-meta">
+          <kbd>⌘K</kbd>
+        </span>
       </div>
-
-      <ul className="console-agents">
-        {AGENTS.map((a) => {
-          const st = agents[a.id];
+      <ul className="nav-list" data-lenis-prevent>
+        {shown.map((r, i) => {
+          const phase = r.local ? (sections[r.id] ?? "idle") : undefined;
+          const isActive = active === r.id;
+          const selected = s && i === selIdx ? "true" : undefined;
           return (
-            <li key={a.id} data-status={st.status} style={{ ["--c" as string]: a.color }}>
-              <span className="console-agent-swatch" />
-              <span className="console-agent-name">{a.name}</span>
-              <span className="console-agent-task">{st.task}</span>
-              <span className="console-agent-eq" aria-hidden="true">
-                <i />
-                <i />
-                <i />
-              </span>
+            <li key={r.id}>
+              {r.local || r.external ? (
+                <a
+                  href={r.href}
+                  className="nav-row"
+                  aria-current={isActive ? "true" : undefined}
+                  data-sel={selected}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    go(r);
+                  }}
+                >
+                  <NavRowInner r={r} phase={phase} active={isActive} />
+                </a>
+              ) : (
+                <Link href={r.href} className="nav-row" aria-current={isActive ? "page" : undefined} data-sel={selected} onClick={onDone}>
+                  <NavRowInner r={r} active={isActive} />
+                </Link>
+              )}
             </li>
           );
         })}
+        {shown.length === 0 && (
+          <li className="nav-empty">
+            no route · <kbd>↵</kbd> asks the router
+          </li>
+        )}
       </ul>
-
-      <div className="console-progress">
-        <div className="console-progress-meta">
-          <span>{enabled ? "build" : "render"}</span>
-          <span>
-            {enabled ? done : total}/{total} nodes
-          </span>
-        </div>
-        <div className="console-progress-bar">
-          <span style={{ transform: `scaleX(${enabled ? pct / 100 : 1})` }} />
-        </div>
-      </div>
-
-      <ol className="console-log" ref={logRef} data-lenis-prevent aria-live="off">
-        <AnimatePresence initial={false}>
-          {log.map((l) => (
-            <motion.li
-              key={l.id}
-              layout="position"
-              initial={{ opacity: 0, x: -8 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-              data-tone={l.tone}
-            >
-              <span className="log-t">{l.t}</span>
-              <span className="log-who" style={{ color: WHO[l.who].color }}>
-                {WHO[l.who].label}
-              </span>
-              <span className="log-text">{l.text}</span>
-            </motion.li>
-          ))}
-        </AnimatePresence>
-      </ol>
-
-      <form className="console-ask" onSubmit={submit}>
-        <div className="console-suggest">
-          {SUGGESTIONS.map((s) => (
-            <button key={s} type="button" onClick={() => run(s)}>
-              {s}
-            </button>
-          ))}
-        </div>
-        <label className="console-input">
+      <form className="nav-ask" onSubmit={submit}>
+        <label className="nav-input">
           <span aria-hidden="true">›</span>
           <input
+            ref={input}
             value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Ask the swarm — a tech, a project, ‘contact’…"
-            aria-label="Ask the swarm"
+            onChange={(e) => {
+              setQ(e.target.value);
+              setSel(0);
+            }}
+            onKeyDown={onKey}
+            placeholder="jump, or ask — kafka, pulsetrade…"
+            aria-label="Navigate or ask the swarm"
             autoComplete="off"
+            spellCheck={false}
           />
-          <button type="submit" aria-label="Send">
+          <button type="submit" aria-label="Run">
             ↵
           </button>
         </label>
       </form>
-    </aside>
+    </section>
+  );
+}
+
+function NavRowInner({ r, phase, active }: { r: Row; phase?: string; active: boolean }) {
+  return (
+    <>
+      <span className="nav-icon" data-phase={phase} data-kind={r.external ? "ext" : r.local ? "sec" : "page"} aria-hidden="true" />
+      <span className="nav-label">{r.label}</span>
+      <span className="nav-hint">{r.hint}</span>
+      {active && <motion.span layoutId="nav-active" className="nav-active" transition={{ type: "spring", stiffness: 420, damping: 36 }} />}
+    </>
+  );
+}
+
+function NavIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
+      <path d="M2 4.5h12M2 8h12M2 11.5h7" />
+    </svg>
   );
 }
