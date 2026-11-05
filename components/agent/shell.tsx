@@ -35,8 +35,10 @@ export function AgentShell({
   current,
   path,
   task,
+  className,
 }: {
   children: ReactNode;
+  className?: string;
   tabs?: Tab[];
   current?: string;
   path?: string;
@@ -44,7 +46,7 @@ export function AgentShell({
 }) {
   const [open, setOpen] = useState(false);
   return (
-    <Swarm className="ag" task={task}>
+    <Swarm className={className ? `ag ${className}` : "ag"} task={task}>
       <div className="ag-ambient" aria-hidden="true" />
       <Chrome tabs={tabs} current={current} fixedPath={path} onRail={() => setOpen((o) => !o)} railOpen={open} />
       <div className="ag-body">

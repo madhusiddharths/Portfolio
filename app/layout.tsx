@@ -4,7 +4,7 @@ import { GeistMono } from "geist/font/mono";
 import "./globals.css";
 import "lenis/dist/lenis.css";
 import { SmoothScroll } from "@/components/smooth-scroll";
-import { display, serif } from "./fonts";
+import { display, serif, plex, jbmono } from "./fonts";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://madhusiddharth.dev"),
@@ -38,7 +38,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html
       lang="en"
       data-theme="dark"
-      className={`${GeistSans.variable} ${GeistMono.variable} ${display.variable} ${serif.variable}`}
+      className={`${GeistSans.variable} ${GeistMono.variable} ${display.variable} ${serif.variable} ${plex.variable} ${jbmono.variable}`}
       suppressHydrationWarning
     >
       <head>
