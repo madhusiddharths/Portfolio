@@ -1,0 +1,10 @@
+<p>
+    The model maps an image of shape <code>(B, C, H, W)</code> into a token sequence and runs it through the encoder:
+    patch-embed to <code>(B, N, D)</code>, prepend the <code>[CLS]</code> token to get <code>(B, N+1, D)</code>, add
+    positional embeddings, pass through <code>L</code> encoder layers, then project the final <code>[CLS]</code>
+    representation to class logits.
+  </p>
+  <figure>
+    <img src="/img/vision_transformer/entire_architecture.jpeg" alt="Vision Transformer architecture: image split into patches, linearly embedded, combined with a class token and position embeddings, processed by a Transformer encoder and classification head" />
+    <figcaption>Figure 1: The end-to-end ViT workflow &mdash; patches are linearly embedded, a learnable [CLS] token is prepended, position embeddings are added, and the sequence is processed by the Transformer encoder before the [CLS] token is classified. Diagram adapted from Dosovitskiy et al. (2021).</figcaption>
+  </figure>

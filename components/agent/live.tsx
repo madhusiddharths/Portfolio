@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSwarmState } from "./swarm";
-import { AGENTS } from "./engine";
+import { useSwarm, useSwarmState } from "./swarm";
 
 /** Playground run state — "streaming" while the hero is still being built. */
 export function RunStatus() {
@@ -24,6 +23,7 @@ export function RunStatus() {
 
 /** Real numbers from this page's build: nodes, wall time, agents. */
 export function RunUsage() {
+  const engine = useSwarm();
   const enabled = useSwarmState((s) => s.enabled);
   const done = useSwarmState((s) => s.done);
   const total = useSwarmState((s) => s.total);
@@ -53,7 +53,7 @@ export function RunUsage() {
       </div>
       <div>
         <dt>agents</dt>
-        <dd>{AGENTS.length}</dd>
+        <dd>{engine.roster.length}</dd>
       </div>
     </dl>
   );
@@ -61,13 +61,15 @@ export function RunUsage() {
 
 /** Footer credit with the real build time. */
 export function BuildCredit() {
+  const engine = useSwarm();
+  const n = engine.roster.length;
   const elapsed = useSwarmState((s) => s.elapsed);
   const enabled = useSwarmState((s) => s.enabled);
   return (
     <span>
       {enabled && elapsed !== null
-        ? `assembled live by a ${AGENTS.length}-agent swarm in ${(elapsed / 1000).toFixed(1)}s`
-        : `assembled by a ${AGENTS.length}-agent swarm · hit replay to watch`}
+        ? `assembled live by a ${n}-agent swarm in ${(elapsed / 1000).toFixed(1)}s`
+        : `assembled by a ${n}-agent swarm · hit replay to watch`}
     </span>
   );
 }

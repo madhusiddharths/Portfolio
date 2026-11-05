@@ -1,0 +1,19 @@
+<p>
+    The orchestrator (<code>run_pipeline.py</code>) exposes a simple CLI &mdash; <code>--source {csv|snowflake}</code>
+    and <code>--sink {local|bigquery}</code> &mdash; so the source and destination are pluggable while the
+    transformation in between never changes. This is the key design decision: the cleaning logic is a
+    <strong>pure function</strong> over Polars DataFrames, completely decoupled from where the bytes come from or go.
+  </p>
+  <div class="code-container">
+    <pre><code># Offline: no credentials, fully reproducible
+python run_pipeline.py                                   # CSV -> star schema -> data/*.parquet
+python analysis.py                                       # -> insights.md + looker_exports/*.csv
+
+# Cloud: the production stack
+python run_pipeline.py --source snowflake --sink bigquery</code></pre>
+  </div>
+  <p>
+    Because the offline path needs no cloud account, the whole project is <strong>reproducible on a laptop</strong> and
+    the test suite runs without secrets &mdash; while the cloud path demonstrates the real
+    Snowflake&nbsp;&rarr;&nbsp;Polars&nbsp;&rarr;&nbsp;BigQuery&nbsp;&rarr;&nbsp;Looker architecture.
+  </p>

@@ -40,7 +40,16 @@ export function AgentFrame({ children }: { children: ReactNode }) {
   tabs.push({ id: "contact", label: "contact", href: "/#contact" });
 
   return (
-    <AgentShell key={pathname} tabs={tabs} current={current} path={parts.join("/")} task={task}>
+    <AgentShell
+      key={pathname}
+      tabs={tabs}
+      current={current}
+      path={parts.join("/")}
+      task={task}
+      className={project ? "ag-skin ag-ide" : undefined}
+      railTabs={!!project}
+      roster={project ? "report" : "home"}
+    >
       {children}
     </AgentShell>
   );

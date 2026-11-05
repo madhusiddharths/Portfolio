@@ -1,5 +1,5 @@
 import Link from "next/link";
-import "./landing.css";
+import "./console.css";
 import { PROFILE, METRICS, FEATURED, PROJECTS, SKILLS, CERTS, techIcon } from "@/lib/projects";
 import { AgentShell } from "@/components/agent/shell";
 import { BuildSection, SwarmCount } from "@/components/agent/swarm";
@@ -78,7 +78,7 @@ const SOCIAL = [
 
 export default function Home() {
   return (
-    <AgentShell className="ag-home">
+    <AgentShell className="ag-skin ag-home">
         {/* ── HERO · a model playground ─────────────────────────────── */}
         <BuildSection id="home" sec="SEC_HOME" className="hero">
           <div className="wrap">

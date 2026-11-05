@@ -1,5 +1,5 @@
 /* =============================================================================
-   LANDING — "inference console" skin for the home page only (.ag-home).
+   LANDING — "inference console" skin for the home page only (.ag-skin).
    Layered over app/agent.css. The swarm workflow, build states and cursor
    animation are untouched: this file only changes surfaces, type and color.
 
@@ -11,7 +11,7 @@
      · faint layout guides at the content edges — the grid the Aligner snaps to
 
    Rules for this file:
-     · every selector is prefixed with .ag-home, so it beats agent.css on
+     · every selector is prefixed with .ag-skin, so it beats agent.css on
        specificity regardless of chunk order, and still loses to the
        .build-on [data-build] state rules (keeps the animation intact)
      · never add ::before/::after to a [data-build] node (the engine owns them)
@@ -19,7 +19,7 @@
        breakpoint unless the media query is repeated here
    ========================================================================== */
 
-.ag.ag-home {
+.ag.ag-skin {
   --bg-0: #0a0a0a;
   --bg-1: #0e0e0e;
   --panel: #111111;
@@ -43,19 +43,19 @@
   --edge: calc(max((100% - 76rem) / 2, 0px) + clamp(1rem, 4vw, 3rem));
   font-feature-settings: "ss01", "cv01";
 }
-html:has(.ag-home) body {
+html:has(.ag-skin) body {
   background: #0a0a0a;
 }
-.ag-home ::selection {
+.ag-skin ::selection {
   background: rgba(255, 255, 255, 0.18);
   color: #fff;
 }
 
 /* ambient: no gradient blobs, no noise — layout guides at the content edges */
-.ag-home .ag-ambient {
+.ag-skin .ag-ambient {
   background: none;
 }
-.ag-home .ag-ambient::after {
+.ag-skin .ag-ambient::after {
   display: none;
 }
 .ag-home .ag-main::before {
@@ -79,36 +79,36 @@ html:has(.ag-home) body {
 /* ---------------------------------------------------------------------------
    CHROME + RAIL — flatter, squarer, no macOS lights
    --------------------------------------------------------------------------- */
-.ag-home .chrome {
+.ag-skin .chrome {
   background: rgba(10, 10, 10, 0.88);
   border-bottom-color: var(--line-2);
 }
-.ag-home .chrome-lights {
+.ag-skin .chrome-lights {
   display: none;
 }
-.ag-home .chrome-row {
+.ag-skin .chrome-row {
   padding-left: 0.6rem;
 }
-.ag-home .chrome-btn,
-.ag-home .chrome-pill,
-.ag-home .chrome-address {
+.ag-skin .chrome-btn,
+.ag-skin .chrome-pill,
+.ag-skin .chrome-address {
   border-radius: var(--r);
 }
-.ag-home .chrome-address {
+.ag-skin .chrome-address {
   background: var(--bg-1);
   font-size: 12px;
 }
-.ag-home .chrome-pill:hover {
+.ag-skin .chrome-pill:hover {
   border-color: var(--line-2);
   background: var(--panel-2);
 }
-.ag-home .rail {
+.ag-skin .rail {
   gap: 0;
   padding: 0;
   border-left: 1px solid var(--line-2);
   background: var(--bg-0);
 }
-.ag-home .win {
+.ag-skin .win {
   border: 0;
   border-radius: 0;
   background: var(--bg-0);
@@ -116,27 +116,27 @@ html:has(.ag-home) body {
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
 }
-.ag-home .win + .win {
+.ag-skin .win + .win {
   border-top: 1px solid var(--line-2);
 }
-.ag-home .win-head {
+.ag-skin .win-head {
   height: 34px;
   background: var(--bg-1);
 }
-.ag-home .win-tab,
-.ag-home .win-tab-bg,
-.ag-home .win-count,
-.ag-home .win-meta kbd {
+.ag-skin .win-tab,
+.ag-skin .win-tab-bg,
+.ag-skin .win-count,
+.ag-skin .win-meta kbd {
   border-radius: var(--r);
 }
-.ag-home .win-tab-bg {
+.ag-skin .win-tab-bg {
   background: var(--panel-2);
 }
 
 /* ---------------------------------------------------------------------------
    SHARED — section heads as ruled console headers, buttons
    --------------------------------------------------------------------------- */
-.ag-home .sec-head {
+.ag-skin .sec-head {
   position: relative;
   max-width: none;
   margin-bottom: clamp(2rem, 4vw, 3rem);
@@ -144,7 +144,7 @@ html:has(.ag-home) body {
   border-top: 1px solid var(--line-2);
 }
 /* a short signal tick on the rule — the section's "cursor" */
-.ag-home .sec-head::before {
+.ag-skin .sec-head::before {
   content: "";
   position: absolute;
   top: -1px;
@@ -153,23 +153,23 @@ html:has(.ag-home) body {
   height: 1px;
   background: var(--red);
 }
-.ag-home .sec-head > :is(.sec-title, .sec-lead) {
+.ag-skin .sec-head > :is(.sec-title, .sec-lead) {
   max-width: 44rem;
 }
-.ag-home .sec-index {
+.ag-skin .sec-index {
   margin: 0 0 1.6rem;
   font: 400 11.5px/1.4 var(--mono);
   letter-spacing: 0;
   color: var(--faint);
 }
-.ag-home .sec-eyebrow {
+.ag-skin .sec-eyebrow {
   margin: 0 0 0.6rem;
   font: 500 11.5px/1.4 var(--mono);
   letter-spacing: 0.02em;
   text-transform: lowercase;
   color: var(--red-ink);
 }
-.ag-home .sec-title {
+.ag-skin .sec-title {
   font-family: var(--sans);
   font-size: clamp(1.9rem, 3.6vw, 2.75rem);
   font-weight: 600;
@@ -177,18 +177,18 @@ html:has(.ag-home) body {
   letter-spacing: -0.03em;
   color: var(--ink-hi);
 }
-.ag-home .sec-lead {
+.ag-skin .sec-lead {
   margin-top: 1rem;
   font-size: 1rem;
   line-height: 1.65;
 }
-.ag-home .sec-lead code {
+.ag-skin .sec-lead code {
   border-radius: var(--r);
   background: var(--panel-2);
   color: var(--ink);
 }
 
-.ag-home .btn {
+.ag-skin .btn {
   height: 42px;
   padding: 0 1.05rem;
   border-radius: var(--r);
@@ -196,29 +196,29 @@ html:has(.ag-home) body {
   letter-spacing: 0;
   text-transform: none;
 }
-.ag-home .btn-red {
+.ag-skin .btn-red {
   background: var(--red);
   color: #0a0a0a;
   font-weight: 600;
   box-shadow: none;
 }
-.ag-home .btn-red:hover {
+.ag-skin .btn-red:hover {
   background: #ff5a4d;
   box-shadow: none;
 }
-.ag-home .btn-line {
+.ag-skin .btn-line {
   background: transparent;
 }
-.ag-home .btn-line:hover {
+.ag-skin .btn-line:hover {
   border-color: var(--ink);
   background: var(--panel-2);
 }
-.ag-home .icon-btn {
+.ag-skin .icon-btn {
   width: 42px;
   height: 42px;
   border-radius: var(--r);
 }
-.ag-home .icon-btn:hover {
+.ag-skin .icon-btn:hover {
   border-color: var(--ink);
   background: var(--panel-2);
   transform: none;
@@ -227,19 +227,19 @@ html:has(.ag-home) body {
 /* ---------------------------------------------------------------------------
    HERO — the playground as a flat console pane
    --------------------------------------------------------------------------- */
-.ag-home .hero {
+.ag-skin .hero {
   padding-top: clamp(1.75rem, 3.5vw, 2.75rem);
   padding-bottom: clamp(3rem, 6vw, 4.5rem);
 }
-.ag-home .hero-status {
+.ag-skin .hero-status {
   font: 400 11.5px/1.5 var(--mono);
   letter-spacing: 0;
   text-transform: lowercase;
 }
-.ag-home .hero-status em {
+.ag-skin .hero-status em {
   color: var(--ink);
 }
-.ag-home .live-dot {
+.ag-skin .live-dot {
   width: 6px;
   height: 6px;
   background: var(--ok);
@@ -247,29 +247,29 @@ html:has(.ag-home) body {
   box-shadow: none;
 }
 
-.ag-home .pg {
+.ag-skin .pg {
   --cover: var(--bg-1);
   border: 1px solid var(--line-2);
   border-radius: var(--r);
   background: var(--bg-1);
   box-shadow: none;
 }
-.ag-home .pg-bar {
+.ag-skin .pg-bar {
   height: 36px;
   padding: 0 12px;
   background: var(--panel);
   border-bottom-color: var(--line-2);
   font: 400 11.5px/1 var(--mono);
 }
-.ag-home .pg-name {
+.ag-skin .pg-name {
   font-weight: 500;
 }
-.ag-home .pg-name::before {
+.ag-skin .pg-name::before {
   width: 6px;
   height: 6px;
   border-radius: 0;
 }
-.ag-home .pg-state {
+.ag-skin .pg-state {
   padding: 3px 7px;
   border-radius: var(--r);
   background: transparent;
@@ -277,56 +277,56 @@ html:has(.ag-home) body {
   color: var(--ok);
   font-size: 11px;
 }
-.ag-home .pg-state[data-live] {
+.ag-skin .pg-state[data-live] {
   border-color: var(--wire-line);
   background: transparent;
 }
-.ag-home .pg-msg {
+.ag-skin .pg-msg {
   padding: 16px 0;
   border-bottom: 1px solid var(--line);
 }
 @media (min-width: 761px) {
-  .ag-home .pg-thread {
+  .ag-skin .pg-thread {
     padding: 4px 20px 22px;
   }
-  .ag-home .pg-msg {
+  .ag-skin .pg-msg {
     grid-template-columns: 5.6rem minmax(0, 1fr);
   }
 }
-.ag-home .pg-out {
+.ag-skin .pg-out {
   border-bottom: 0;
   padding-bottom: 0;
 }
-.ag-home .pg-role {
+.ag-skin .pg-role {
   font: 500 11px/1.75 var(--mono);
   letter-spacing: 0;
   text-transform: lowercase;
 }
-.ag-home .pg-out .pg-role {
+.ag-skin .pg-out .pg-role {
   color: var(--ink);
 }
-.ag-home .pg-caret {
+.ag-skin .pg-caret {
   width: 7px;
   height: 12px;
   background: var(--ink);
 }
-.ag-home .pg-system {
+.ag-skin .pg-system {
   font: 400 13px/1.7 var(--mono);
 }
-.ag-home .pg-ctx li {
+.ag-skin .pg-ctx li {
   border-radius: var(--r);
   border-color: var(--line-2);
   font: 400 11px/1.4 var(--mono);
 }
-.ag-home .pg-ctx b {
+.ag-skin .pg-ctx b {
   font-weight: 500;
 }
-.ag-home .pg-user {
+.ag-skin .pg-user {
   font-size: 16px;
   font-weight: 500;
   letter-spacing: -0.005em;
 }
-.ag-home .pg-hello {
+.ag-skin .pg-hello {
   margin: 0 0 0.2rem;
   font: 400 12px/1.5 var(--mono);
   letter-spacing: 0;
@@ -335,7 +335,7 @@ html:has(.ag-home) body {
 }
 
 /* the name: a streamed answer, not a poster — no box, no glow */
-.ag-home .hero-name {
+.ag-skin .hero-name {
   margin: 0;
   padding: 0.04em 0 0.08em;
   font-family: var(--sans);
@@ -346,14 +346,14 @@ html:has(.ag-home) body {
   text-transform: none;
   color: var(--ink-hi);
 }
-.ag-home .hero-name span {
+.ag-skin .hero-name span {
   background: none;
   color: inherit;
   padding: 0;
   box-shadow: none;
 }
 /* end-of-stream cursor */
-.ag-home .hero-name span::after {
+.ag-skin .hero-name span::after {
   content: "";
   display: inline-block;
   width: 0.09em;
@@ -363,7 +363,7 @@ html:has(.ag-home) body {
   background: var(--red);
   animation: blink 1.1s steps(1) infinite;
 }
-.ag-home .hero-role {
+.ag-skin .hero-role {
   gap: 0.5rem;
   margin: 1rem 0 0.6rem;
   font: 400 12px/1.5 var(--mono);
@@ -371,33 +371,33 @@ html:has(.ag-home) body {
   text-transform: lowercase;
   color: var(--muted);
 }
-.ag-home .hero-role i {
+.ag-skin .hero-role i {
   width: 6px;
   height: 6px;
   border-radius: 0;
 }
-.ag-home .hero-tagline {
+.ag-skin .hero-tagline {
   margin: 0 0 1.5rem;
   font-size: clamp(1.1rem, 1.8vw, 1.3rem);
   font-weight: 400;
   letter-spacing: -0.01em;
 }
-.ag-home .hero-tagline mark {
+.ag-skin .hero-tagline mark {
   color: var(--ink-hi);
   box-shadow: inset 0 -1px 0 var(--red);
 }
 
-.ag-home .pg-calls {
+.ag-skin .pg-calls {
   --cover: var(--bg-1);
   gap: 6px;
 }
-.ag-home .pg-calls-h {
+.ag-skin .pg-calls-h {
   margin-bottom: 2px;
   font: 400 11px/1.6 var(--mono);
   letter-spacing: 0;
   text-transform: lowercase;
 }
-.ag-home .pg-call {
+.ag-skin .pg-call {
   height: 34px;
   padding: 0 11px;
   border-radius: var(--r);
@@ -408,40 +408,40 @@ html:has(.ag-home) body {
     background 0.15s,
     color 0.15s;
 }
-.ag-home .pg-call code {
+.ag-skin .pg-call code {
   font-weight: 500;
   color: var(--ink);
 }
-.ag-home .pg-call:hover {
+.ag-skin .pg-call:hover {
   border-color: var(--ink);
   background: var(--panel-2);
   transform: none;
 }
-.ag-home .pg-call-go {
+.ag-skin .pg-call-go {
   background: var(--red);
   border-color: var(--red);
   color: rgba(10, 10, 10, 0.72);
   box-shadow: none;
 }
-.ag-home .pg-call-go code {
+.ag-skin .pg-call-go code {
   color: #0a0a0a;
   font-weight: 600;
 }
-.ag-home .pg-call-go:hover {
+.ag-skin .pg-call-go:hover {
   background: #ff5a4d;
   border-color: #ff5a4d;
   color: #0a0a0a;
 }
 
 /* run config: one key/value table, rows separated by hairlines */
-.ag-home .pg-config {
+.ag-skin .pg-config {
   --cover: var(--panel);
   gap: 0;
   padding: 0;
   background: var(--panel);
   border-left-color: var(--line-2);
 }
-.ag-home .pg-field {
+.ag-skin .pg-field {
   padding: 12px 14px;
   border: 0;
   border-bottom: 1px solid var(--line);
@@ -449,50 +449,50 @@ html:has(.ag-home) body {
   background: transparent;
   font: 400 12px/1.3 var(--mono);
 }
-.ag-home .pg-field:last-child {
+.ag-skin .pg-field:last-child {
   border-bottom: 0;
 }
-.ag-home .pg-k {
+.ag-skin .pg-k {
   font-size: 11px;
   letter-spacing: 0;
   text-transform: lowercase;
 }
-.ag-home .pg-temp i {
+.ag-skin .pg-temp i {
   border-radius: 0;
   height: 2px;
 }
-.ag-home .pg-tools a {
+.ag-skin .pg-tools a {
   border-radius: var(--r);
   font-size: 12px;
 }
-.ag-home .pg-check {
+.ag-skin .pg-check {
   border-radius: 2px;
   background-color: var(--ink);
 }
-.ag-home .pg-usage {
+.ag-skin .pg-usage {
   gap: 0;
   border: 1px solid var(--line);
 }
-.ag-home .pg-usage div {
+.ag-skin .pg-usage div {
   border-radius: 0;
   background: transparent;
   padding: 7px 8px;
 }
-.ag-home .pg-usage div + div {
+.ag-skin .pg-usage div + div {
   border-left: 1px solid var(--line);
 }
-.ag-home .pg-usage dt {
+.ag-skin .pg-usage dt {
   font-size: 10.5px;
   letter-spacing: 0;
   text-transform: lowercase;
 }
 
 /* metrics: one eval table — joined cells, numbers in mono, no poster type */
-.ag-home .hero-metrics {
+.ag-skin .hero-metrics {
   gap: 1px;
   margin-top: 1px;
 }
-.ag-home .metric {
+.ag-skin .metric {
   --cover: var(--bg-0);
   padding: 1rem 1.1rem 1.05rem;
   border: 0;
@@ -500,14 +500,14 @@ html:has(.ag-home) body {
   background: var(--bg-0);
   box-shadow: 0 0 0 1px var(--rule);
 }
-.ag-home .metric dt {
+.ag-skin .metric dt {
   font-family: var(--mono);
   font-weight: 500;
   font-size: clamp(1.5rem, 2.4vw, 2rem);
   letter-spacing: -0.03em;
   color: var(--ink-hi);
 }
-.ag-home .metric dd {
+.ag-skin .metric dd {
   margin-top: 0.45rem;
   font: 400 11.5px/1.45 var(--mono);
   letter-spacing: 0;
@@ -518,49 +518,49 @@ html:has(.ag-home) body {
 /* ---------------------------------------------------------------------------
    ABOUT
    --------------------------------------------------------------------------- */
-.ag-home .about-lead {
+.ag-skin .about-lead {
   font-size: clamp(1.2rem, 1.9vw, 1.4rem);
   font-weight: 400;
   line-height: 1.5;
   letter-spacing: -0.01em;
   color: var(--ink-hi);
 }
-.ag-home .about-body {
+.ag-skin .about-body {
   font-size: 1rem;
 }
-.ag-home .about-note {
+.ag-skin .about-note {
   font: 400 12px/1.6 var(--mono);
 }
-.ag-home .about-note a {
+.ag-skin .about-note a {
   border-bottom-color: var(--line-2);
 }
-.ag-home .about-note a:hover {
+.ag-skin .about-note a:hover {
   border-bottom-color: var(--ink);
 }
-.ag-home .principle {
+.ag-skin .principle {
   --cover: var(--bg-1);
   padding: 0;
   border-radius: var(--r);
   border-color: var(--line-2);
   background: var(--bg-1);
 }
-.ag-home .principle-h {
+.ag-skin .principle-h {
   margin: 0;
   padding: 10px 14px;
   border-bottom: 1px solid var(--line);
   background: var(--panel);
   font-size: 11.5px;
 }
-.ag-home .principle-q {
+.ag-skin .principle-q {
   margin: 0;
   padding: 14px 14px 16px;
   font-size: 13px;
   color: var(--ink);
 }
-.ag-home .principle-q span {
+.ag-skin .principle-q span {
   color: var(--faint);
 }
-.ag-home .principle-k {
+.ag-skin .principle-k {
   margin: 0;
   padding: 10px 14px 8px;
   border-top: 1px solid var(--line);
@@ -568,19 +568,19 @@ html:has(.ag-home) body {
   letter-spacing: 0;
   text-transform: lowercase;
 }
-.ag-home .principle-caps {
+.ag-skin .principle-caps {
   padding: 0 14px 14px;
   gap: 4px;
 }
-.ag-home .principle-caps li {
+.ag-skin .principle-caps li {
   border-radius: var(--r);
   font-size: 11.5px;
 }
-.ag-home .principle-caps i {
+.ag-skin .principle-caps i {
   border-radius: 0;
 }
 
-.ag-home .sub-h {
+.ag-skin .sub-h {
   display: flex;
   align-items: baseline;
   gap: 0.6rem;
@@ -588,18 +588,18 @@ html:has(.ag-home) body {
   padding: 0 0 0.7rem;
   font: 500 12.5px/1 var(--mono);
 }
-.ag-home .sub-h span {
+.ag-skin .sub-h span {
   margin: 0;
   font-weight: 400;
 }
 
 /* runs + checkpoints: joined table cells */
-.ag-home .runs,
-.ag-home .ckpts {
+.ag-skin .runs,
+.ag-skin .ckpts {
   gap: 1px;
 }
-.ag-home .run,
-.ag-home .ckpt {
+.ag-skin .run,
+.ag-skin .ckpt {
   --cover: var(--bg-1);
   padding: 1.15rem 1.25rem 1.25rem;
   border: 0;
@@ -608,14 +608,14 @@ html:has(.ag-home) body {
   box-shadow: 0 0 0 1px var(--rule);
   transition: background 0.2s;
 }
-.ag-home .run:hover,
-.ag-home .ckpt:hover {
+.ag-skin .run:hover,
+.ag-skin .ckpt:hover {
   background: var(--panel);
 }
-.ag-home .run-head {
+.ag-skin .run-head {
   font: 400 11.5px/1 var(--mono);
 }
-.ag-home .run-status {
+.ag-skin .run-status {
   padding: 0;
   border-radius: 0;
   background: transparent;
@@ -623,51 +623,51 @@ html:has(.ag-home) body {
   text-transform: lowercase;
   color: var(--ok);
 }
-.ag-home .run-status i {
+.ag-skin .run-status i {
   border-radius: 0;
 }
-.ag-home .run-status[data-status="running"] {
+.ag-skin .run-status[data-status="running"] {
   background: transparent;
 }
-.ag-home .run-org {
+.ag-skin .run-org {
   margin-top: 0.9rem;
   font-size: 1.25rem;
   font-weight: 600;
   color: var(--ink-hi);
 }
-.ag-home .run-org span {
+.ag-skin .run-org span {
   font-weight: 400;
 }
-.ag-home .run-where {
+.ag-skin .run-where {
   font: 400 11.5px var(--mono);
 }
-.ag-home .run-task {
+.ag-skin .run-task {
   font-size: 0.95rem;
 }
-.ag-home .run-task b {
+.ag-skin .run-task b {
   font: 500 11px var(--mono);
   letter-spacing: 0;
   text-transform: lowercase;
   color: var(--faint);
 }
-.ag-home .run-out {
+.ag-skin .run-out {
   border-top: 1px solid var(--line);
 }
-.ag-home .run-out div {
+.ag-skin .run-out div {
   border-bottom: 1px solid var(--line);
   font-size: 12px;
 }
-.ag-home .run-tools li,
-.ag-home .card-tech li {
+.ag-skin .run-tools li,
+.ag-skin .card-tech li {
   border: 1px solid var(--line);
   border-radius: var(--r);
   background: transparent;
   font: 400 11px/1 var(--mono);
 }
-.ag-home .run-tools li {
+.ag-skin .run-tools li {
   padding: 4px 7px;
 }
-.ag-home .ckpt-tag {
+.ag-skin .ckpt-tag {
   padding: 0;
   border-radius: 0;
   background: transparent;
@@ -675,37 +675,37 @@ html:has(.ag-home) body {
   font: 400 11.5px/1.3 var(--mono);
   letter-spacing: 0;
 }
-.ag-home .ckpt-degree {
+.ag-skin .ckpt-degree {
   font-weight: 600;
   color: var(--ink-hi);
 }
-.ag-home .ckpt-meta {
+.ag-skin .ckpt-meta {
   gap: 0;
   border: 1px solid var(--line);
 }
-.ag-home .ckpt-meta div {
+.ag-skin .ckpt-meta div {
   border-radius: 0;
   background: transparent;
 }
-.ag-home .ckpt-meta div + div {
+.ag-skin .ckpt-meta div + div {
   border-left: 1px solid var(--line);
 }
-.ag-home .ckpt-meta dt {
+.ag-skin .ckpt-meta dt {
   font-size: 10.5px;
   letter-spacing: 0;
   text-transform: lowercase;
 }
-.ag-home .ckpt-meta dd {
+.ag-skin .ckpt-meta dd {
   font-size: 12px;
 }
 
 /* ---------------------------------------------------------------------------
    WORK — a joined grid of report cells
    --------------------------------------------------------------------------- */
-.ag-home .work-grid {
+.ag-skin .work-grid {
   gap: 1px;
 }
-.ag-home .card {
+.ag-skin .card {
   --cover: var(--bg-1);
   border: 0;
   border-radius: 0;
@@ -716,31 +716,31 @@ html:has(.ag-home) body {
     box-shadow 0.2s,
     opacity 0.4s;
 }
-.ag-home .card:hover {
+.ag-skin .card:hover {
   z-index: 2;
   background: var(--panel);
   box-shadow: 0 0 0 1px var(--muted);
   transform: none;
 }
-.ag-home .card-thumb {
+.ag-skin .card-thumb {
   border-radius: 0;
   border-bottom: 1px solid var(--rule);
 }
-.ag-home .card-thumb::after {
+.ag-skin .card-thumb::after {
   background: linear-gradient(180deg, transparent 55%, rgba(14, 14, 14, 0.6));
 }
-.ag-home .card-thumb img {
+.ag-skin .card-thumb img {
   filter: grayscale(1) contrast(1.08) brightness(0.62);
   transform: none;
 }
-.ag-home .card:hover .card-thumb img {
+.ag-skin .card:hover .card-thumb img {
   filter: grayscale(0.15) brightness(0.9);
   transform: none;
 }
-.ag-home .card-body {
+.ag-skin .card-body {
   padding: 1rem 1.15rem 1rem;
 }
-.ag-home .card-pill {
+.ag-skin .card-pill {
   padding: 0;
   border-radius: 0;
   background: transparent;
@@ -749,118 +749,118 @@ html:has(.ag-home) body {
   letter-spacing: 0;
   text-transform: lowercase;
 }
-.ag-home .card-pill i {
+.ag-skin .card-pill i {
   border-radius: 0;
 }
-.ag-home .card-index {
+.ag-skin .card-index {
   font: 400 11px var(--mono);
 }
-.ag-home .card-title {
+.ag-skin .card-title {
   font-size: 1.2rem;
   font-weight: 600;
   letter-spacing: -0.02em;
   color: var(--ink-hi);
 }
-.ag-home .card-lead .card-title {
+.ag-skin .card-lead .card-title {
   font-size: clamp(1.5rem, 2.6vw, 2rem);
   letter-spacing: -0.03em;
 }
-.ag-home .card-domain {
+.ag-skin .card-domain {
   font: 400 11.5px/1.4 var(--mono);
   letter-spacing: 0;
 }
-.ag-home .card-summary {
+.ag-skin .card-summary {
   font-size: 0.93rem;
 }
-.ag-home .card-tech li {
+.ag-skin .card-tech li {
   padding: 4px 6px;
 }
-.ag-home .card-tech li.more {
+.ag-skin .card-tech li.more {
   border-style: dashed;
 }
-.ag-home .card-foot {
+.ag-skin .card-foot {
   border-top-color: var(--line);
 }
-.ag-home .card-go {
+.ag-skin .card-go {
   font: 500 12px/1 var(--mono);
   letter-spacing: 0;
   text-transform: lowercase;
 }
-.ag-home .card:hover .card-go {
+.ag-skin .card:hover .card-go {
   color: var(--ink-hi);
 }
-.ag-home .card-repo {
+.ag-skin .card-repo {
   border-radius: var(--r);
 }
-.ag-home [data-project-grid][data-filtering] .card[data-match] {
+.ag-skin [data-project-grid][data-filtering] .card[data-match] {
   box-shadow: 0 0 0 1px var(--red);
 }
 
 /* ---------------------------------------------------------------------------
    STACK — registry panels
    --------------------------------------------------------------------------- */
-.ag-home .reg-grid {
+.ag-skin .reg-grid {
   gap: 10px;
 }
-.ag-home .reg {
+.ag-skin .reg {
   --cover: var(--bg-1);
   padding: 0 0 6px;
   border-radius: var(--r);
   border-color: var(--line-2);
   background: var(--bg-1);
 }
-.ag-home .reg-head {
+.ag-skin .reg-head {
   padding: 9px 12px;
   border-bottom: 1px solid var(--line);
   background: var(--panel);
   font-size: 11.5px;
 }
-.ag-home .reg-ns b {
+.ag-skin .reg-ns b {
   font-weight: 500;
   color: var(--faint);
 }
-.ag-home .reg-count {
+.ag-skin .reg-count {
   padding: 0;
   background: transparent;
   font-size: 11px;
 }
-.ag-home .reg-title {
+.ag-skin .reg-title {
   margin: 0;
   padding: 10px 12px 8px;
   font: 500 0.95rem/1.3 var(--sans);
   color: var(--ink);
 }
-.ag-home .reg-list {
+.ag-skin .reg-list {
   padding: 0 6px;
 }
-.ag-home .reg-row {
+.ag-skin .reg-row {
   padding: 5px 6px;
   border-radius: var(--r);
   font-size: 12px;
 }
-.ag-home .reg-row-h {
+.ag-skin .reg-row-h {
   font-size: 10.5px;
   letter-spacing: 0;
   text-transform: lowercase;
   color: var(--faint);
   border-radius: 0;
 }
-.ag-home .reg-bar {
+.ag-skin .reg-bar {
   border-radius: 0;
   height: 2px;
   background: linear-gradient(90deg, var(--muted) calc(var(--w) * 100%), var(--line-2) 0);
 }
-.ag-home a.reg-row:hover .reg-bar {
+.ag-skin a.reg-row:hover .reg-bar {
   background: linear-gradient(90deg, var(--ink-hi) calc(var(--w) * 100%), var(--line-2) 0);
 }
 
 /* ---------------------------------------------------------------------------
    CERTS — joined verifier cells
    --------------------------------------------------------------------------- */
-.ag-home .cred-grid {
+.ag-skin .cred-grid {
   gap: 1px;
 }
-.ag-home .cred {
+.ag-skin .cred {
   --cover: var(--bg-1);
   padding: 1rem;
   border: 0;
@@ -871,34 +871,34 @@ html:has(.ag-home) body {
     background 0.2s,
     box-shadow 0.2s;
 }
-.ag-home .cred:hover {
+.ag-skin .cred:hover {
   z-index: 2;
   background: var(--panel);
   box-shadow: 0 0 0 1px var(--muted);
   transform: none;
 }
-.ag-home .cred-top {
+.ag-skin .cred-top {
   font: 400 11px/1 var(--mono);
 }
-.ag-home .cred-ok {
+.ag-skin .cred-ok {
   color: var(--ok);
 }
-.ag-home .cred-img {
+.ag-skin .cred-img {
   width: 64px;
   height: 64px;
 }
-.ag-home .cred-name {
+.ag-skin .cred-name {
   font-weight: 500;
   color: var(--ink-hi);
 }
-.ag-home .cred-meta {
+.ag-skin .cred-meta {
   font: 400 11.5px var(--mono);
 }
-.ag-home .cred-call {
+.ag-skin .cred-call {
   border-top: 1px solid var(--line);
   font: 400 11.5px var(--mono);
 }
-.ag-home .cred-call code {
+.ag-skin .cred-call code {
   font-weight: 500;
   color: var(--ink);
 }
@@ -906,42 +906,42 @@ html:has(.ag-home) body {
 /* ---------------------------------------------------------------------------
    CONTACT + FOOTER
    --------------------------------------------------------------------------- */
-.ag-home .contact-copy {
+.ag-skin .contact-copy {
   font-size: 1.1rem;
 }
-.ag-home .req {
+.ag-skin .req {
   --cover: var(--bg-1);
   border-radius: var(--r);
   background: var(--bg-1);
   font: 400 12.5px/1.75 var(--mono);
 }
-.ag-home .req-bar {
+.ag-skin .req-bar {
   padding: 9px 14px;
   background: var(--panel);
 }
-.ag-home .req-verb {
+.ag-skin .req-verb {
   border-radius: 2px;
   background: transparent;
   color: var(--wire);
   padding: 0;
   font-weight: 600;
 }
-.ag-home .req-ok {
+.ag-skin .req-ok {
   color: var(--ok);
 }
-.ag-home .j-s {
+.ag-skin .j-s {
   color: var(--str);
 }
-.ag-home .ag-foot {
+.ag-skin .ag-foot {
   border-top-color: var(--line-2);
 }
-.ag-home .ag-foot-inner {
+.ag-skin .ag-foot-inner {
   font: 400 11.5px/1.5 var(--mono);
   letter-spacing: 0;
 }
 
 /* focus — visible, square, on-brand */
-.ag-home :is(a, button, input):focus-visible {
+.ag-skin :is(a, button, input):focus-visible {
   outline: 1px solid var(--ink);
   outline-offset: 2px;
   border-radius: var(--r);

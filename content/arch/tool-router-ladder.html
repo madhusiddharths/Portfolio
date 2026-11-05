@@ -1,0 +1,11 @@
+<p>
+          The pipeline has eight stages: harvest teacher trajectories, build a loss-masked SFT set, train LoRA
+          students, post-train them, evaluate them teacher-forced and free-running, and finally put the best student
+          behind an escalation router. Every stage writes to an append-only JSONL run log keyed by a config
+          fingerprint, so any cell can be resumed and no number can silently mix two configurations.
+        </p>
+        <figure>
+          <img src="/img/tool-router/architecture.svg" alt="Eight-stage pipeline from teacher harvest to LoRA students, post-training, evaluation and the escalation router" />
+          <figcaption>Figure 1: Distil → train → evaluate → route. Invariants abort any run that would break the
+            experiment's guarantees.</figcaption>
+        </figure>

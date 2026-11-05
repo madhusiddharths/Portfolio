@@ -299,44 +299,6 @@ WHERE  distance_ly &gt; 0;</code></pre>
     </section>
 
     <section class="content-section">
-      <h2>Full-Stack System Design</h2>
-      <p class="subsection-title">Backend — cloud-native API</p>
-      <p>
-        The backend is a containerised <strong>FastAPI</strong> service exposing four endpoints —
-        <code>/stars</code>, <code>/density</code>, <code>/hr</code>, <code>/clusters</code> — each mapping to one of the
-        engineered tables. Queries are built with <strong>parameterised <code>ScalarQueryParameter</code>s</strong> (SQL-injection-safe),
-        and the star sampler uses a <strong>density-adaptive <code>LIMIT</code></strong> — more points for wide
-        distance ranges, fewer per sector — to keep payloads bounded. Crucially, the service
-        <strong>degrades gracefully</strong>: if BigQuery or a precomputed table is unavailable, each endpoint falls
-        back to synthetic mock data, so the UI always renders and local development needs no GCP credentials at all.
-      </p>
-      <p class="subsection-title">Frontend — GPU-accelerated rendering</p>
-      <p>
-        The frontend is a <strong>React + React Three Fiber</strong> (Three.js / WebGL) app built with Vite. Tens of
-        thousands of stars are drawn as a single optimised <code>BufferGeometry</code> particle system, holding a smooth
-        <strong>60 FPS</strong>, colour-coded by magnitude, with hover inspection. Two pages sit on the same data layer:
-        <strong>Structure</strong> (the 3D density field plus the live HR diagram) and <strong>Families</strong> (the
-        HDBSCAN clusters in 3D with a clickable catalogue).
-      </p>
-      <div class="image-grid grid-2">
-        <figure>
-          <img src="/img/galaxy/galaxy_load.png" alt="Galaxy Explorer query interface" />
-          <figcaption>Figure 2a: Parameterised query interface — choose a distance range, sky sector and epoch.</figcaption>
-        </figure>
-        <figure>
-          <img src="/img/galaxy/all17kly.png" alt="GPU-rendered 3D star field spanning ~17,000 light-years" />
-          <figcaption>Figure 2b: GPU-rendered 3D star field, the solar neighbourhood out to ~17,000 ly.</figcaption>
-        </figure>
-      </div>
-      <p class="subsection-title">Deployment</p>
-      <p>
-        Production is a <strong>single Docker container on Google Cloud Run</strong>: the built React bundle is served by
-        FastAPI from the same origin as the API, so there is no CORS hop and one stateless service scales horizontally to
-        zero. The same image runs locally with a <code>MOCK_DATA</code> flag for credential-free frontend development.
-      </p>
-    </section>
-
-    <section class="content-section">
       <h2>Engineering Challenges Solved</h2>
       <ul>
         <li><strong>Distributed compute that didn't pay for itself:</strong> the first filtering and partitioning pass

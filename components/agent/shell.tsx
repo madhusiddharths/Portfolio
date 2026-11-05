@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import "@/app/agent.css";
 import { AnimatePresence, motion } from "motion/react";
 import { Swarm, useSwarm, useSwarmState } from "./swarm";
+import type { RosterName } from "./engine";
 import { ObsWindow } from "./observe";
 import { MiniMap } from "./minimap";
 import { route } from "@/lib/intent-router";
@@ -36,9 +37,15 @@ export function AgentShell({
   path,
   task,
   className,
+  railTabs = false,
+  roster = "home",
 }: {
   children: ReactNode;
   className?: string;
+  /** field reports: the navigator gets a skills | minimap tab bar */
+  railTabs?: boolean;
+  /** which agents are on shift */
+  roster?: RosterName;
   tabs?: Tab[];
   current?: string;
   path?: string;
@@ -46,7 +53,7 @@ export function AgentShell({
 }) {
   const [open, setOpen] = useState(false);
   return (
-    <Swarm className={className ? `ag ${className}` : "ag"} task={task}>
+    <Swarm className={className ? `ag ${className}` : "ag"} task={task} roster={roster}>
       <div className="ag-ambient" aria-hidden="true" />
       <Chrome tabs={tabs} current={current} fixedPath={path} onRail={() => setOpen((o) => !o)} railOpen={open} />
       <div className="ag-body">
@@ -58,7 +65,7 @@ export function AgentShell({
             ✕
           </button>
           <ObsWindow />
-          <NavWindow tabs={tabs} current={current} onDone={() => setOpen(false)} />
+          <NavWindow tabs={tabs} current={current} onDone={() => setOpen(false)} railTabs={railTabs} />
         </aside>
       </div>
     </Swarm>
@@ -99,11 +106,11 @@ function Chrome({
           <i />
           <i />
         </span>
-        <div className="chrome-nav" aria-hidden="true">
-          <button tabIndex={-1} type="button" className="chrome-btn" disabled>
+        <div className="chrome-nav">
+          <button type="button" className="chrome-btn" onClick={() => window.history.back()} aria-label="Back" title="Back">
             <Chev d="left" />
           </button>
-          <button tabIndex={-1} type="button" className="chrome-btn" disabled>
+          <button type="button" className="chrome-btn" onClick={() => window.history.forward()} aria-label="Forward" title="Forward">
             <Chev d="right" />
           </button>
         </div>
@@ -115,19 +122,7 @@ function Chrome({
 
         <div className="chrome-address" data-building={building ? "true" : undefined}>
           <span className="chrome-scheme">agent://</span>
-          <span className="chrome-host">madhusiddharth.dev/</span>
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.span
-              key={path}
-              className="chrome-path"
-              initial={{ opacity: 0, y: 6, filter: "blur(4px)" }}
-              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              exit={{ opacity: 0, y: -6, filter: "blur(4px)" }}
-              transition={{ duration: 0.22 }}
-            >
-              {path}
-            </motion.span>
-          </AnimatePresence>
+          <AddressPath path={path} tabs={tabs} />
           <span className="chrome-status">
             {building ? (
               <>
@@ -135,7 +130,7 @@ function Chrome({
               </>
             ) : (
               <>
-                <span className="chrome-ok" /> {enabled ? "built by 6 agents" : "static render"}
+                <span className="chrome-ok" /> {enabled ? `built by ${engine.roster.length} agents` : "static render"}
               </>
             )}
           </span>
@@ -159,6 +154,124 @@ function Chrome({
   );
 }
 
+/* ---------------------------------------------------------------------------
+   Address bar — the path is live. Click a segment to go up to it, click the
+   bar (or ⌘L) to edit the path, Enter to go, Esc to cancel. A path that names
+   a section of this page scrolls to it; anything else is a route.
+   --------------------------------------------------------------------------- */
+const HOST = "madhusiddharth.dev/";
+
+function AddressPath({ path, tabs }: { path: string; tabs: Tab[] }) {
+  const engine = useSwarm();
+  const router = useRouter();
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+  const input = useRef<HTMLInputElement>(null);
+
+  function start(e?: { preventDefault: () => void }) {
+    e?.preventDefault();
+    setDraft(path);
+    setEditing(true);
+    requestAnimationFrame(() => {
+      input.current?.focus();
+      input.current?.select();
+    });
+  }
+
+  // ⌘L / ctrl+L focuses the address bar, like a browser
+  useEffect(() => {
+    const onKey = (e: globalThis.KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.code === "KeyL") start(e);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [path]);
+
+  function go(raw: string) {
+    const value = raw
+      .trim()
+      .replace(/^agent:\/\//, "")
+      .replace(/^(https?:\/\/)?(www\.)?madhusiddharth\.dev/, "")
+      .replace(/^\/+|\/+$/g, "");
+    setEditing(false);
+    if (value === path) return;
+    if (value.startsWith("#")) {
+      engine.scrollTo(value);
+      return;
+    }
+    const local = tabs.find((t) => t.href.startsWith("#") && t.path === value);
+    if (local) {
+      engine.scrollTo(local.href);
+      return;
+    }
+    engine.log("user", `navigate /${value}`);
+    router.push(value ? `/${value}/` : "/");
+  }
+
+  if (editing) {
+    return (
+      <form
+        className="chrome-edit"
+        onSubmit={(e) => {
+          e.preventDefault();
+          go(draft);
+        }}
+      >
+        <span className="chrome-host">{HOST}</span>
+        <input
+          ref={input}
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={() => setEditing(false)}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") setEditing(false);
+          }}
+          aria-label="Address"
+          spellCheck={false}
+          autoComplete="off"
+        />
+      </form>
+    );
+  }
+
+  const segs = path ? path.split("/") : [];
+  return (
+    <span className="chrome-loc" onClick={(e) => e.target === e.currentTarget && start()} title="Click to edit the path (⌘L)">
+      <button type="button" className="chrome-seg chrome-host" onClick={() => go("")}>
+        {HOST}
+      </button>
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.span
+          key={path}
+          className="chrome-path"
+          initial={{ opacity: 0, y: 6, filter: "blur(4px)" }}
+          animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+          exit={{ opacity: 0, y: -6, filter: "blur(4px)" }}
+          transition={{ duration: 0.22 }}
+        >
+          {segs.map((seg, i) => {
+            const last = i === segs.length - 1;
+            return (
+              <span key={i}>
+                <button type="button" className="chrome-seg" onClick={() => (last ? start() : go(segs.slice(0, i + 1).join("/")))} title={last ? "Edit the path" : `Go to /${segs.slice(0, i + 1).join("/")}`}>
+                  {seg}
+                </button>
+                {!last && <span className="chrome-slash">/</span>}
+              </span>
+            );
+          })}
+        </motion.span>
+      </AnimatePresence>
+      <button type="button" className="chrome-edit-hint" onClick={() => start()} aria-label="Edit the path">
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M11 2.5l2.5 2.5L6 12.5H3.5V10z" />
+        </svg>
+      </button>
+    </span>
+  );
+}
+
 function Chev({ d }: { d: "left" | "right" }) {
   return (
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -174,7 +287,8 @@ function Chev({ d }: { d: "left" | "right" }) {
    --------------------------------------------------------------------------- */
 type Row = { id: string; label: string; hint: string; href: string; external?: boolean; local?: boolean };
 
-function NavWindow({ tabs, current, onDone }: { tabs: Tab[]; current?: string; onDone: () => void }) {
+function NavWindow({ tabs, current, onDone, railTabs }: { tabs: Tab[]; current?: string; onDone: () => void; railTabs?: boolean }) {
+  const [pane, setPane] = useState<"skills" | "minimap">(railTabs ? "skills" : "minimap");
   const engine = useSwarm();
   const router = useRouter();
   const [q, setQ] = useState("");
@@ -288,15 +402,27 @@ function NavWindow({ tabs, current, onDone }: { tabs: Tab[]; current?: string; o
   return (
     <section className="win win-nav" aria-label="Navigator">
       <div className="win-head">
-        <span className="win-title">
-          <NavIcon /> minimap
-        </span>
+        {railTabs ? (
+          <div className="win-tabs" role="tablist" aria-label="Navigator views">
+            {(["skills", "minimap"] as const).map((p) => (
+              <button key={p} type="button" role="tab" aria-selected={pane === p} className="win-tab" onClick={() => setPane(p)}>
+                {pane === p && <span className="win-tab-bg" />}
+                {p === "minimap" ? <NavIcon /> : <SkillsIcon />} {p}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <span className="win-title">
+            <NavIcon /> minimap
+          </span>
+        )}
         <span className="win-meta">
           <kbd>⌘K</kbd>
         </span>
       </div>
-      <MiniMap onJump={onDone} />
-      <ul className="nav-chips">
+      {railTabs && <div id="ide-skills-slot" className="nav-skills" hidden={pane !== "skills"} />}
+      {(!railTabs || pane === "minimap") && <MiniMap onJump={onDone} />}
+      <ul className="nav-chips" hidden={railTabs && pane !== "minimap"}>
         {chips.map((r) => (
           <li key={r.id}>
             {r.external ? (
@@ -329,6 +455,14 @@ function NavWindow({ tabs, current, onDone }: { tabs: Tab[]; current?: string; o
         </label>
       </form>
     </section>
+  );
+}
+
+function SkillsIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M5.5 4L2 8l3.5 4M10.5 4L14 8l-3.5 4" />
+    </svg>
   );
 }
 

@@ -12,7 +12,7 @@ import {
 } from "react";
 import { motion } from "motion/react";
 import { useLenis } from "lenis/react";
-import { AGENTS, SwarmEngine, type SwarmState } from "./engine";
+import { SwarmEngine, type SwarmState, type RosterName } from "./engine";
 
 const Ctx = createContext<SwarmEngine | null>(null);
 
@@ -32,8 +32,8 @@ export function useSwarmState<T>(select: (s: SwarmState) => T): T {
 }
 
 /** Root of the agentic page: owns the engine, the cursor layer, and Lenis wiring. */
-export function Swarm({ children, className, task }: { children: ReactNode; className?: string; task?: string }) {
-  const [engine] = useState(() => new SwarmEngine());
+export function Swarm({ children, className, task, roster = "home" }: { children: ReactNode; className?: string; task?: string; roster?: RosterName }) {
+  const [engine] = useState(() => new SwarmEngine(roster));
   const root = useRef<HTMLDivElement>(null);
   const lenis = useLenis();
 
@@ -62,7 +62,7 @@ function CursorLayer({ engine }: { engine: SwarmEngine }) {
   const agents = useSyncExternalStore(engine.subscribe, () => engine.state.agents, () => engine.state.agents);
   return (
     <div className="swarm-layer" aria-hidden="true">
-      {AGENTS.map((a) => {
+      {engine.roster.map((a) => {
         const c = engine.cursors[a.id];
         const st = agents[a.id];
         return (

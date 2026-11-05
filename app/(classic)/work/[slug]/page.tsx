@@ -8,12 +8,20 @@ import {
   techIcon,
 } from "@/lib/projects";
 import { loadCaseStudy } from "@/lib/case-study";
-import { CaseStudyToc } from "@/components/case-study-toc";
+import { getPipeline } from "@/lib/pipelines";
+import { IdeRoot } from "@/components/ide/ide-root";
+import { Explorer } from "@/components/ide/explorer";
+import { ArchPanel } from "@/components/ide/arch-panel";
+import { StatusBar } from "@/components/ide/statusbar";
+import { RailSkills } from "@/components/ide/rail-skills";
+import { Resizers } from "@/components/ide/resizers";
 import { ReadingProgress } from "@/components/reading-progress";
 import { GithubIcon, ArrowUpRight, ArrowIcon, LockIcon, LiveIcon } from "@/components/icons";
 import { BuildSection } from "@/components/agent/swarm";
 import { B } from "@/components/agent/b";
 import "./fieldnotes.css";
+import "@/app/console.css";
+import "@/app/ide.css";
 
 type Params = { slug: string };
 
@@ -58,10 +66,25 @@ export default async function CaseStudyPage({
 
   const pos = STUDY_PROJECTS.findIndex((p) => p.slug === slug);
   const next = STUDY_PROJECTS[(pos + 1) % STUDY_PROJECTS.length];
+  const pipe = getPipeline(slug);
+  const order = data.toc.map((t) => t.id);
+  const labels = Object.fromEntries(data.toc.map((t) => [t.id, t.label]));
+  const others = STUDY_PROJECTS.filter((p) => p.slug !== slug).map((p) => ({ slug: p.slug, name: p.name, index: p.index }));
+  const skills = project.tech.map((t) => ({
+    name: t,
+    icon: techIcon(t) ?? null,
+    uses: PROJECTS.filter((p) => p.tech.includes(t)).length,
+  }));
 
   return (
     <div className="case-study">
       <ReadingProgress />
+      <IdeRoot order={order} />
+      <Explorer slug={slug} groups={data.groups} others={others} />
+      {pipe && <ArchPanel slug={slug} pipe={pipe} toc={data.toc} arch={data.arch} />}
+      <StatusBar index={project.index} slug={slug} labels={labels} nodeAt={pipe ? pipe.nodes.map((n) => n.at) : []} />
+      <Resizers />
+      <RailSkills domain={project.domain} repo={project.repo ?? null} skills={skills} />
 
       {/* ---- hero ---- */}
       <BuildSection id="report" sec="SEC_REPORT" className="cs-hero">
@@ -109,60 +132,10 @@ export default async function CaseStudyPage({
         </div>
       </BuildSection>
 
-      {/* ---- body: TOC · prose · metadata ---- */}
+      {/* ---- body: the report, in the editor column ---- */}
       <BuildSection id="notes" sec="SEC_NOTES" className="cs-body">
         <div className="wrap cs-layout">
-          {/* sticky wrappers sit outside the build nodes (which are position:relative) */}
-          <aside className="cs-rail cs-rail-left">
-            <div className="cs-sticky">
-              <B kind="list" label="nav.toc">
-                <CaseStudyToc items={data.toc} />
-              </B>
-            </div>
-          </aside>
-
           <article className="fieldnotes" dangerouslySetInnerHTML={{ __html: data.html }} />
-
-          <aside className="cs-rail cs-rail-right">
-            <div className="cs-sticky">
-            <B kind="list" label="aside.metadata" className="cs-meta">
-              <p className="cs-meta-title u-mono">Metadata</p>
-              <dl>
-                <div>
-                  <dt className="u-mono">Domain</dt>
-                  <dd>{project.domain}</dd>
-                </div>
-                <div>
-                  <dt className="u-mono">Source</dt>
-                  <dd>
-                    {project.repo ? (
-                      <a href={project.repo} target="_blank" rel="noopener noreferrer" className="u-link">
-                        GitHub <ArrowUpRight width={12} height={12} />
-                      </a>
-                    ) : (
-                      <span className="cs-meta-private">
-                        <LockIcon width={12} height={12} /> Private
-                      </span>
-                    )}
-                  </dd>
-                </div>
-              </dl>
-
-              <p className="cs-meta-title u-mono cs-meta-stack-title">Stack</p>
-              <ul className="cs-meta-stack">
-                {project.tech.map((t) => {
-                  const icon = techIcon(t);
-                  return (
-                    <li key={t}>
-                      {icon && <img src={icon} alt="" width={16} height={16} loading="lazy" />}
-                      <span>{t}</span>
-                    </li>
-                  );
-                })}
-              </ul>
-            </B>
-            </div>
-          </aside>
         </div>
       </BuildSection>
 

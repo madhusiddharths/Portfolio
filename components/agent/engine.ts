@@ -26,6 +26,9 @@ export const AGENTS = [
   { id: "coder", name: "Coder·1", op: "write", role: "writes markup", color: "#4de1ff" },
   { id: "coder2", name: "Coder·2", op: "write", role: "writes markup", color: "#6f9bff" },
   { id: "coder3", name: "Coder·3", op: "write", role: "writes markup", color: "#3fd0c0" },
+  { id: "coder4", name: "Coder·4", op: "write", role: "writes markup", color: "#8ab4ff" },
+  { id: "coder5", name: "Coder·5", op: "write", role: "writes markup", color: "#5fe3ff" },
+  { id: "coder6", name: "Coder·6", op: "write", role: "writes markup", color: "#4fb8a8" },
   { id: "stylist", name: "Stylist·1", op: "style", role: "styles + places media", color: "#ff6bd6" },
   { id: "stylist2", name: "Stylist·2", op: "style", role: "styles + places media", color: "#ff8f9f" },
   { id: "sizer", name: "Sizer", op: "resize", role: "stylist sub-agent", color: "#a78bff", parent: "stylist" },
@@ -35,6 +38,19 @@ export const AGENTS = [
 ] as const;
 
 export type AgentId = (typeof AGENTS)[number]["id"];
+
+/**
+ * Who is on shift. The landing page is a design job (planners, stylists and
+ * their sub-agents, critics); a field report is mostly text, so it gets a
+ * planner for the figures, six coders writing in parallel, one stylist for
+ * media and one critic.
+ */
+export const ROSTERS = {
+  home: ["planner", "planner2", "coder", "coder2", "coder3", "stylist", "stylist2", "sizer", "aligner", "critic", "critic2"],
+  report: ["planner", "coder", "coder2", "coder3", "coder4", "coder5", "coder6", "stylist", "critic"],
+} as const satisfies Record<string, readonly AgentId[]>;
+export type RosterName = keyof typeof ROSTERS;
+export type RosterAgent = (typeof AGENTS)[number];
 export type Op = (typeof AGENTS)[number]["op"];
 export type Speaker = AgentId | "user" | "router" | "system";
 export type LogLine = { id: number; hash: string; t: string; who: Speaker; text: string; tone?: "ok" | "dim" | "accent" | "warn" };
@@ -64,7 +80,6 @@ type Pose = { dx: number; dy: number; sx: number; sy: number };
 type Box = { x: number; y: number; w: number; h: number };
 
 const OPS: Op[] = ["create", "write", "style", "resize", "place", "review"];
-export const OWNERS = Object.fromEntries(OPS.map((op) => [op, AGENTS.filter((a) => a.op === op).map((a) => a.id)])) as Record<Op, AgentId[]>;
 const AGENT = Object.fromEntries(AGENTS.map((a) => [a.id, a])) as Record<AgentId, (typeof AGENTS)[number]>;
 const parentOf = (id: AgentId) => (AGENT[id] as { parent?: AgentId }).parent;
 
@@ -91,6 +106,10 @@ let pulseId = 0;
 export class SwarmEngine {
   state: SwarmState;
   cursors: Record<AgentId, Cursor>;
+  readonly rosterName: RosterName;
+  /** the agents on shift, in display order */
+  readonly roster: RosterAgent[];
+  private owners: Record<Op, AgentId[]>;
   private listeners = new Set<() => void>();
   private root: HTMLElement | null = null;
   private queues = {} as Record<Op, Job[]>;
@@ -114,7 +133,11 @@ export class SwarmEngine {
     else document.querySelector(t)?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
-  constructor() {
+  constructor(roster: RosterName = "home") {
+    this.rosterName = roster;
+    const ids = new Set<string>(ROSTERS[roster]);
+    this.roster = AGENTS.filter((a) => ids.has(a.id));
+    this.owners = Object.fromEntries(OPS.map((op) => [op, this.roster.filter((a) => a.op === op).map((a) => a.id)])) as Record<Op, AgentId[]>;
     const agents = {} as SwarmState["agents"];
     const cursors = {} as Record<AgentId, Cursor>;
     AGENTS.forEach((a, i) => {
@@ -157,7 +180,7 @@ export class SwarmEngine {
   /** Refresh queue depth on every agent that owns `op`. */
   private syncQueue(op: Op) {
     const agents = { ...this.state.agents };
-    OWNERS[op].forEach((id) => (agents[id] = { ...agents[id], q: this.queues[op].length }));
+    this.owners[op].forEach((id) => (agents[id] = { ...agents[id], q: this.queues[op].length }));
     this.set({ agents });
   }
   private setSection(id: string, phase: SectionPhase) {
@@ -171,8 +194,22 @@ export class SwarmEngine {
   /* ---- lifecycle --------------------------------------------------------- */
   attach(root: HTMLElement, task = "build portfolio for Madhu Siddharth") {
     this.root = root;
+    const w = window as unknown as { __swarmReady?: boolean; __swarmLate?: boolean };
+    w.__swarmReady = true;
+    // The boot script drops `build-on` if the engine is not up within 5s (a JS
+    // error, a slow device — or a cold dev-server compile). If we did arrive,
+    // the visitor did not opt out, and motion is allowed, re-arm the build.
+    if (w.__swarmLate && !document.documentElement.classList.contains("build-on")) {
+      let skip = false;
+      try {
+        skip = localStorage.getItem("swarm-skip") === "1";
+      } catch {
+        /* storage blocked */
+      }
+      if (!skip && !matchMedia("(prefers-reduced-motion: reduce)").matches) document.documentElement.classList.add("build-on");
+      w.__swarmLate = false;
+    }
     const enabled = document.documentElement.classList.contains("build-on");
-    (window as unknown as { __swarmReady?: boolean }).__swarmReady = true;
     this.set({ enabled, total: root.querySelectorAll("[data-build]").length });
 
     this.buildIO = new IntersectionObserver(
@@ -221,7 +258,8 @@ export class SwarmEngine {
       // re-attached (React strict mode / fast refresh): the session is already open
       if (enabled) this.startWorkers(this.gen);
     } else if (enabled) {
-      this.log("system", `session opened · ${AGENTS.length - 2} agents online · 2 sub-agents on call`, "dim");
+      const subs = this.roster.filter((a) => "parent" in a).length;
+      this.log("system", `session opened · ${this.roster.length - subs} agents online${subs ? ` · ${subs} sub-agents on call` : ""}`, "dim");
       this.log("planner", `task received: ${task} · ${this.state.total} nodes`);
       this.startWorkers(this.gen);
     } else {
@@ -246,7 +284,7 @@ export class SwarmEngine {
   }
 
   private startWorkers(gen: number) {
-    AGENTS.forEach((a) => this.work(a.id, gen));
+    this.roster.forEach((a) => this.work(a.id, gen));
   }
 
   /* ---- segments ---------------------------------------------------------- */
@@ -275,8 +313,21 @@ export class SwarmEngine {
    * labels are written straight into their final style.
    */
   private plan(el: HTMLElement): Op[] {
+    const staffed = (ops: Op[]) => ops.filter((o) => this.owners[o].length > 0);
     const forced = el.dataset.ops;
-    if (forced) return forced.split(",").map((s) => s.trim() as Op).filter((o) => OPS.includes(o));
+    if (forced) return staffed(forced.split(",").map((s) => s.trim() as Op).filter((o) => OPS.includes(o)));
+    if (this.rosterName === "report") {
+      // prose is written straight into its final style; figures and code are framed and styled
+      const kind = el.dataset.build ?? "block";
+      const hasText = (el.textContent ?? "").trim().length > 0;
+      if (kind === "type" || kind === "para" || kind === "list") return ["write"];
+      if (kind === "frame") return ["create"];
+      return staffed(hasText && kind !== "media" ? ["create", "write", "style"] : ["create", "style"]);
+    }
+    return staffed(this.basePlan(el));
+  }
+
+  private basePlan(el: HTMLElement): Op[] {
     const kind = el.dataset.build ?? "block";
     if (kind === "frame") return ["create"];
     const r = el.getBoundingClientRect();
@@ -354,7 +405,7 @@ export class SwarmEngine {
 
   private push(job: Job, from?: AgentId) {
     this.queues[job.op].push(job);
-    const owners = OWNERS[job.op];
+    const owners = this.owners[job.op];
     const to = owners.find((id) => this.state.agents[id].status === "idle") ?? owners[0];
     if (from && from !== to) {
       this.set({ pulses: [...this.state.pulses.slice(-12), { id: ++pulseId, from, to }] });
@@ -385,10 +436,18 @@ export class SwarmEngine {
     const q = this.queues[op];
     if (q.length === 0) return undefined;
     const onScreen = q.some((j) => this.visible.has(j.section));
+    // a report is one long section — so there, build what is in the viewport first
+    const vh = window.innerHeight;
+    const near = (j: Job) => {
+      const r = (j.el ?? j.seg ?? j.section).getBoundingClientRect();
+      return r.bottom > -120 && r.top < vh + 240;
+    };
+    const nearOnly = this.rosterName === "report" && q.some(near);
     let best = -1;
     for (let i = 0; i < q.length; i++) {
       const j = q[i];
       if (onScreen && !this.visible.has(j.section)) continue;
+      if (nearOnly && !near(j)) continue;
       if (best < 0) {
         best = i;
         continue;

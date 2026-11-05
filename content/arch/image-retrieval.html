@@ -1,0 +1,13 @@
+<p>The architecture is based on a transfer learning approach using a pre-trained
+          <strong>ResNet-50</strong> network. The convolutional backbone is initially frozen to preserve pre-learned
+          low-level
+          visual features, while deeper layers are progressively unfrozen during training to allow fine-tuning. The
+          fully
+          connected classification layer of ResNet-50 is replaced with a custom embedding module consisting of a linear
+          projection layer reducing 2048-dimensional ResNet features to 512 dimensions, followed by batch normalization,
+          ReLU activation, and dropout (50%) for improved stability and generalization. A final linear layer produces a
+          128-dimensional feature embedding used for both classification and retrieval. A lightweight classifier head
+          maps
+          these embeddings to 101 output classes corresponding to the Caltech101 object categories. Label smoothing is
+          applied during training to enhance model calibration and reduce overconfidence.
+        </p>

@@ -33,22 +33,6 @@
       </section>
 
       <section class="content-section">
-        <h2>Architecture</h2>
-        <p>
-          The platform is split into seven logical layers: ingestion (Python producers polling Finnhub and NewsAPI),
-          message bus (Kafka), stream processing and storage (Spark + Delta Lake medallion on Databricks), batch
-          orchestration (Airflow), agentic AI (LangGraph + MCP + Gemini), serving (FastAPI + Streamlit on GKE), and
-          observability (Prometheus, Grafana, LangSmith, Evidently AI). Real-time data flows through layers 1–3
-          continuously; Airflow reads from layer 2 and writes to layers 3–4 on schedule.
-        </p>
-        <figure>
-          <img src="/img/pulsetrade/pulsetrade_architecture.svg" alt="PulseTrade end-to-end architecture diagram" />
-          <figcaption>Figure 1: Seven-layer architecture spanning ingestion, stream processing, agentic AI, and
-            observability.</figcaption>
-        </figure>
-      </section>
-
-      <section class="content-section">
         <h2>Layer 1 &mdash; Ingestion</h2>
         <p>
           Two Python producers run independently to keep ingestion concerns separated. The <strong>stock

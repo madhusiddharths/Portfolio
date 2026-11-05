@@ -156,7 +156,7 @@ export function MiniMap({ onJump }: { onJump?: () => void }) {
           />
         ))}
         <div className="mm-vp" style={{ top: vp.y, height: vp.h }} />
-        {AGENTS.map((a) => (
+        {engine.roster.map((a) => (
           <MiniCursor key={a.id} id={a.id} color={a.color} geo={geoRef} />
         ))}
       </div>

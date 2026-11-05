@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useTransform } from "motion/react";
 import { useSwarm, useSwarmState } from "./swarm";
-import { AGENTS, type AgentId, type Speaker } from "./engine";
+import { AGENTS, type AgentId, type RosterAgent, type Speaker } from "./engine";
 
 /* ---------------------------------------------------------------------------
    Observability window — what the swarm is doing, two ways:
@@ -12,38 +12,63 @@ import { AGENTS, type AgentId, type Speaker } from "./engine";
      logs  · a git-log style event stream
    --------------------------------------------------------------------------- */
 
-/* Lanes of the pipeline, top → bottom. Agents in a lane share one queue. */
+/* Lanes of the pipeline, top → bottom. Agents in a lane share one queue.
+   The layout is computed from the roster on shift: empty lanes drop out and
+   a lane with more than three agents wraps onto extra rows. */
 type Lane = "plan" | "code" | "style" | "subs" | "review";
-const LANES: { key: Lane; label: string; y: number }[] = [
-  { key: "plan", label: "planners · frame blocks", y: 30 },
-  { key: "code", label: "coders · write markup", y: 92 },
-  { key: "style", label: "stylists · style + place media", y: 154 },
-  { key: "subs", label: "stylist sub-agents · spawned per call", y: 214 },
-  { key: "review", label: "critics · review finished segments", y: 276 },
+const LANE_DEFS: { key: Lane; label: string; report?: string }[] = [
+  { key: "plan", label: "planners · frame blocks", report: "planner · frames figures + code" },
+  { key: "code", label: "coders · write markup", report: "coders · write the report in parallel" },
+  { key: "style", label: "stylists · style + place media", report: "stylist · places media" },
+  { key: "subs", label: "stylist sub-agents · spawned per call" },
+  { key: "review", label: "critics · review finished segments", report: "critic · reviews each section" },
 ];
 const LANE_OF: Record<string, Lane> = { create: "plan", write: "code", style: "style", resize: "subs", place: "subs", review: "review" };
-const LANE_Y = Object.fromEntries(LANES.map((l) => [l.key, l.y])) as Record<Lane, number>;
 const NW = 88;
 const NH = 28;
-const VB_H = 300;
-const POS = (() => {
-  const pos = {} as Record<AgentId, { x: number; y: number }>;
-  LANES.forEach((l) => {
-    const inLane = AGENTS.filter((a) => LANE_OF[a.op] === l.key);
-    inLane.forEach((a, i) => (pos[a.id] = { x: 160 + (i - (inLane.length - 1) / 2) * 100, y: l.y }));
-  });
-  return pos;
-})();
-/* lane → lane hand-offs: the main spine down the middle, bypasses on the sides */
-const LANE_EDGES: { from: Lane; to: Lane; d: string }[] = [
-  { from: "plan", to: "code", d: `M160 ${LANE_Y.plan + 18} V${LANE_Y.code - 18}` },
-  { from: "code", to: "style", d: `M160 ${LANE_Y.code + 18} V${LANE_Y.style - 18}` },
-  { from: "style", to: "subs", d: `M160 ${LANE_Y.style + 18} V${LANE_Y.subs - 18}` },
-  { from: "subs", to: "review", d: `M160 ${LANE_Y.subs + 18} V${LANE_Y.review - 18}` },
-  { from: "plan", to: "style", d: `M10 ${LANE_Y.plan} V${LANE_Y.style}` },
-  { from: "code", to: "review", d: `M310 ${LANE_Y.code} V${LANE_Y.review}` },
-  { from: "style", to: "review", d: `M302 ${LANE_Y.style + 6} V${LANE_Y.review - 6}` },
-];
+const PER_ROW = 3;
+const ROW_H = 34;
+
+type LaneBox = { key: Lane; label: string; y: number; h: number };
+type Layout = { lanes: LaneBox[]; pos: Record<string, { x: number; y: number }>; edges: { from: Lane; to: Lane; d: string }[]; h: number };
+
+function layoutFor(roster: RosterAgent[], report: boolean): Layout {
+  const lanes: LaneBox[] = [];
+  const pos: Layout["pos"] = {};
+  let y = 30;
+  for (const def of LANE_DEFS) {
+    const inLane = roster.filter((a) => LANE_OF[a.op] === def.key);
+    if (!inLane.length) continue;
+    const rows = Math.ceil(inLane.length / PER_ROW);
+    const h = 38 + (rows - 1) * ROW_H;
+    inLane.forEach((a, i) => {
+      const row = Math.floor(i / PER_ROW);
+      const inRow = Math.min(PER_ROW, inLane.length - row * PER_ROW);
+      pos[a.id] = { x: 160 + ((i % PER_ROW) - (inRow - 1) / 2) * 100, y: y + row * ROW_H };
+    });
+    lanes.push({ key: def.key, label: report ? def.report ?? def.label : def.label, y, h });
+    y += h + 24;
+  }
+  const at = Object.fromEntries(lanes.map((l) => [l.key, l])) as Record<Lane, LaneBox | undefined>;
+  const top = (l: LaneBox) => l.y - 19;
+  const bot = (l: LaneBox) => l.y - 19 + l.h;
+  const edges: Layout["edges"] = [];
+  // the spine down the middle
+  for (let i = 0; i < lanes.length - 1; i++) {
+    edges.push({ from: lanes[i].key, to: lanes[i + 1].key, d: `M160 ${bot(lanes[i]) - 1} V${top(lanes[i + 1]) + 1}` });
+  }
+  // bypasses on the sides
+  const side = (from: Lane, to: Lane, x: number) => {
+    const a = at[from];
+    const b = at[to];
+    if (a && b && lanes.indexOf(b) - lanes.indexOf(a) > 1) edges.push({ from, to, d: `M${x} ${a.y} V${b.y}` });
+  };
+  side("plan", "style", 10);
+  side("code", "review", 310);
+  side("style", "review", 302);
+  const last = lanes[lanes.length - 1];
+  return { lanes, pos, edges, h: last ? bot(last) + 6 : 60 };
+}
 const SUB = new Set<AgentId>(AGENTS.filter((a) => "parent" in a).map((a) => a.id));
 const laneOf = (id: AgentId) => LANE_OF[AGENTS.find((a) => a.id === id)!.op];
 
@@ -86,10 +111,12 @@ export function ObsWindow() {
 }
 
 function GraphTab() {
+  const engine = useSwarm();
+  const { lanes, pos: POS, edges, h: VB_H } = useMemo(() => layoutFor(engine.roster, engine.rosterName === "report"), [engine]);
   const agents = useSwarmState((s) => s.agents);
   const pulses = useSwarmState((s) => s.pulses);
   const hot = new Set(pulses.slice(-4).map((p) => `${laneOf(p.from)}>${laneOf(p.to)}`));
-  const laneBusy = (l: Lane) => AGENTS.some((a) => LANE_OF[a.op] === l && agents[a.id].status !== "idle");
+  const laneBusy = (l: Lane) => engine.roster.some((a) => LANE_OF[a.op] === l && agents[a.id].status !== "idle");
 
   return (
     <div className="obs-graph">
@@ -103,15 +130,15 @@ function GraphTab() {
           </marker>
         </defs>
         <rect width="320" height={VB_H} fill="url(#dag-dots)" />
-        {LANES.map((l) => (
+        {lanes.map((l) => (
           <g key={l.key} className="dag-lane" data-lane={l.key} data-busy={laneBusy(l.key) ? "true" : undefined}>
-            <rect x={20} y={l.y - 19} width={280} height={38} rx={9} />
+            <rect x={20} y={l.y - 19} width={280} height={l.h} rx={9} />
             <text x={26} y={l.y - 22}>
               {l.label}
             </text>
           </g>
         ))}
-        {LANE_EDGES.map((e) => (
+        {edges.map((e) => (
           <path
             key={`${e.from}>${e.to}`}
             d={e.d}
@@ -135,7 +162,7 @@ function GraphTab() {
             />
           );
         })}
-        {AGENTS.map((a) => {
+        {engine.roster.map((a) => {
           const st = agents[a.id];
           const p = POS[a.id];
           return (
@@ -175,7 +202,7 @@ function GraphTab() {
           <span role="columnheader">cursor</span>
           <span role="columnheader">q / ✓</span>
         </div>
-        {AGENTS.map((a) => (
+        {engine.roster.map((a) => (
           <AgentRow key={a.id} id={a.id} />
         ))}
       </div>
