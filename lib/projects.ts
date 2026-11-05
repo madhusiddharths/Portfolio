@@ -13,7 +13,7 @@ export const PROFILE = {
   available: true,
   building: "the LLM project",
   tagline: "I develop scalable models that drive real-world impact.",
-  bio: "As an AI Engineer, I design and build AI systems that automate real work end to end. I build agentic workflows where models plan, call tools, and act on their own, connecting LLMs to APIs, data pipelines, and services so a process runs from trigger to result without a human stitching the steps together. My work spans agent orchestration, tool integration, model fine-tuning, evaluation, and production deployment, with a focus on making automation reliable enough to trust. I enjoy taking a manual, multi-step process, turning it into an AI-driven workflow, and measuring honestly where it holds up and where it needs a human in the loop.",
+  bio: "As an AI Engineer, I build AI systems that automate real work end to end. I design agentic workflows where models plan, call tools, and act on their own, connecting LLMs to APIs, data pipelines, and services so a process runs from trigger to result without manual hand-offs. My work spans agent orchestration, fine-tuning, evaluation, and deployment, with a focus on automation reliable enough to trust, and knowing where it still needs a human in the loop.",
   analystNote:
     "For analyst-focused roles, a tailored Data Analyst resume is available.",
   resume:
