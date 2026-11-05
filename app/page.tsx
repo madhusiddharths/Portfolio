@@ -22,7 +22,53 @@ const SENTENCES = PROFILE.bio.split(/(?<=\.)\s+/);
 const QUOTE = SENTENCES[SENTENCES.length - 1];
 const BIO = SENTENCES.slice(0, -1);
 const TOOLS = ["LangGraph", "MCP", "Claude API", "vLLM", "PyTorch", "Apache Kafka", "Apache Spark", "Docker"];
-const FOCUS = ["Agent orchestration", "Tool integration", "Model fine-tuning", "Evaluation", "Production deployment"];
+const FOCUS = ["agent_orchestration", "tool_integration", "fine_tuning", "evaluation", "deployment"];
+
+/* Experience + education — facts from the résumé knowledge base, verbatim numbers. */
+const RUNS = [
+  {
+    id: "parsec",
+    org: "Parsec",
+    role: "AI Engineering Intern",
+    when: "Oct 2026 — present",
+    where: "Remote",
+    status: "running",
+    task: "Own the video track of OpenJev — an open-source model that scores answer options in one forward pass, running locally on an 18 GB laptop.",
+    out: [
+      ["video QA · dev split", "54.7% → 73.5%"],
+      ["LoRA training set", "7,392 Qs · 1,955 videos"],
+      ["memory budget", "64 frames in 18 GB"],
+    ],
+    tools: ["MLX", "LoRA", "Gemma 4 E4B", "PyTorch", "FastAPI"],
+  },
+  {
+    id: "labelmaster",
+    org: "Labelmaster",
+    role: "Data Science Co-op",
+    when: "Jan — May 2026",
+    where: "Chicago, IL",
+    status: "completed",
+    task: "White-space analysis: pulled sites from 9 government compliance databases and enriched them with LLMs to surface prospects that had never bought.",
+    out: [
+      ["sites mapped", "26,290 · 178 families"],
+      ["white space", "17,999 zero-sales sites"],
+      ["LLM enrichment", "12 attrs · mean conf 0.81"],
+    ],
+    tools: ["Gemini API", "Perplexity", "SciPy", "Placekey", "Python"],
+  },
+] as const;
+const CKPTS = [
+  { tag: "fine-tune", degree: "M.S. Data Science", school: "Illinois Institute of Technology", where: "Chicago, IL", when: "May 2026", gpa: "3.77" },
+  { tag: "pretrain", degree: "B.Tech Information Technology", school: "Coimbatore Institute of Technology", where: "Coimbatore, India", when: "Apr 2024", gpa: "3.66 · 8.91/10" },
+];
+const CERT_DATE: Record<string, string> = {
+  "IBM Machine Learning Specialist — Advanced": "Aug 2025",
+  "IBM Data Science Professional Certificate": "Apr 2023",
+  "AWS Certified Cloud Practitioner": "Jun 2025",
+  "Google Data Analytics Professional Certificate": "May 2022",
+};
+const calls = (tech: string) => PROJECTS.filter((p) => p.tech.includes(tech)).length;
+const MAX_CALLS = Math.max(...SKILLS.flatMap((g) => g.items.map(calls)), 1);
 const SOCIAL = [
   { label: "GitHub", href: PROFILE.github, Icon: GithubIcon },
   { label: "LinkedIn", href: PROFILE.linkedin, Icon: LinkedinIcon },
@@ -51,9 +97,16 @@ export default function Home() {
                 <div className="pg-thread">
                   <div className="pg-msg">
                     <span className="pg-role">system</span>
-                    <B as="p" kind="para" label="msg.system" className="pg-system">
-                      You are Madhu Siddharth, an AI engineer. You design agentic workflows where models plan, call tools and act
-                      on their own — and you measure honestly where they hold up.
+                    <B as="p" kind="type" label="msg.system" className="pg-system">
+                      Answer as Madhu. Ground every claim in the résumé, the project logs and the repos.
+                    </B>
+                    <B as="ul" kind="list" label="ctx.retrieved" className="pg-ctx" data-ops="write,style">
+                      <li style={{ ["--i" as string]: 0 }}>
+                        <b>ctx</b> resume_kb.yaml
+                      </li>
+                      <li style={{ ["--i" as string]: 1 }}>{PROJECTS.length} projects</li>
+                      <li style={{ ["--i" as string]: 2 }}>{RUNS.length} roles</li>
+                      <li style={{ ["--i" as string]: 3 }}>{CERTS.length} certs</li>
                     </B>
                   </div>
                   <div className="pg-msg">
@@ -69,7 +122,7 @@ export default function Home() {
                     <B as="p" kind="type" label="span.hello" className="pg-hello">
                       Hello, I&apos;m
                     </B>
-                    <B as="h1" kind="fill" label="h1.name" className="hero-name">
+                    <B as="h1" kind="fill" label="h1.name" className="hero-name" data-defect="overlap">
                       <span>Madhu Siddharth.</span>
                     </B>
                     <B as="p" kind="type" label="p.role" className="hero-role">
@@ -78,7 +131,7 @@ export default function Home() {
                     <B as="p" kind="type" label="p.tagline" className="hero-tagline">
                       I develop <mark>scalable models</mark> that drive real-world impact.
                     </B>
-                    <B kind="block" label="tool_calls" className="pg-calls" data-ops="create,paint,resize,place">
+                    <B kind="block" label="tool_calls" className="pg-calls" data-ops="create,write,style,resize,place">
                       <span className="pg-calls-h">tool_calls · 3</span>
                       <a href={`mailto:${PROFILE.email}`} className="pg-call pg-call-go">
                         <code>contact</code>
@@ -128,7 +181,7 @@ export default function Home() {
                       })}
                     </ul>
                   </B>
-                  <B kind="block" label="cfg.usage" className="pg-field" data-ops="create,paint,place">
+                  <B kind="block" label="cfg.usage" className="pg-field" data-ops="create,write,style,place">
                     <span className="pg-k">this run</span>
                     <RunUsage />
                   </B>
@@ -138,7 +191,7 @@ export default function Home() {
 
             <dl className="hero-metrics">
               {METRICS.map((m, i) => (
-                <B key={m.label} kind="block" label="eval.metric" className="metric" data-ops={i % 2 ? "create,paint,place" : "create,paint"}>
+                <B key={m.label} kind="block" label="eval.metric" className="metric" data-ops={i % 2 ? "create,write,style,place" : "create,write,style"}>
                   <dt>
                     <SwarmCount value={m.value} prefix={m.prefix} suffix={m.suffix} />
                   </dt>
@@ -149,10 +202,10 @@ export default function Home() {
           </div>
         </BuildSection>
 
-        {/* ── ABOUT ────────────────────────────────────────────────────── */}
+        {/* ── ABOUT · profile, runs, checkpoints ───────────────────── */}
         <BuildSection id="about" sec="SEC_ABOUT">
           <div className="wrap">
-            <SecHead n="01" sec="SEC_ABOUT" eyebrow="Engineer profile" title="Background & Philosophy" />
+            <SecHead n="01" sec="SEC_ABOUT" eyebrow="Agent profile" title="Background, runs & checkpoints" />
             <div className="about-grid">
               <div className="about-copy">
                 {BIO.length > 0 && (
@@ -170,19 +223,93 @@ export default function Home() {
                   </a>
                 </B>
               </div>
-              <div className="about-side">
-                <B as="blockquote" kind="para" label="blockquote" className="about-quote">
-                  “{QUOTE}”
-                </B>
-                <B as="ul" kind="list" label="ul.focus" className="about-focus">
+              <B kind="block" label="memory.principle" className="principle" data-ops="create,write,style">
+                <p className="principle-h">
+                  <span>memory/</span>principle.md
+                </p>
+                <p className="principle-q">
+                  <span aria-hidden="true">{"// "}</span>
+                  {QUOTE}
+                </p>
+                <p className="principle-k">capabilities</p>
+                <ul className="principle-caps">
                   {FOCUS.map((f, i) => (
                     <li key={f} style={{ ["--i" as string]: i }}>
-                      <span>0{i + 1}</span>
+                      <i aria-hidden="true" />
                       {f}
                     </li>
                   ))}
+                </ul>
+              </B>
+            </div>
+
+            <p className="sub-h">
+              runs/ <span>experience · {RUNS.length}</span>
+            </p>
+            <div className="runs">
+              {RUNS.map((r) => (
+                <B as="article" key={r.id} kind="block" label={`run.${r.id}`} className="run">
+                  <header className="run-head">
+                    <span className="run-status" data-status={r.status}>
+                      <i aria-hidden="true" /> {r.status}
+                    </span>
+                    <span className="run-when">{r.when}</span>
+                  </header>
+                  <h3 className="run-org">
+                    {r.org} <span>/ {r.role}</span>
+                  </h3>
+                  <p className="run-where">{r.where}</p>
+                  <p className="run-task">
+                    <b>task</b> {r.task}
+                  </p>
+                  <dl className="run-out">
+                    {r.out.map(([k, v]) => (
+                      <div key={k}>
+                        <dt>{k}</dt>
+                        <dd>{v}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                  <ul className="run-tools">
+                    {r.tools.map((t) => {
+                      const icon = techIcon(t);
+                      return (
+                        <li key={t}>
+                          {icon && <img src={icon} alt="" width={13} height={13} loading="lazy" />}
+                          {t}
+                        </li>
+                      );
+                    })}
+                  </ul>
                 </B>
-              </div>
+              ))}
+            </div>
+
+            <p className="sub-h">
+              checkpoints/ <span>education · {CKPTS.length}</span>
+            </p>
+            <div className="ckpts">
+              {CKPTS.map((c) => (
+                <B key={c.degree} kind="block" label={`ckpt.${c.tag}`} className="ckpt">
+                  <span className="ckpt-tag">ckpt · {c.tag}</span>
+                  <h3 className="ckpt-degree">{c.degree}</h3>
+                  <p className="ckpt-school">{c.school}</p>
+                  <dl className="ckpt-meta">
+                    <div>
+                      <dt>gpa</dt>
+                      <dd>{c.gpa}</dd>
+                    </div>
+                    <div>
+                      <dt>saved</dt>
+                      <dd>{c.when}</dd>
+                    </div>
+                    <div>
+                      <dt>where</dt>
+                      <dd>{c.where}</dd>
+                    </div>
+                  </dl>
+                </B>
+              ))}
             </div>
           </div>
         </BuildSection>
@@ -254,41 +381,45 @@ export default function Home() {
           </div>
         </BuildSection>
 
-        {/* ── STACK ────────────────────────────────────────────────────── */}
+        {/* ── STACK · tool registry ─────────────────────────────────── */}
         <BuildSection id="stack" sec="SEC_STACK">
           <div className="wrap">
-            <SecHead n="03" sec="SEC_STACK" eyebrow="Capability matrix" title="The Toolbox">
+            <SecHead n="03" sec="SEC_STACK" eyebrow="Tool registry" title="Tools the agents can call">
               <B as="p" kind="para" label="p.lead" className="sec-lead">
-                Languages, frameworks, and platforms I reach for across the AI, ML and data lifecycle — grouped by where they live in
-                the stack. Pick one to filter projects.
+                Everything I reach for, registered by namespace. <code>calls</code> counts the projects in this portfolio that use
+                each tool — pick one to filter them.
               </B>
             </SecHead>
-            <div className="stack-grid">
+            <div className="reg-grid">
               {SKILLS.map((g) => {
-                const dir = g.group.toLowerCase().replace(/[^a-z]+/g, "-").replace(/-$/, "");
+                const ns = g.group.toLowerCase().replace(/&/g, "").replace(/[^a-z]+/g, "_").replace(/^_|_$/g, "");
                 return (
-                  <B key={g.group} kind="list" label={`term.${dir}`} className="term">
-                    <div className="term-bar">
-                      <span className="term-dots" aria-hidden="true">
-                        <i />
-                        <i />
-                        <i />
+                  <B key={g.group} kind="block" label={`ns.${ns}`} className="reg">
+                    <header className="reg-head">
+                      <span className="reg-ns">
+                        <b>ns</b> {ns}
                       </span>
-                      <span>~/stack/{dir}</span>
-                      <span className="term-count">{g.items.length}</span>
-                    </div>
-                    <h3 className="term-title">{g.group}</h3>
-                    <p className="term-cmd">
-                      <span>$</span> ls --icons
-                    </p>
-                    <ul className="term-items">
+                      <span className="reg-count">{g.items.length} tools</span>
+                    </header>
+                    <p className="reg-title">{g.group}</p>
+                    <ul className="reg-list">
+                      <li className="reg-row reg-row-h" aria-hidden="true">
+                        <span />
+                        <span>tool</span>
+                        <span>calls</span>
+                      </li>
                       {g.items.map((item, i) => {
                         const icon = techIcon(item);
+                        const n = calls(item);
                         return (
                           <li key={item} style={{ ["--i" as string]: i }}>
-                            <Link href={`/work/?skill=${encodeURIComponent(item)}`} className="chip">
-                              {icon ? <img src={icon} alt="" loading="lazy" width={16} height={16} /> : <i className="chip-dot" />}
-                              {item}
+                            <Link href={`/work/?skill=${encodeURIComponent(item)}`} className="reg-row" data-zero={n === 0 ? "true" : undefined}>
+                              {icon ? <img src={icon} alt="" loading="lazy" width={15} height={15} /> : <i className="reg-dot" />}
+                              <span className="reg-name">{item}</span>
+                              <span className="reg-calls">
+                                <span className="reg-bar" style={{ ["--w" as string]: n / MAX_CALLS }} />
+                                {n}
+                              </span>
                             </Link>
                           </li>
                         );
@@ -301,22 +432,29 @@ export default function Home() {
           </div>
         </BuildSection>
 
-        {/* ── CERTS ────────────────────────────────────────────────────── */}
+        {/* ── CERTS · credential verifier ───────────────────────────── */}
         <BuildSection id="certs" sec="SEC_CERTS">
           <div className="wrap">
-            <SecHead n="04" sec="SEC_CERTS" eyebrow="Credentials" title="Certifications">
+            <SecHead n="04" sec="SEC_CERTS" eyebrow="Credential verifier" title="Verified credentials">
               <B as="p" kind="para" label="p.lead" className="sec-lead">
-                Industry certifications validating my expertise across machine learning, data science, cloud, and analytics.
+                Industry certifications across machine learning, data science, cloud and analytics — each one checks out against its
+                public Credly record.
               </B>
             </SecHead>
-            <div className="cert-grid">
+            <div className="cred-grid">
               {CERTS.map((c, i) => (
-                <B as="a" key={c.name} kind="block" label="a.credential" href={c.url} target="_blank" rel="noopener noreferrer" className="cert">
-                  <span className="cert-i">C.0{i + 1}</span>
-                  <img src={c.img} alt="" loading="lazy" />
-                  <span className="cert-name">{c.name}</span>
-                  <span className="cert-issuer">
-                    {c.issuer} <ArrowUpRight width={13} height={13} />
+                <B as="a" key={c.name} kind="block" label={`cred.0${i + 1}`} href={c.url} target="_blank" rel="noopener noreferrer" className="cred">
+                  <span className="cred-top">
+                    <span className="cred-id">cred_0{i + 1}</span>
+                    <span className="cred-ok">✓ verified</span>
+                  </span>
+                  <img src={c.img} alt="" loading="lazy" className="cred-img" />
+                  <span className="cred-name">{c.name}</span>
+                  <span className="cred-meta">
+                    {c.issuer} · {CERT_DATE[c.name] ?? "—"}
+                  </span>
+                  <span className="cred-call">
+                    <code>verify</code>(&quot;credly&quot;) <ArrowUpRight width={12} height={12} />
                   </span>
                 </B>
               ))}
@@ -334,7 +472,7 @@ export default function Home() {
                   Feel free to drop me an email if you believe we&apos;d make a great team and would like to collaborate. Let&apos;s
                   make our work together not only productive but also enjoyable!
                 </B>
-                <B kind="block" label="div.actions" className="contact-actions" data-ops="create,paint">
+                <B kind="block" label="div.actions" className="contact-actions" data-ops="create,write,style">
                   <a href={`mailto:${PROFILE.email}`} className="btn btn-red">
                     <MailIcon width={16} height={16} /> Get in touch
                   </a>

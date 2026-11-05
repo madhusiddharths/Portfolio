@@ -77,9 +77,9 @@ function CursorLayer({ engine }: { engine: SwarmEngine }) {
               <path d="M1.5 1.5 L16 9.2 L9.4 10.9 L6.2 17.6 Z" fill="currentColor" stroke="#050507" strokeWidth="1.4" strokeLinejoin="round" />
             </svg>
             <span className="swarm-tag">
-              {a.name}
+              {"parent" in a ? `↳ ${a.name}` : a.name}
               {st.status === "working" && st.op && <span className="swarm-op">{st.op}</span>}
-              {st.status === "working" && (st.op === "write" || st.op === "paint") && (
+              {st.status === "working" && st.op === "write" && (
                 <i className="swarm-typing">
                   <b />
                   <b />

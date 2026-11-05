@@ -13,24 +13,32 @@ import { AGENTS, type AgentId, type Speaker } from "./engine";
    --------------------------------------------------------------------------- */
 
 const POS: Record<AgentId, { x: number; y: number }> = {
-  planner: { x: 160, y: 22 },
-  coder: { x: 66, y: 78 },
-  stylist: { x: 254, y: 78 },
-  sizer: { x: 254, y: 130 },
-  aligner: { x: 254, y: 182 },
-  critic: { x: 66, y: 182 },
+  planner: { x: 160, y: 20 },
+  coder: { x: 78, y: 72 },
+  coder2: { x: 242, y: 72 },
+  stylist: { x: 160, y: 124 },
+  sizer: { x: 84, y: 176 },
+  aligner: { x: 236, y: 176 },
+  critic: { x: 160, y: 232 },
 };
 const EDGES: [AgentId, AgentId][] = [
   ["planner", "coder"],
+  ["planner", "coder2"],
   ["planner", "stylist"],
+  ["coder", "stylist"],
+  ["coder2", "stylist"],
   ["stylist", "sizer"],
+  ["stylist", "aligner"],
   ["sizer", "aligner"],
-  ["coder", "critic"],
   ["stylist", "critic"],
   ["aligner", "critic"],
+  ["coder", "critic"],
+  ["coder2", "critic"],
 ];
+const SUB = new Set<AgentId>(["sizer", "aligner"]);
 const NW = 96;
 const NH = 30;
+const VB_H = 252;
 
 export const WHO: Record<Speaker, { label: string; color: string }> = {
   ...Object.fromEntries(AGENTS.map((a) => [a.id, { label: a.name, color: a.color }])),
@@ -77,13 +85,18 @@ function GraphTab() {
 
   return (
     <div className="obs-graph">
-      <svg viewBox="0 0 320 204" className="dag" role="img" aria-label="Agent pipeline graph">
+      <svg viewBox={`0 0 320 ${VB_H}`} className="dag" role="img" aria-label="Agent pipeline graph">
         <defs>
           <pattern id="dag-dots" width="12" height="12" patternUnits="userSpaceOnUse">
             <circle cx="1" cy="1" r="0.8" fill="rgba(255,255,255,0.07)" />
           </pattern>
         </defs>
-        <rect width="320" height="204" fill="url(#dag-dots)" />
+        <rect width="320" height={VB_H} fill="url(#dag-dots)" />
+        {/* the Stylist's sub-agent pool */}
+        <rect x={26} y={150} width={268} height={52} rx={10} className="dag-pool" />
+        <text x={34} y={146} className="dag-pool-t">
+          stylist · sub-agents (spawned per call)
+        </text>
         {EDGES.map(([a, b]) => {
           const A = POS[a];
           const B = POS[b];
@@ -103,6 +116,7 @@ function GraphTab() {
         {pulses.map((p) => {
           const A = POS[p.from];
           const B = POS[p.to];
+          if (!A || !B) return null;
           return (
             <motion.circle
               key={p.id}
@@ -118,14 +132,21 @@ function GraphTab() {
           const st = agents[a.id];
           const p = POS[a.id];
           return (
-            <g key={a.id} className="dag-node" data-status={st.status} style={{ ["--c" as string]: a.color }} transform={`translate(${p.x - NW / 2} ${p.y - NH / 2})`}>
+            <g
+              key={a.id}
+              className="dag-node"
+              data-status={st.status}
+              data-sub={SUB.has(a.id) ? "true" : undefined}
+              style={{ ["--c" as string]: a.color }}
+              transform={`translate(${p.x - NW / 2} ${p.y - NH / 2})`}
+            >
               <rect width={NW} height={NH} rx={7} className="dag-box" />
               <circle cx={11} cy={NH / 2} r={3.2} className="dag-dot" />
               <text x={20} y={12.5} className="dag-name">
                 {a.name}
               </text>
               <text x={20} y={23.5} className="dag-op">
-                {st.status === "idle" ? "idle" : a.op}
+                {st.status === "idle" ? (SUB.has(a.id) ? "on call" : "idle") : a.op}
               </text>
               {st.q > 0 && (
                 <g transform={`translate(${NW - 20} 8)`}>
@@ -164,8 +185,8 @@ function AgentRow({ id }: { id: AgentId }) {
   const y = useTransform(c.y, (v) => Math.round(v));
   return (
     <div className="obs-row" role="row" data-status={st.status} style={{ ["--c" as string]: a.color }}>
-      <span className="obs-agent" role="cell">
-        <i /> {a.name}
+      <span className="obs-agent" role="cell" data-sub={"parent" in a ? "true" : undefined}>
+        <i /> {"parent" in a ? `↳ ${a.name}` : a.name}
       </span>
       <span className="obs-task" role="cell">
         {st.status === "idle" ? (
