@@ -9,9 +9,10 @@ import {
   useSpring,
   AnimatePresence,
   useReducedMotion,
-} from "framer-motion";
+} from "motion/react";
 import type { Project } from "@/lib/projects";
 import { ArrowUpRight, LockIcon } from "./icons";
+import { B } from "./agent/b";
 
 function rowHref(p: Project) {
   return p.hasCaseStudy ? `/work/${p.slug}/` : "/work/coming-soon/";
@@ -108,9 +109,12 @@ function WorkIndexContent({ projects }: { projects: Project[] }) {
   return (
     <div className="work-index" onMouseMove={onMove} onMouseLeave={() => setActive(null)}>
       {skillFilter && displayedProjects.length > 0 && (
-        <div style={{ marginBottom: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <p className="u-mono" style={{ margin: 0 }}>Filtered by skill: <strong style={{ color: 'var(--accent)' }}>{skillFilter}</strong></p>
-          <button onClick={() => router.push(window.location.pathname)} className="btn btn-ghost" style={{ padding: '0.5rem 1rem' }}>Clear filter</button>
+        <div className="work-filter">
+          <p className="u-mono">
+            <span className="work-filter-cmd">$ grep --skill</span> <strong>{skillFilter}</strong>{" "}
+            <span className="work-filter-count">→ {displayedProjects.length} match{displayedProjects.length === 1 ? "" : "es"}</span>
+          </p>
+          <button onClick={() => router.push(window.location.pathname)} className="btn btn-line">Clear filter</button>
         </div>
       )}
 
@@ -120,12 +124,12 @@ function WorkIndexContent({ projects }: { projects: Project[] }) {
           <p className="page-hero-lead" style={{ margin: '0 auto 2rem', maxWidth: '600px' }}>
             I use <strong style={{ color: 'var(--accent)' }}>{skillFilter}</strong> in coursework and side projects, but it doesn't feature in these case studies yet.
           </p>
-          <button onClick={() => router.push(window.location.pathname)} className="btn btn-primary">View All Projects</button>
+          <button onClick={() => router.push(window.location.pathname)} className="btn btn-red">View All Projects</button>
         </div>
       ) : (
         <ol className="work-list">
           {displayedProjects.map((p) => (
-            <li key={p.slug}>
+            <B as="li" kind="block" label={`row.${p.slug}`} key={p.slug}>
               <Link
                 href={rowHref(p)}
                 className="work-row"
@@ -163,7 +167,7 @@ function WorkIndexContent({ projects }: { projects: Project[] }) {
                   <ArrowUpRight width={18} height={18} />
                 </span>
               </Link>
-            </li>
+            </B>
           ))}
         </ol>
       )}

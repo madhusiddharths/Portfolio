@@ -6,7 +6,6 @@ const nextConfig = {
   images: { unoptimized: true },
   // Emit /work/pulsetrade/index.html so links work on static hosts.
   trailingSlash: true,
-  eslint: { ignoreDuringBuilds: true },
 };
 
 export default nextConfig;
