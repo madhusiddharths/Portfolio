@@ -86,7 +86,7 @@ export default function Home() {
               <span className="sep">/</span> building <em>{PROFILE.building}</em>
             </B>
 
-            <B kind="frame" label="div.playground" className="pg">
+            <B kind="frame" label="div.playground" className="pg" data-seg="playground">
               <div className="pg-bar">
                 <span className="pg-name">playground</span>
                 <span className="pg-run">run_01JD4M · madhu-v2</span>
@@ -189,7 +189,7 @@ export default function Home() {
               </div>
             </B>
 
-            <dl className="hero-metrics">
+            <dl className="hero-metrics" data-seg="metrics">
               {METRICS.map((m, i) => (
                 <B key={m.label} kind="block" label="eval.metric" className="metric" data-ops={i % 2 ? "create,write,style,place" : "create,write,style"}>
                   <dt>
@@ -206,7 +206,7 @@ export default function Home() {
         <BuildSection id="about" sec="SEC_ABOUT">
           <div className="wrap">
             <SecHead n="01" sec="SEC_ABOUT" eyebrow="Agent profile" title="Background, runs & checkpoints" />
-            <div className="about-grid">
+            <div className="about-grid" data-seg="profile">
               <div className="about-copy">
                 {BIO.length > 0 && (
                   <B as="p" kind="para" label="p.bio" className="about-lead">
@@ -246,7 +246,7 @@ export default function Home() {
             <p className="sub-h">
               runs/ <span>experience · {RUNS.length}</span>
             </p>
-            <div className="runs">
+            <div className="runs" data-seg="runs">
               {RUNS.map((r) => (
                 <B as="article" key={r.id} kind="block" label={`run.${r.id}`} className="run">
                   <header className="run-head">
@@ -288,7 +288,7 @@ export default function Home() {
             <p className="sub-h">
               checkpoints/ <span>education · {CKPTS.length}</span>
             </p>
-            <div className="ckpts">
+            <div className="ckpts" data-seg="checkpoints">
               {CKPTS.map((c) => (
                 <B key={c.degree} kind="block" label={`ckpt.${c.tag}`} className="ckpt">
                   <span className="ckpt-tag">ckpt · {c.tag}</span>
@@ -324,7 +324,7 @@ export default function Home() {
               </B>
             </SecHead>
 
-            <div className="work-grid" data-project-grid>
+            <div className="work-grid" data-project-grid data-seg="cards">
               {FEATURED.slice(0, 6).map((p, i) => {
                 const href = p.hasCaseStudy ? `/work/${p.slug}/` : "/work/coming-soon/";
                 const extra = p.tech.length - 5;
@@ -390,7 +390,7 @@ export default function Home() {
                 each tool — pick one to filter them.
               </B>
             </SecHead>
-            <div className="reg-grid">
+            <div className="reg-grid" data-seg="registry">
               {SKILLS.map((g) => {
                 const ns = g.group.toLowerCase().replace(/&/g, "").replace(/[^a-z]+/g, "_").replace(/^_|_$/g, "");
                 return (
@@ -441,7 +441,7 @@ export default function Home() {
                 public Credly record.
               </B>
             </SecHead>
-            <div className="cred-grid">
+            <div className="cred-grid" data-seg="credentials">
               {CERTS.map((c, i) => (
                 <B as="a" key={c.name} kind="block" label={`cred.0${i + 1}`} href={c.url} target="_blank" rel="noopener noreferrer" className="cred">
                   <span className="cred-top">
@@ -466,7 +466,7 @@ export default function Home() {
         <BuildSection id="contact" sec="SEC_CONTACT" className="contact">
           <div className="wrap">
             <SecHead n="05" sec="SEC_CONTACT" eyebrow="Next steps?" title="Don't be a Stranger!" />
-            <div className="contact-grid">
+            <div className="contact-grid" data-seg="request">
               <div>
                 <B as="p" kind="para" label="p.copy" className="contact-copy">
                   Feel free to drop me an email if you believe we&apos;d make a great team and would like to collaborate. Let&apos;s

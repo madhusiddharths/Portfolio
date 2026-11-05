@@ -12,33 +12,40 @@ import { AGENTS, type AgentId, type Speaker } from "./engine";
      logs  · a git-log style event stream
    --------------------------------------------------------------------------- */
 
-const POS: Record<AgentId, { x: number; y: number }> = {
-  planner: { x: 160, y: 20 },
-  coder: { x: 78, y: 72 },
-  coder2: { x: 242, y: 72 },
-  stylist: { x: 160, y: 124 },
-  sizer: { x: 84, y: 176 },
-  aligner: { x: 236, y: 176 },
-  critic: { x: 160, y: 232 },
-};
-const EDGES: [AgentId, AgentId][] = [
-  ["planner", "coder"],
-  ["planner", "coder2"],
-  ["planner", "stylist"],
-  ["coder", "stylist"],
-  ["coder2", "stylist"],
-  ["stylist", "sizer"],
-  ["stylist", "aligner"],
-  ["sizer", "aligner"],
-  ["stylist", "critic"],
-  ["aligner", "critic"],
-  ["coder", "critic"],
-  ["coder2", "critic"],
+/* Lanes of the pipeline, top → bottom. Agents in a lane share one queue. */
+type Lane = "plan" | "code" | "style" | "subs" | "review";
+const LANES: { key: Lane; label: string; y: number }[] = [
+  { key: "plan", label: "planners · frame blocks", y: 30 },
+  { key: "code", label: "coders · write markup", y: 92 },
+  { key: "style", label: "stylists · style + place media", y: 154 },
+  { key: "subs", label: "stylist sub-agents · spawned per call", y: 214 },
+  { key: "review", label: "critics · review finished segments", y: 276 },
 ];
-const SUB = new Set<AgentId>(["sizer", "aligner"]);
-const NW = 96;
-const NH = 30;
-const VB_H = 252;
+const LANE_OF: Record<string, Lane> = { create: "plan", write: "code", style: "style", resize: "subs", place: "subs", review: "review" };
+const LANE_Y = Object.fromEntries(LANES.map((l) => [l.key, l.y])) as Record<Lane, number>;
+const NW = 88;
+const NH = 28;
+const VB_H = 300;
+const POS = (() => {
+  const pos = {} as Record<AgentId, { x: number; y: number }>;
+  LANES.forEach((l) => {
+    const inLane = AGENTS.filter((a) => LANE_OF[a.op] === l.key);
+    inLane.forEach((a, i) => (pos[a.id] = { x: 160 + (i - (inLane.length - 1) / 2) * 100, y: l.y }));
+  });
+  return pos;
+})();
+/* lane → lane hand-offs: the main spine down the middle, bypasses on the sides */
+const LANE_EDGES: { from: Lane; to: Lane; d: string }[] = [
+  { from: "plan", to: "code", d: `M160 ${LANE_Y.plan + 18} V${LANE_Y.code - 18}` },
+  { from: "code", to: "style", d: `M160 ${LANE_Y.code + 18} V${LANE_Y.style - 18}` },
+  { from: "style", to: "subs", d: `M160 ${LANE_Y.style + 18} V${LANE_Y.subs - 18}` },
+  { from: "subs", to: "review", d: `M160 ${LANE_Y.subs + 18} V${LANE_Y.review - 18}` },
+  { from: "plan", to: "style", d: `M10 ${LANE_Y.plan} V${LANE_Y.style}` },
+  { from: "code", to: "review", d: `M310 ${LANE_Y.code} V${LANE_Y.review}` },
+  { from: "style", to: "review", d: `M302 ${LANE_Y.style + 6} V${LANE_Y.review - 6}` },
+];
+const SUB = new Set<AgentId>(AGENTS.filter((a) => "parent" in a).map((a) => a.id));
+const laneOf = (id: AgentId) => LANE_OF[AGENTS.find((a) => a.id === id)!.op];
 
 export const WHO: Record<Speaker, { label: string; color: string }> = {
   ...Object.fromEntries(AGENTS.map((a) => [a.id, { label: a.name, color: a.color }])),
@@ -81,7 +88,8 @@ export function ObsWindow() {
 function GraphTab() {
   const agents = useSwarmState((s) => s.agents);
   const pulses = useSwarmState((s) => s.pulses);
-  const hot = new Set(pulses.slice(-3).map((p) => `${p.from}>${p.to}`));
+  const hot = new Set(pulses.slice(-4).map((p) => `${laneOf(p.from)}>${laneOf(p.to)}`));
+  const laneBusy = (l: Lane) => AGENTS.some((a) => LANE_OF[a.op] === l && agents[a.id].status !== "idle");
 
   return (
     <div className="obs-graph">
@@ -90,29 +98,28 @@ function GraphTab() {
           <pattern id="dag-dots" width="12" height="12" patternUnits="userSpaceOnUse">
             <circle cx="1" cy="1" r="0.8" fill="rgba(255,255,255,0.07)" />
           </pattern>
+          <marker id="dag-arrow" viewBox="0 0 6 6" refX="5" refY="3" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+            <path d="M0 0L6 3L0 6z" fill="rgba(255,255,255,0.3)" />
+          </marker>
         </defs>
         <rect width="320" height={VB_H} fill="url(#dag-dots)" />
-        {/* the Stylist's sub-agent pool */}
-        <rect x={26} y={150} width={268} height={52} rx={10} className="dag-pool" />
-        <text x={34} y={146} className="dag-pool-t">
-          stylist · sub-agents (spawned per call)
-        </text>
-        {EDGES.map(([a, b]) => {
-          const A = POS[a];
-          const B = POS[b];
-          return (
-            <line
-              key={`${a}>${b}`}
-              x1={A.x}
-              y1={A.y}
-              x2={B.x}
-              y2={B.y}
-              className="dag-edge"
-              data-hot={hot.has(`${a}>${b}`) ? "true" : undefined}
-              style={{ ["--c" as string]: AGENTS.find((x) => x.id === b)!.color }}
-            />
-          );
-        })}
+        {LANES.map((l) => (
+          <g key={l.key} className="dag-lane" data-lane={l.key} data-busy={laneBusy(l.key) ? "true" : undefined}>
+            <rect x={20} y={l.y - 19} width={280} height={38} rx={9} />
+            <text x={26} y={l.y - 22}>
+              {l.label}
+            </text>
+          </g>
+        ))}
+        {LANE_EDGES.map((e) => (
+          <path
+            key={`${e.from}>${e.to}`}
+            d={e.d}
+            className="dag-edge"
+            markerEnd="url(#dag-arrow)"
+            data-hot={hot.has(`${e.from}>${e.to}`) ? "true" : undefined}
+          />
+        ))}
         {pulses.map((p) => {
           const A = POS[p.from];
           const B = POS[p.to];
@@ -141,15 +148,15 @@ function GraphTab() {
               transform={`translate(${p.x - NW / 2} ${p.y - NH / 2})`}
             >
               <rect width={NW} height={NH} rx={7} className="dag-box" />
-              <circle cx={11} cy={NH / 2} r={3.2} className="dag-dot" />
-              <text x={20} y={12.5} className="dag-name">
+              <circle cx={10} cy={NH / 2} r={3} className="dag-dot" />
+              <text x={18} y={11.5} className="dag-name">
                 {a.name}
               </text>
-              <text x={20} y={23.5} className="dag-op">
-                {st.status === "idle" ? (SUB.has(a.id) ? "on call" : "idle") : a.op}
+              <text x={18} y={22} className="dag-op">
+                {st.status === "idle" ? (SUB.has(a.id) ? "on call" : "idle") : st.op === "review" ? st.target.slice(0, 13) : a.op}
               </text>
               {st.q > 0 && (
-                <g transform={`translate(${NW - 20} 8)`}>
+                <g transform={`translate(${NW - 19} 7)`}>
                   <rect width={15} height={14} rx={4} className="dag-q" />
                   <text x={7.5} y={10.5} className="dag-q-t" textAnchor="middle">
                     {st.q > 9 ? "9+" : st.q}

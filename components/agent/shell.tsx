@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import "@/app/agent.css";
 import { AnimatePresence, motion } from "motion/react";
 import { Swarm, useSwarm, useSwarmState } from "./swarm";
 import { ObsWindow } from "./observe";
+import { MiniMap } from "./minimap";
 import { route } from "@/lib/intent-router";
 import { PROFILE, PROJECTS } from "@/lib/projects";
 
@@ -165,20 +166,16 @@ function Chev({ d }: { d: "left" | "right" }) {
 }
 
 /* ---------------------------------------------------------------------------
-   Navigator — the site's menu as a command palette. Rows are routes; typing
-   filters them, and Enter either opens the highlighted match or hands the
-   text to the deterministic intent router (a tech, a project, "résumé", …).
+   Navigator — a live minimap of the page (click or drag to scroll), route
+   chips, and the ask box. Enter opens a route whose name you typed, or hands
+   the text to the deterministic intent router (a tech, a project, "résumé"…).
    --------------------------------------------------------------------------- */
 type Row = { id: string; label: string; hint: string; href: string; external?: boolean; local?: boolean };
 
 function NavWindow({ tabs, current, onDone }: { tabs: Tab[]; current?: string; onDone: () => void }) {
   const engine = useSwarm();
   const router = useRouter();
-  const spied = useSwarmState((s) => s.active);
-  const sections = useSwarmState((s) => s.sections);
-  const active = current ?? spied;
   const [q, setQ] = useState("");
-  const [sel, setSel] = useState(0);
   const input = useRef<HTMLInputElement>(null);
   const clearMatch = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -196,9 +193,7 @@ function NavWindow({ tabs, current, onDone }: { tabs: Tab[]; current?: string; o
     return base;
   }, [tabs]);
 
-  const s = q.trim().toLowerCase();
-  const shown = s ? rows.filter((r) => r.label.includes(s) || r.id.includes(s)) : rows;
-  const selIdx = Math.min(sel, Math.max(0, shown.length - 1));
+  const chips = rows.filter((r) => !r.local);
 
   // "/" or ⌘K focuses the ask box
   useEffect(() => {
@@ -281,65 +276,38 @@ function NavWindow({ tabs, current, onDone }: { tabs: Tab[]; current?: string; o
 
   function submit(e: FormEvent) {
     e.preventDefault();
-    // a typed filter that narrows to a route → open it; anything else → router
-    if (s && shown.length > 0 && shown.length <= 2) go(shown[selIdx]);
+    // a route typed by name → open it; anything else → the router
+    const t = q.trim().toLowerCase();
+    const hit = t ? rows.filter((r) => r.label.startsWith(t) || r.id.startsWith(t)) : [];
+    if (hit.length === 1) go(hit[0]);
     else ask(q);
-  }
-
-  function onKey(e: KeyboardEvent<HTMLInputElement>) {
-    if (!shown.length) return;
-    if (e.key === "ArrowDown") {
-      e.preventDefault();
-      setSel((v) => (v + 1) % shown.length);
-    } else if (e.key === "ArrowUp") {
-      e.preventDefault();
-      setSel((v) => (v - 1 + shown.length) % shown.length);
-    }
   }
 
   return (
     <section className="win win-nav" aria-label="Navigator">
       <div className="win-head">
         <span className="win-title">
-          <NavIcon /> navigate
+          <NavIcon /> minimap
         </span>
         <span className="win-meta">
           <kbd>⌘K</kbd>
         </span>
       </div>
-      <ul className="nav-list" data-lenis-prevent>
-        {shown.map((r, i) => {
-          const phase = r.local ? (sections[r.id] ?? "idle") : undefined;
-          const isActive = active === r.id;
-          const selected = s && i === selIdx ? "true" : undefined;
-          return (
-            <li key={r.id}>
-              {r.local || r.external ? (
-                <a
-                  href={r.href}
-                  className="nav-row"
-                  aria-current={isActive ? "true" : undefined}
-                  data-sel={selected}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    go(r);
-                  }}
-                >
-                  <NavRowInner r={r} phase={phase} active={isActive} />
-                </a>
-              ) : (
-                <Link href={r.href} className="nav-row" aria-current={isActive ? "page" : undefined} data-sel={selected} onClick={onDone}>
-                  <NavRowInner r={r} active={isActive} />
-                </Link>
-              )}
-            </li>
-          );
-        })}
-        {shown.length === 0 && (
-          <li className="nav-empty">
-            no route · <kbd>↵</kbd> asks the router
+      <MiniMap onJump={onDone} />
+      <ul className="nav-chips">
+        {chips.map((r) => (
+          <li key={r.id}>
+            {r.external ? (
+              <a href={r.href} target="_blank" rel="noopener noreferrer" onClick={() => engine.log("user", `open ${r.label}`)}>
+                {r.label} <span aria-hidden="true">↗</span>
+              </a>
+            ) : (
+              <Link href={r.href} aria-current={current === r.id ? "page" : undefined} onClick={onDone}>
+                {r.label} <span aria-hidden="true">→</span>
+              </Link>
+            )}
           </li>
-        )}
+        ))}
       </ul>
       <form className="nav-ask" onSubmit={submit}>
         <label className="nav-input">
@@ -347,11 +315,7 @@ function NavWindow({ tabs, current, onDone }: { tabs: Tab[]; current?: string; o
           <input
             ref={input}
             value={q}
-            onChange={(e) => {
-              setQ(e.target.value);
-              setSel(0);
-            }}
-            onKeyDown={onKey}
+            onChange={(e) => setQ(e.target.value)}
             placeholder="jump, or ask — kafka, pulsetrade…"
             aria-label="Navigate or ask the swarm"
             autoComplete="off"
@@ -363,17 +327,6 @@ function NavWindow({ tabs, current, onDone }: { tabs: Tab[]; current?: string; o
         </label>
       </form>
     </section>
-  );
-}
-
-function NavRowInner({ r, phase, active }: { r: Row; phase?: string; active: boolean }) {
-  return (
-    <>
-      <span className="nav-icon" data-phase={phase} data-kind={r.external ? "ext" : r.local ? "sec" : "page"} aria-hidden="true" />
-      <span className="nav-label">{r.label}</span>
-      <span className="nav-hint">{r.hint}</span>
-      {active && <motion.span layoutId="nav-active" className="nav-active" transition={{ type: "spring", stiffness: 420, damping: 36 }} />}
-    </>
   );
 }
 

@@ -21,13 +21,17 @@
 import { animate, motionValue, type MotionValue } from "motion/react";
 
 export const AGENTS = [
-  { id: "planner", name: "Planner", op: "create", role: "frames blocks", color: "#c8ff4d" },
+  { id: "planner", name: "Planner·1", op: "create", role: "frames blocks", color: "#c8ff4d" },
+  { id: "planner2", name: "Planner·2", op: "create", role: "frames blocks", color: "#8fe36a" },
   { id: "coder", name: "Coder·1", op: "write", role: "writes markup", color: "#4de1ff" },
   { id: "coder2", name: "Coder·2", op: "write", role: "writes markup", color: "#6f9bff" },
-  { id: "stylist", name: "Stylist", op: "style", role: "styles + places media", color: "#ff6bd6" },
+  { id: "coder3", name: "Coder·3", op: "write", role: "writes markup", color: "#3fd0c0" },
+  { id: "stylist", name: "Stylist·1", op: "style", role: "styles + places media", color: "#ff6bd6" },
+  { id: "stylist2", name: "Stylist·2", op: "style", role: "styles + places media", color: "#ff8f9f" },
   { id: "sizer", name: "Sizer", op: "resize", role: "stylist sub-agent", color: "#a78bff", parent: "stylist" },
   { id: "aligner", name: "Aligner", op: "place", role: "stylist sub-agent", color: "#5dffc4", parent: "stylist" },
-  { id: "critic", name: "Critic", op: "review", role: "reviews + fixes", color: "#ffb547" },
+  { id: "critic", name: "Critic·1", op: "review", role: "reviews + fixes", color: "#ffb547" },
+  { id: "critic2", name: "Critic·2", op: "review", role: "reviews + fixes", color: "#ffd56b" },
 ] as const;
 
 export type AgentId = (typeof AGENTS)[number]["id"];
@@ -54,7 +58,7 @@ export type SwarmState = {
   elapsed: number | null; // ms from first node to last node, once everything is built
 };
 
-type Job = { op: Op; section: HTMLElement; el?: HTMLElement };
+type Job = { op: Op; section: HTMLElement; el?: HTMLElement; seg?: HTMLElement };
 type Cursor = { x: MotionValue<number>; y: MotionValue<number>; o: MotionValue<number> };
 type Pose = { dx: number; dy: number; sx: number; sy: number };
 type Box = { x: number; y: number; w: number; h: number };
@@ -95,7 +99,10 @@ export class SwarmEngine {
   private poses = new WeakMap<HTMLElement, Pose>();
   private defects = new WeakMap<HTMLElement, Defect>();
   private gen = 0;
+  /** nodes still in flight per segment, and segments not yet reviewed per section */
   private remaining = new Map<HTMLElement, number>();
+  private openSegs = new Map<HTMLElement, Set<HTMLElement>>();
+  private spawnFrom = {} as Partial<Record<AgentId, AgentId>>;
   private sectionStart = new Map<HTMLElement, number>();
   private sections = new Map<HTMLElement, { triggered: boolean }>();
   private visible = new Set<HTMLElement>();
@@ -242,6 +249,25 @@ export class SwarmEngine {
     AGENTS.forEach((a) => this.work(a.id, gen));
   }
 
+  /* ---- segments ---------------------------------------------------------- */
+  /**
+   * A section reviews in segments — `[data-seg]` blocks and the section head,
+   * with whatever is left over as the section's own segment — so a Critic can
+   * start on a finished block while the builders move on to the next one.
+   */
+  private segOf(el: HTMLElement, section: HTMLElement) {
+    const seg = el.closest<HTMLElement>("[data-seg], .sec-head");
+    return seg && section.contains(seg) ? seg : section;
+  }
+  private segName(seg: HTMLElement, section: HTMLElement) {
+    const sec = (section.dataset.sec ?? section.id).replace("SEC_", "").toLowerCase();
+    if (seg === section) return `${sec}.body`;
+    return `${sec}.${seg.dataset.seg ?? (seg.classList.contains("sec-head") ? "head" : "block")}`;
+  }
+  private segNodes(seg: HTMLElement, section: HTMLElement) {
+    return Array.from(seg.querySelectorAll<HTMLElement>("[data-build]")).filter((n) => this.segOf(n, section) === seg);
+  }
+
   /* ---- planning ---------------------------------------------------------- */
   /**
    * Which stages a node goes through. `data-ops` on the node overrides.
@@ -310,7 +336,13 @@ export class SwarmEngine {
       section.dataset.defectsPlanned = "1";
       this.planDefects(section, nodes);
     }
-    this.remaining.set(section, Math.max(0, this.remaining.get(section) ?? 0) + nodes.length);
+    const open = this.openSegs.get(section) ?? new Set<HTMLElement>();
+    this.openSegs.set(section, open);
+    nodes.forEach((n) => {
+      const seg = this.segOf(n, section);
+      open.add(seg);
+      this.remaining.set(seg, Math.max(0, this.remaining.get(seg) ?? 0) + 1);
+    });
     this.sectionStart.set(section, performance.now());
     if (this.state.startedAt === null) this.set({ startedAt: performance.now() });
     section.dataset.phase = "building";
@@ -326,7 +358,10 @@ export class SwarmEngine {
     const to = owners.find((id) => this.state.agents[id].status === "idle") ?? owners[0];
     if (from && from !== to) {
       this.set({ pulses: [...this.state.pulses.slice(-12), { id: ++pulseId, from, to }] });
-      if (parentOf(to) === from) this.log(from, `spawn ${AGENT[to].name.toLowerCase()} → ${job.el?.dataset.label ?? ""}`, "dim");
+      if (parentOf(to) && AGENT[from].op === "style") {
+        this.spawnFrom[to] = from;
+        this.log(from, `spawn ${AGENT[to].name.toLowerCase()} → ${job.el?.dataset.label ?? ""}`, "dim");
+      }
     }
     this.syncQueue(job.op);
     const w = this.waiters[job.op].shift();
@@ -341,12 +376,29 @@ export class SwarmEngine {
     });
   }
 
-  /** Next job, preferring sections on screen — jump ahead and the swarm follows. */
+  /**
+   * Next job: on-screen sections first (jump ahead and the swarm follows),
+   * then the earliest node in the page — so a block is finished top-down and
+   * handed to a Critic while the builders move on to the next one.
+   */
   private take(op: Op) {
     const q = this.queues[op];
-    const i = q.findIndex((j) => this.visible.has(j.section));
-    const job = i > 0 ? q.splice(i, 1)[0] : q.shift();
-    if (job) this.syncQueue(op);
+    if (q.length === 0) return undefined;
+    const onScreen = q.some((j) => this.visible.has(j.section));
+    let best = -1;
+    for (let i = 0; i < q.length; i++) {
+      const j = q[i];
+      if (onScreen && !this.visible.has(j.section)) continue;
+      if (best < 0) {
+        best = i;
+        continue;
+      }
+      const a = q[best].el ?? q[best].seg ?? q[best].section;
+      const b = j.el ?? j.seg ?? j.section;
+      if (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_PRECEDING) best = i;
+    }
+    const job = q.splice(Math.max(0, best), 1)[0];
+    this.syncQueue(op);
     return job;
   }
 
@@ -413,7 +465,7 @@ export class SwarmEngine {
       // reappear near the target instead of streaking across the page;
       // sub-agents spawn out of the Stylist's cursor
       if (cur.o.get() === 0) {
-        const parent = parentOf(id);
+        const parent = this.spawnFrom[id] ?? parentOf(id);
         const from = parent ? this.cursors[parent] : null;
         cur.x.set(from && from.o.get() > 0 ? from.x.get() : x + rand(-90, 90));
         cur.y.set(from && from.o.get() > 0 ? from.y.get() : y + rand(40, 110));
@@ -433,9 +485,9 @@ export class SwarmEngine {
 
   /* ---- the operations ---------------------------------------------------- */
   private async perform(id: AgentId, job: Job, gen: number) {
-    if (job.op === "review") return this.review(id, job.section, gen);
+    if (job.op === "review") return this.review(id, job.section, job.seg ?? job.section, gen);
     const el = job.el!;
-    if (!el.isConnected || !this.root) return this.tick(job.section);
+    if (!el.isConnected || !this.root) return this.tick(job.section, el);
     const label = el.dataset.label ?? el.dataset.build ?? "node";
     const ops = this.plans.get(el) ?? [];
     const t0 = performance.now();
@@ -564,27 +616,29 @@ export class SwarmEngine {
       this.push({ op: next, section: job.section, el }, id);
     } else {
       this.complete(el, true);
-      this.tick(job.section, id);
+      this.tick(job.section, el, id);
     }
     await sleep(120);
   }
 
-  /** Walk the section, then fix each of the Stylist's mistakes in place. */
-  private async review(id: AgentId, section: HTMLElement, gen: number) {
+  /** Walk one finished segment, then fix each of the Stylist's mistakes in it. */
+  private async review(id: AgentId, section: HTMLElement, seg: HTMLElement, gen: number) {
     if (!section.isConnected || !this.root) return;
-    const sec = section.dataset.sec ?? section.id;
-    const nodes = Array.from(section.querySelectorAll<HTMLElement>("[data-build]"));
+    const name = this.segName(seg, section);
+    const nodes = this.segNodes(seg, section);
     const broken = nodes.filter((n) => n.dataset.defect);
-    this.setAgent(id, { status: "moving", op: "review", target: sec });
-    section.dataset.phase = "review";
-    this.setSection(section.id, "review");
+    this.setAgent(id, { status: "moving", op: "review", target: name });
+    if (this.state.sections[section.id] !== "done") {
+      section.dataset.phase = "review";
+      this.setSection(section.id, "review");
+    }
 
     if (nodes.length) {
       const first = this.rel(nodes[0]);
       const last = this.rel(nodes[nodes.length - 1]);
       if (!(await this.fly(id, first.x + first.w + 12, first.y + 6, gen))) return;
       this.setAgent(id, { status: "working" });
-      await this.drag(id, Math.min(first.x + first.w + 12, last.x + last.w - 12), last.y + Math.min(last.h, 40), 900);
+      await this.drag(id, Math.min(first.x + first.w + 12, last.x + last.w - 12), last.y + Math.min(last.h, 40), clamp(300 + nodes.length * 90, 450, 900));
     }
 
     for (const el of broken) {
@@ -600,7 +654,7 @@ export class SwarmEngine {
       el.dataset.review = "flag";
       el.dataset.reviewNote = DEFECT_NOTE[defect][0];
       this.log(id, `flag ${label} · ${DEFECT_NOTE[defect][0].slice(2)}`, "warn");
-      await sleep(1000);
+      await sleep(900);
       if (gen !== this.gen) return;
       el.dataset.fixing = "1";
       delete el.dataset.defect;
@@ -609,19 +663,25 @@ export class SwarmEngine {
       el.dataset.reviewNote = DEFECT_NOTE[defect][1];
       this.log(id, `fix ${label} · ${DEFECT_NOTE[defect][1].slice(2)}`, "ok");
       this.set({ fixes: this.state.fixes + 1 });
-      await sleep(700);
+      await sleep(650);
       delete el.dataset.review;
       delete el.dataset.reviewNote;
       delete el.dataset.fixing;
     }
     if (gen !== this.gen) return;
 
-    this.finishSection(section);
-    const t0 = this.sectionStart.get(section) ?? performance.now();
     const fixed = broken.length ? ` · ${broken.length} fix${broken.length > 1 ? "es" : ""}` : "";
-    this.log("critic", `✓ review passed ${sec} · ${nodes.length} nodes${fixed} · ${((performance.now() - t0) / 1000).toFixed(1)}s`, "ok");
+    this.log(id, `✓ ${name} · ${nodes.length} nodes${fixed}`, "ok");
     this.setAgent(id, { n: this.state.agents[id].n + 1 });
-    await sleep(200);
+
+    const open = this.openSegs.get(section);
+    open?.delete(seg);
+    if (!open || open.size === 0) {
+      this.finishSection(section);
+      const t0 = this.sectionStart.get(section) ?? performance.now();
+      this.log(id, `✓ review passed ${section.dataset.sec ?? section.id} · ${((performance.now() - t0) / 1000).toFixed(1)}s`, "ok");
+    }
+    await sleep(150);
   }
 
   private complete(el: HTMLElement, count: boolean) {
@@ -644,10 +704,11 @@ export class SwarmEngine {
     }
   }
 
-  private tick(section: HTMLElement, from?: AgentId) {
-    const left = (this.remaining.get(section) ?? 1) - 1;
-    this.remaining.set(section, left);
-    if (left <= 0) this.push({ op: "review", section }, from);
+  private tick(section: HTMLElement, el: HTMLElement, from?: AgentId) {
+    const seg = this.segOf(el, section);
+    const left = (this.remaining.get(seg) ?? 1) - 1;
+    this.remaining.set(seg, left);
+    if (left <= 0) this.push({ op: "review", section, seg }, from);
   }
 
   private finishSection(section: HTMLElement) {
@@ -714,6 +775,7 @@ export class SwarmEngine {
     });
     this.root?.querySelectorAll<HTMLElement>("[data-defects-planned]").forEach((s) => delete s.dataset.defectsPlanned);
     this.remaining.clear();
+    this.openSegs.clear();
     html.classList.add("build-on");
     this.set({ enabled: true, done: 0, fixes: 0, startedAt: null, elapsed: null, agents: this.resetAgents(), pulses: [] });
     this.log("system", "rebuild requested · wiping canvas", "dim");
