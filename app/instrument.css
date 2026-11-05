@@ -1332,3 +1332,8 @@ main {
     display: none;
   }
 }
+
+/* Single-colour black logos (file name ends in -mono) flip to white in dark mode. */
+[data-theme="dark"] img[src*="-mono."] {
+  filter: invert(1);
+}

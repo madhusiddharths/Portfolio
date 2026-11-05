@@ -12,16 +12,16 @@ import { SmoothScroll } from "@/components/smooth-scroll";
 export const metadata: Metadata = {
   metadataBase: new URL("https://madhusiddharth.dev"),
   title: {
-    default: "Madhu Siddharth Suthagar — Data Scientist",
+    default: "Madhu Siddharth Suthagar — AI Engineer",
     template: "%s · Madhu Siddharth Suthagar",
   },
   description:
-    "Madhu Siddharth is a data scientist specializing in machine learning and data-driven solutions — building end-to-end data systems, applied ML, and agentic AI.",
+    "Madhu Siddharth is an AI engineer building agentic AI workflows that automate work end to end — agents, tool integration, model fine-tuning, evaluation, and production deployment.",
   authors: [{ name: "Madhu Siddharth Suthagar" }],
   icons: { icon: "/img/letter_m.png", apple: "/img/letter_m.png" },
   openGraph: {
-    title: "Madhu Siddharth Suthagar — Data Scientist",
-    description: "End-to-end data systems, applied machine learning, and agentic AI.",
+    title: "Madhu Siddharth Suthagar — AI Engineer",
+    description: "Agentic AI workflows, end-to-end automation, and production AI systems.",
     type: "website",
   },
 };

@@ -14,3 +14,6 @@ next-env.d.ts
 *.log
 .idea
 .vscode
+
+# graphify knowledge graph (generated locally)
+graphify-out/

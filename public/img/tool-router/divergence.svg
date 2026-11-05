@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 620" width="1200" height="620">
+<rect width="1200" height="620" fill="#f6f5f1"/>
+<text x="40" y="46" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="22" font-weight="700" fill="#16151a">Qwen2.5-1.5B + LoRA: per-step accuracy vs end-to-end task success</text>
+<rect x="40" y="66" width="14" height="14" rx="3" fill="#5B3DF5"/><text x="62" y="78" font-family="Menlo, SFMono-Regular, Consolas, monospace" font-size="13" fill="#5d5b66">STEP AGREEMENT (TEACHER-FORCED)</text>
+<rect x="380" y="66" width="14" height="14" rx="3" fill="#16151a"/><text x="402" y="78" font-family="Menlo, SFMono-Regular, Consolas, monospace" font-size="13" fill="#5d5b66">TASK SUCCESS (FREE-RUNNING, 300 EPISODES)</text>
+<line x1="110" y1="520.0" x2="1160" y2="520.0" stroke="#d9d6cc" stroke-width="1"/>
+<text x="98" y="525.0" text-anchor="end" font-family="Menlo, SFMono-Regular, Consolas, monospace" font-size="13" fill="#5d5b66">0%</text>
+<line x1="110" y1="420.0" x2="1160" y2="420.0" stroke="#d9d6cc" stroke-width="1"/>
+<text x="98" y="425.0" text-anchor="end" font-family="Menlo, SFMono-Regular, Consolas, monospace" font-size="13" fill="#5d5b66">25%</text>
+<line x1="110" y1="320.0" x2="1160" y2="320.0" stroke="#d9d6cc" stroke-width="1"/>
+<text x="98" y="325.0" text-anchor="end" font-family="Menlo, SFMono-Regular, Consolas, monospace" font-size="13" fill="#5d5b66">50%</text>
+<line x1="110" y1="220.0" x2="1160" y2="220.0" stroke="#d9d6cc" stroke-width="1"/>
+<text x="98" y="225.0" text-anchor="end" font-family="Menlo, SFMono-Regular, Consolas, monospace" font-size="13" fill="#5d5b66">75%</text>
+<line x1="110" y1="120.0" x2="1160" y2="120.0" stroke="#d9d6cc" stroke-width="1"/>
+<text x="98" y="125.0" text-anchor="end" font-family="Menlo, SFMono-Regular, Consolas, monospace" font-size="13" fill="#5d5b66">100%</text>
+<rect x="160" y="226.8" width="120" height="293.2" rx="4" fill="#5B3DF5"/>
+<text x="220" y="216.8" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="18" font-weight="700" fill="#5B3DF5">73.3%</text>
+<rect x="300" y="489.2" width="120" height="30.8" rx="4" fill="#16151a"/>
+<text x="360" y="479.2" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="18" font-weight="700" fill="#16151a">7.7%</text>
+<text x="290" y="554" text-anchor="middle" font-family="Menlo, SFMono-Regular, Consolas, monospace" font-size="15" fill="#16151a">CATALOG · 16 TOOLS</text>
+<rect x="500" y="302.4" width="120" height="217.6" rx="4" fill="#5B3DF5"/>
+<text x="560" y="292.4" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="18" font-weight="700" fill="#5B3DF5">54.4%</text>
+<rect x="640" y="508.0" width="120" height="12.0" rx="4" fill="#16151a"/>
+<text x="700" y="498.0" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="18" font-weight="700" fill="#16151a">3.0%</text>
+<text x="630" y="554" text-anchor="middle" font-family="Menlo, SFMono-Regular, Consolas, monospace" font-size="15" fill="#16151a">CATALOG · 40 TOOLS</text>
+<rect x="840" y="367.6" width="120" height="152.4" rx="4" fill="#5B3DF5"/>
+<text x="900" y="357.6" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="18" font-weight="700" fill="#5B3DF5">38.1%</text>
+<rect x="980" y="509.2" width="120" height="10.8" rx="4" fill="#16151a"/>
+<text x="1040" y="499.2" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="18" font-weight="700" fill="#16151a">2.7%</text>
+<text x="970" y="554" text-anchor="middle" font-family="Menlo, SFMono-Regular, Consolas, monospace" font-size="15" fill="#16151a">CATALOG · 80 TOOLS</text>
+<text x="40" y="596" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" fill="#5d5b66">A student that matches the teacher on 73% of single steps finishes under 8% of whole tasks: errors compound over 8–15 agent steps.</text>
+</svg>

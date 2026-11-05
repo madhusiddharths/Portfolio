@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 620" width="1200" height="620">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#5B3DF5"/></marker></defs>
+<rect width="1200" height="620" fill="#f6f5f1"/>
+<text x="40" y="48" font-family="Menlo, SFMono-Regular, Consolas, monospace" font-size="14" letter-spacing="2" fill="#5d5b66">DISTIL → TRAIN → EVALUATE → ROUTE</text>
+<rect x="40" y="80" width="250" height="150" rx="12" fill="#ffffff" stroke="#d9d6cc" stroke-width="1.5"/>
+<text x="58" y="110" font-family="Menlo, SFMono-Regular, Consolas, monospace" font-size="12" letter-spacing="1.5" fill="#5B3DF5">01 · TEACHER</text>
+<text x="58" y="138" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="19" font-weight="700" fill="#16151a">Nemotron 3 Ultra</text>
+<text x="58" y="166" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" fill="#5d5b66">550B MoE via OpenRouter</text>
+<text x="58" y="188" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" fill="#5d5b66">free tier, zero spend</text>
+<text x="58" y="210" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" fill="#5d5b66">throttled 20 req/min</text>
+<rect x="330" y="80" width="250" height="150" rx="12" fill="#ffffff" stroke="#d9d6cc" stroke-width="1.5"/>
+<text x="348" y="110" font-family="Menlo, SFMono-Regular, Consolas, monospace" font-size="12" letter-spacing="1.5" fill="#5B3DF5">02 · HARVEST</text>
+<text x="348" y="138" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="19" font-weight="700" fill="#16151a">τ²-bench retail</text>
+<text x="348" y="166" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" fill="#5d5b66">114 tasks → 54 train / 60 eval</text>
+<text x="348" y="188" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" fill="#5d5b66">108 successful episodes</text>
+<text x="348" y="210" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" fill="#5d5b66">failures discarded</text>
+<rect x="620" y="80" width="250" height="150" rx="12" fill="#ffffff" stroke="#d9d6cc" stroke-width="1.5"/>
+<text x="638" y="110" font-family="Menlo, SFMono-Regular, Consolas, monospace" font-size="12" letter-spacing="1.5" fill="#5B3DF5">03 · SFT DATA</text>
+<text x="638" y="138" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="19" font-weight="700" fill="#16151a">1,099 decisions</text>
+<text x="638" y="166" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" fill="#5d5b66">703 tool calls · 396 replies</text>
+<text x="638" y="188" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" fill="#5d5b66">Qwen ChatML serializer</text>
+<text x="638" y="210" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" fill="#5d5b66">loss-masked to teacher turns</text>
+<rect x="910" y="80" width="250" height="150" rx="12" fill="#ffffff" stroke="#5B3DF5" stroke-width="2"/>
+<text x="928" y="110" font-family="Menlo, SFMono-Regular, Consolas, monospace" font-size="12" letter-spacing="1.5" fill="#5B3DF5">04 · STUDENTS</text>
+<text x="928" y="138" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="19" font-weight="700" fill="#16151a">Qwen2.5 + LoRA</text>
+<text x="928" y="166" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" fill="#5d5b66">0.5B · 1.5B · 3B</text>
+<text x="928" y="188" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" fill="#5d5b66">r=16 · α=32 · 3 epochs</text>
+<text x="928" y="210" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" fill="#5d5b66">Kaggle T4 GPUs</text>
+<rect x="910" y="330" width="250" height="150" rx="12" fill="#ffffff" stroke="#d9d6cc" stroke-width="1.5"/>
+<text x="928" y="360" font-family="Menlo, SFMono-Regular, Consolas, monospace" font-size="12" letter-spacing="1.5" fill="#5B3DF5">05 · POST-TRAIN</text>
+<text x="928" y="388" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="19" font-weight="700" fill="#16151a">DPO vs GRPO</text>
+<text x="928" y="416" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" fill="#5d5b66">DPO on the student's mistakes</text>
+<text x="928" y="438" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" fill="#5d5b66">step-level GRPO</text>
+<text x="928" y="460" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" fill="#5d5b66">execution-checked rewards</text>
+<rect x="620" y="330" width="250" height="150" rx="12" fill="#ffffff" stroke="#d9d6cc" stroke-width="1.5"/>
+<text x="638" y="360" font-family="Menlo, SFMono-Regular, Consolas, monospace" font-size="12" letter-spacing="1.5" fill="#5B3DF5">06 · FORCED EVAL</text>
+<text x="638" y="388" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="19" font-weight="700" fill="#16151a">Teacher replay</text>
+<text x="638" y="416" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" fill="#5d5b66">1,416 replayed steps</text>
+<text x="638" y="438" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" fill="#5d5b66">catalogs of 16 / 40 / 80 tools</text>
+<text x="638" y="460" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" fill="#5d5b66">step + tool-name accuracy</text>
+<rect x="330" y="330" width="250" height="150" rx="12" fill="#ffffff" stroke="#d9d6cc" stroke-width="1.5"/>
+<text x="348" y="360" font-family="Menlo, SFMono-Regular, Consolas, monospace" font-size="12" letter-spacing="1.5" fill="#5B3DF5">07 · FREE-RUNNING</text>
+<text x="348" y="388" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="19" font-weight="700" fill="#16151a">Full episodes</text>
+<text x="348" y="416" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" fill="#5d5b66">60 eval tasks × 5 seeds</text>
+<text x="348" y="438" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" fill="#5d5b66">LLM user simulator + judge</text>
+<text x="348" y="460" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" fill="#5d5b66">task success · pass^5</text>
+<rect x="40" y="330" width="250" height="150" rx="12" fill="#ffffff" stroke="#5B3DF5" stroke-width="2"/>
+<text x="58" y="360" font-family="Menlo, SFMono-Regular, Consolas, monospace" font-size="12" letter-spacing="1.5" fill="#5B3DF5">08 · ROUTER</text>
+<text x="58" y="388" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="19" font-weight="700" fill="#16151a">Escalation gate</text>
+<text x="58" y="416" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" fill="#5d5b66">LangGraph student → teacher</text>
+<text x="58" y="438" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" fill="#5d5b66">log-prob step confidence</text>
+<text x="58" y="460" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="14" fill="#5d5b66">vLLM + Docker Compose</text>
+<line x1="292" y1="155" x2="326" y2="155" stroke="#5B3DF5" stroke-width="2" marker-end="url(#a)"/>
+<line x1="582" y1="155" x2="616" y2="155" stroke="#5B3DF5" stroke-width="2" marker-end="url(#a)"/>
+<line x1="872" y1="155" x2="906" y2="155" stroke="#5B3DF5" stroke-width="2" marker-end="url(#a)"/>
+<line x1="1035" y1="232" x2="1035" y2="326" stroke="#5B3DF5" stroke-width="2" marker-end="url(#a)"/>
+<line x1="908" y1="405" x2="874" y2="405" stroke="#5B3DF5" stroke-width="2" marker-end="url(#a)"/>
+<line x1="618" y1="405" x2="584" y2="405" stroke="#5B3DF5" stroke-width="2" marker-end="url(#a)"/>
+<line x1="328" y1="405" x2="294" y2="405" stroke="#5B3DF5" stroke-width="2" marker-end="url(#a)"/>
+<rect x="40" y="525" width="1120" height="56" rx="10" fill="none" stroke="#d9d6cc" stroke-dasharray="5 5"/>
+<text x="60" y="559" font-family="Menlo, SFMono-Regular, Consolas, monospace" font-size="13" fill="#5d5b66">INVARIANTS ABORT ANY RUN: pinned teacher · frozen simulator · judge ≠ teacher · disjoint split · hash-pinned prompts</text>
+</svg>

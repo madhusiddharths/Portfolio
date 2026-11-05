@@ -2,7 +2,7 @@
   "name": "madhu-portfolio",
   "version": "2.0.0",
   "private": true,
-  "description": "Madhu Siddharth Suthagar — Data Scientist portfolio (Instrument design system)",
+  "description": "Madhu Siddharth Suthagar — AI Engineer portfolio (Instrument design system)",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

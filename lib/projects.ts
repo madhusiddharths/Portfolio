@@ -8,12 +8,12 @@ export const PROFILE = {
   name: "Madhu Siddharth Suthagar",
   shortName: "Madhu Siddharth",
   monogram: "MS",
-  role: "Data Scientist",
+  role: "AI Engineer",
   location: "GMT+0",
   available: true,
-  building: "DEM simulator",
+  building: "the LLM project",
   tagline: "I develop scalable models that drive real-world impact.",
-  bio: "As a Data Scientist, I design and build end-to-end data systems that turn large, complex datasets into actionable insights and predictive models. My work spans data engineering, exploratory analysis, and applied machine learning, with a focus on reliability and real-world impact. I enjoy uncovering patterns at scale, optimizing analytical workflows, and translating technical results into clear, decision-ready insights for both technical and non-technical stakeholders.",
+  bio: "As an AI Engineer, I design and build AI systems that automate real work end to end. I build agentic workflows where models plan, call tools, and act on their own, connecting LLMs to APIs, data pipelines, and services so a process runs from trigger to result without a human stitching the steps together. My work spans agent orchestration, tool integration, model fine-tuning, evaluation, and production deployment, with a focus on making automation reliable enough to trust. I enjoy taking a manual, multi-step process, turning it into an AI-driven workflow, and measuring honestly where it holds up and where it needs a human in the loop.",
   analystNote:
     "For analyst-focused roles, a tailored Data Analyst resume is available.",
   resume:
@@ -50,6 +50,15 @@ export const TECH: Record<string, string> = {
   "scikit-learn": `${ICON}/scikit-learn.png`,
   OpenCV: `${ICON}/OpenCV.png`,
   LangChain: `${ICON}/langchain.png`,
+  LangGraph: `${ICON}/LangGraph.png`,
+  MCP: `${ICON}/MCP-mono.png`,
+  "Hugging Face": `${ICON}/HuggingFace.png`,
+  vLLM: `${ICON}/vLLM.png`,
+  "OpenAI API": `${ICON}/OpenAI-mono.png`,
+  "Claude API": `${ICON}/Claude.png`,
+  "Gemini API": `${ICON}/Gemini.png`,
+  Ollama: `${ICON}/Ollama-mono.png`,
+  "Weights & Biases": `${ICON}/WandB.png`,
   Jupyter: `${ICON}/Jupyter.png`,
   PyCharm: `${ICON}/PyCharm.png`,
   Docker: `${ICON}/Docker.png`,
@@ -100,13 +109,26 @@ const IMG = "/img/project_img";
 
 export const PROJECTS: Project[] = [
   {
-    slug: "pulsetrade",
+    slug: "tool-router-ladder",
     index: "01",
+    name: "Tool Router Ladder",
+    domain: "LLM post-training · Agent evaluation",
+    summary:
+      "How small can a tool router go? A research build that distils a 550B teacher's tool-calling into Qwen2.5 0.5B–3B LoRA students on τ²-bench retail, then measures where multi-step agent reliability breaks — across 16/40/80-tool catalogs, SFT vs DPO vs GRPO, and a log-prob confidence router that escalates hard steps back to the teacher.",
+    tech: ["PyTorch", "Hugging Face", "vLLM", "LangGraph", "LangChain", "OpenAI API", "Weights & Biases", "Docker", "Python", "LLM Fine-tuning", "Agentic AI"],
+    thumb: `${IMG}/tool_router.png`,
+    repo: "https://github.com/madhusiddharths/the_llm_project",
+    hasCaseStudy: true,
+    featured: true,
+  },
+  {
+    slug: "pulsetrade",
+    index: "02",
     name: "PulseTrade",
     domain: "Real-time streaming · Agentic AI",
     summary:
       "Real-time financial intelligence platform that streams market data through Kafka and Delta Lake, then uses an agentic AI investigator to explain anomalies in plain language.",
-    tech: ["Apache Kafka", "Apache Airflow", "Databricks", "Kubernetes", "FastAPI", "PostgreSQL", "Python"],
+    tech: ["Apache Kafka", "Apache Airflow", "Databricks", "Kubernetes", "FastAPI", "PostgreSQL", "Python", "LangGraph", "MCP", "Gemini API", "Hugging Face", "Agentic AI"],
     thumb: `${IMG}/pulsetrade.png`,
     repo: "https://github.com/madhusiddharths/pulsetrade",
     // TODO: GKE deploys are ephemeral by design — swap for a persistent live URL when one exists.
@@ -116,7 +138,7 @@ export const PROJECTS: Project[] = [
   },
   {
     slug: "galaxy",
-    index: "02",
+    index: "03",
     name: "Galaxy Explorer",
     domain: "3D visualization · 557M+ stars",
     summary:
@@ -129,7 +151,7 @@ export const PROJECTS: Project[] = [
   },
   {
     slug: "growth-retention",
-    index: "03",
+    index: "04",
     name: "Growth & Retention",
     domain: "Experimentation · 20M+ events",
     summary:
@@ -142,7 +164,7 @@ export const PROJECTS: Project[] = [
   },
   {
     slug: "alzheimers",
-    index: "04",
+    index: "05",
     name: "Alzheimer's Progression",
     domain: "Medical imaging · GANs",
     summary:
@@ -155,12 +177,12 @@ export const PROJECTS: Project[] = [
   },
   {
     slug: "ai-counselling",
-    index: "05",
+    index: "06",
     name: "AI-counselling",
     domain: "Multimodal AI · Wellbeing",
     summary:
       "An AI-powered chatbot that analyzes a person's video, audio, and tone to assess their mental state and provide personalized counseling.",
-    tech: ["FastAPI", "GCP", "MongoDB", "TypeScript", "Docker", "Node.js", "Python"],
+    tech: ["FastAPI", "GCP", "MongoDB", "TypeScript", "Docker", "Node.js", "Python", "Gemini API", "Hugging Face"],
     thumb: `${IMG}/ai_chatbot.png`,
     repo: "https://github.com/madhusiddharths/aicounselling",
     // TODO: deployment is building — swap this for the real live URL when ready.
@@ -170,12 +192,12 @@ export const PROJECTS: Project[] = [
   },
   {
     slug: "crypto-tweet-impact",
-    index: "06",
+    index: "07",
     name: "Crypto Tweet Impact",
     domain: "Event study · NLP",
     summary:
       "A statistically rigorous data-science pipeline and event study that evaluates the market impact of ~20,000 LLM-classified tweets on Bitcoin and Dogecoin prices using multiple-testing corrections and an interactive Shiny dashboard.",
-    tech: ["R"],
+    tech: ["R", "OpenAI API"],
     thumb: `${IMG}/crypto.png`,
     repo: "https://github.com/madhusiddharths/crypto_tweet_impact",
     hasCaseStudy: true,
@@ -183,7 +205,7 @@ export const PROJECTS: Project[] = [
   },
   {
     slug: "federated-iot",
-    index: "07",
+    index: "08",
     name: "Federated IoT Security",
     domain: "Federated learning · Privacy",
     summary:
@@ -197,7 +219,7 @@ export const PROJECTS: Project[] = [
   },
   {
     slug: "online-retail",
-    index: "08",
+    index: "09",
     name: "Online Retail",
     domain: "Analytics engineering · Cloud DW",
     summary:
@@ -209,7 +231,7 @@ export const PROJECTS: Project[] = [
   },
   {
     slug: "vision-transformer",
-    index: "09",
+    index: "10",
     name: "Vision Transformer",
     domain: "Deep learning · Transformers",
     summary:
@@ -222,7 +244,7 @@ export const PROJECTS: Project[] = [
   },
   {
     slug: "image-retrieval",
-    index: "10",
+    index: "11",
     name: "Image Retrieval",
     domain: "Vector search · Computer vision",
     summary:
@@ -234,7 +256,7 @@ export const PROJECTS: Project[] = [
   },
   {
     slug: "traffic-prediction",
-    index: "11",
+    index: "12",
     name: "Traffic Prediction",
     domain: "Fleet routing · 50-stop VRP",
     summary:
@@ -246,7 +268,7 @@ export const PROJECTS: Project[] = [
   },
   {
     slug: "saturdae",
-    index: "12",
+    index: "13",
     name: "SATURDAE",
     domain: "Voice UI · Spatial design",
     summary:
@@ -258,7 +280,7 @@ export const PROJECTS: Project[] = [
   },
   {
     slug: "symptoscan",
-    index: "13",
+    index: "14",
     name: "SymptoScan",
     domain: "Classification · Health",
     summary:
@@ -270,7 +292,7 @@ export const PROJECTS: Project[] = [
   },
   {
     slug: "hotspot",
-    index: "14",
+    index: "15",
     name: "Hotspot",
     domain: "Geospatial health · Exposure modeling",
     summary:
@@ -282,7 +304,7 @@ export const PROJECTS: Project[] = [
   },
   {
     slug: "image-classifier",
-    index: "15",
+    index: "16",
     name: "Image Classifier",
     domain: "Transfer learning · CV",
     summary:
@@ -305,7 +327,7 @@ export const METRICS = [
   { value: 557, suffix: "M+", label: "Gaia DR3 stars rendered" },
   { value: 20, suffix: "M+", label: "e-commerce events processed" },
   { value: 20, prefix: "~", suffix: "K", label: "tweets classified & studied" },
-  { value: 13, suffix: "", label: "in-depth case studies" },
+  { value: 14, suffix: "", label: "in-depth case studies" },
 ];
 
 /* ---- capability matrix (skills) — same items as before, re-categorized ---- */
@@ -315,8 +337,12 @@ export const SKILLS: { group: string; items: string[] }[] = [
     items: ["Python", "R", "C", "C++", "Java", "SQL", "PostgreSQL", "JavaScript", "HTML", "CSS"],
   },
   {
+    group: "AI Engineering & Agents",
+    items: ["Agentic AI", "LangGraph", "LangChain", "MCP", "Claude API", "OpenAI API", "Gemini API", "Ollama", "Hugging Face", "vLLM", "Weights & Biases", "LLM Fine-tuning"],
+  },
+  {
     group: "ML / Data Science",
-    items: ["Pandas", "NumPy", "PyTorch", "TensorFlow", "scikit-learn", "Matplotlib", "Plotly", "OpenCV", "NLP", "Time Series Analysis", "Agentic AI", "LangChain"],
+    items: ["Pandas", "NumPy", "PyTorch", "TensorFlow", "scikit-learn", "Matplotlib", "Plotly", "OpenCV", "NLP", "Time Series Analysis"],
   },
   {
     group: "Data & Cloud Infra",

@@ -11,7 +11,7 @@ export function Skills() {
           index="02"
           eyebrow="Capability matrix"
           title="The toolbox"
-          description="Languages, frameworks, and platforms I reach for across the data and ML lifecycle — grouped by where they live in the stack."
+          description="Languages, frameworks, and platforms I reach for across the AI, ML and data lifecycle — grouped by where they live in the stack."
         />
 
         <div className="matrix">

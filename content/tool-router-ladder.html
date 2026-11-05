@@ -1,0 +1,294 @@
+<section class="content-section">
+        <h2>Overview</h2>
+        <p>
+          Tool Router Ladder asks one question: <strong>how small can a model be and still drive a multi-step,
+          tool-calling agent reliably?</strong> A 550B-parameter teacher (Nemotron 3 Ultra) runs customer-service
+          episodes on <code>τ²-bench</code> retail. Its successful trajectories become training data for a ladder of
+          Qwen2.5 students (0.5B, 1.5B and 3B) fine-tuned with LoRA. Each student is then evaluated twice: once
+          replaying the teacher's conversations one step at a time, and once running whole episodes on its own
+          against a simulated customer.
+        </p>
+        <p>
+          The gap between those two numbers is the point of the project. A student can agree with the teacher on most
+          individual decisions and still fail almost every task, because errors compound over the 8–15 steps of a
+          real agent episode. On top of the distilled students, the project adds preference and reinforcement
+          post-training (DPO and step-level GRPO) and a <strong>confidence router</strong> that hands low-confidence
+          steps back to the teacher, served with vLLM behind a LangGraph graph.
+        </p>
+        <div class="highlight-box">
+          <p><strong>Zero spend:</strong> every teacher, simulator and judge call runs on OpenRouter's free tier
+            (throttled to 20 requests/min and 1,000/day), and every training run fits on free Kaggle T4 GPUs or an
+            18 GB M3 Pro Mac.</p>
+        </div>
+      </section>
+
+      <section class="content-section">
+        <h2>Problem and Goal</h2>
+        <p>
+          Frontier models are good at tool calling, but routing every step of every agent conversation through a
+          550B model is slow and expensive. The common answer is distillation: train a small model on the big one's
+          behaviour. What is rarely measured honestly is <em>how</em> the small model fails once it is in charge.
+        </p>
+        <p>The project sets out to measure four things:</p>
+        <ul>
+          <li><strong>Step accuracy vs task success:</strong> how per-decision agreement translates into end-to-end
+            success when mistakes compound.</li>
+          <li><strong>Catalog scaling:</strong> what happens when the tool list grows from the 16 native tools to 40
+            and 80, padded with near-neighbour distractors from BFCL.</li>
+          <li><strong>Post-training:</strong> whether DPO or GRPO on top of SFT fixes the failure modes SFT
+            leaves behind.</li>
+          <li><strong>Routing:</strong> whether the student's own token log-probs can tell when to escalate a step to
+            the teacher.</li>
+        </ul>
+      </section>
+
+      <section class="content-section">
+        <h2>Architecture</h2>
+        <p>
+          The pipeline has eight stages: harvest teacher trajectories, build a loss-masked SFT set, train LoRA
+          students, post-train them, evaluate them teacher-forced and free-running, and finally put the best student
+          behind an escalation router. Every stage writes to an append-only JSONL run log keyed by a config
+          fingerprint, so any cell can be resumed and no number can silently mix two configurations.
+        </p>
+        <figure>
+          <img src="/img/tool-router/architecture.svg" alt="Eight-stage pipeline from teacher harvest to LoRA students, post-training, evaluation and the escalation router" />
+          <figcaption>Figure 1: Distil → train → evaluate → route. Invariants abort any run that would break the
+            experiment's guarantees.</figcaption>
+        </figure>
+      </section>
+
+      <section class="content-section">
+        <h2>Harvesting Teacher Trajectories</h2>
+        <p>
+          τ²-bench retail's 114 tasks are split by task ID into <strong>54 train and 60 eval</strong> tasks. The
+          teacher runs every train task, and only <strong>successful</strong> episodes are kept: 108 episodes over 46
+          tasks, containing <strong>1,099 teacher decisions</strong> (703 tool calls and 396 natural-language
+          replies). On the eval split the teacher solves 48.0% of 300 episodes (95% CI 41.9–54.1%), which is the
+          ceiling every student is measured against.
+        </p>
+        <p>
+          The harvest loop had to survive a free-tier API. <code>throttle.py</code> paces requests and resumes after
+          the daily cap; <code>judge.py</code> swaps τ²'s hard-coded GPT-4.1 judge for an OpenRouter model (40 of the
+          114 tasks need a natural-language judge) and strips the markdown fences it wraps around JSON.
+          <code>invariants.py</code> aborts the run if the teacher isn't pinned, the user simulator isn't frozen, the
+          judge is the same model as the teacher, or the train and eval splits overlap.
+        </p>
+        <p>
+          The SFT converter serializes each episode in Qwen2.5's native tool-call format (ChatML with
+          <code>&lt;tool_call&gt;</code> and <code>&lt;tool_response&gt;</code> blocks) and masks the loss to the
+          teacher's own turns. The serializer's hash is pinned in <code>configs/base.yaml</code>; changing a single
+          character of the prompt format aborts every run until the pin is updated.
+        </p>
+      </section>
+
+      <section class="content-section">
+        <h2>Training the Students</h2>
+        <p>
+          Each student is a LoRA adapter (r=16, α=32, lr 1e-4, 3 epochs) on Qwen2.5-Instruct, trained on Kaggle T4s
+          with a 12,288-token context, chosen after measuring the real training episodes (p50 7,972 tokens, max
+          12,176). Losses: 0.5B 0.886 → 0.539, 1.5B 0.734 → 0.442, and 3B down to 0.387 sharded over two T4s.
+        </p>
+        <p>
+          <strong>Making 12k-token training fit on a T4:</strong> Qwen2.5 uses grouped-query attention. Transformers
+          passes the unexpanded KV heads to SDPA with <code>enable_gqa=True</code>, which no fused kernel accepts on
+          the T4's sm75 architecture, so attention silently fell back to the math backend and materialised a
+          [1, 14, 12176, 12176] fp16 score matrix: 7.7 GiB on a 14.6 GiB card. Forcing the KV expansion below sm80
+          costs about 22 MB and brings the peak down to 5.4 GiB at 0.5B and 8.4 GiB at 1.5B, with identical
+          arithmetic.
+        </p>
+        <p>
+          Student inference later moved to the Mac with MLX (merged adapters, fp16, greedy decoding, prefix-cache
+          reuse). A calibration run against Kaggle vLLM matched to within run-to-run noise: 73.4% vs 73.3% step
+          agreement, with 93.7% of completions byte-identical.
+        </p>
+      </section>
+
+      <section class="content-section">
+        <h2>Teacher-Forced Evaluation: The Catalog Cliff</h2>
+        <p>
+          Forced evaluation replays 142 successful teacher episodes (1,416 steps) and asks the student for the next
+          decision at every step, with the teacher's history as context. Fine-tuning is worth +50 points or more over
+          zero-shot at every size, but every adapter was trained on the 16-tool catalog, and accuracy falls as
+          distractor tools are added.
+        </p>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Model</th>
+                <th>16 tools</th>
+                <th>40 tools</th>
+                <th>80 tools</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>Qwen2.5-3B + LoRA</strong></td><td><strong>78.5%</strong></td><td><strong>75.8%</strong></td><td><strong>57.5%</strong></td></tr>
+              <tr><td>Qwen2.5-1.5B + LoRA</td><td>73.3%</td><td>54.4%</td><td>38.1%</td></tr>
+              <tr><td>Qwen2.5-0.5B + LoRA</td><td>66.8%</td><td>28.6%</td><td>32.7%</td></tr>
+              <tr><td>Qwen2.5-3B zero-shot</td><td>26.9%</td><td>27.4%</td><td>23.3%</td></tr>
+              <tr><td>Qwen2.5-1.5B zero-shot</td><td>18.9%</td><td>8.3%</td><td>7.7%</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          The failure is specific. At 1.5B, <strong>decision-type accuracy stays around 77%</strong> at every catalog
+          size, while tool-name accuracy falls from 76.8% to 57.0% to 41.3%. The model still knows <em>when</em> to
+          call a tool; it loses <em>which</em> one, and near-neighbour confusion grows from 43% to 66% of wrong
+          tool-call steps. Scaling to 3B mostly removes the 40-tool cliff (−2.7 points instead of −18.9) and halves
+          the drop at 80 tools.
+        </p>
+        <p>
+          A five-bucket failure taxonomy (validated against 30 hand labels at 100% agreement) shows SFT's dominant
+          error is <code>call_instead_of_reply</code>: the fine-tuned students over-call tools when the teacher would
+          have answered the customer.
+        </p>
+      </section>
+
+      <section class="content-section">
+        <h2>Free-Running Evaluation: Where Reliability Breaks</h2>
+        <p>
+          Free-running evaluation puts the student in charge of whole episodes inside τ²'s orchestrator, against an
+          LLM user simulator and judge: 60 eval tasks × 5 seeds = 300 episodes per cell, reported with 95% CIs
+          across seeds. To make this affordable, students are served behind a local vLLM OpenAI-compatible server and
+          run N episodes concurrently, about 10× cheaper in GPU time per episode than the serial path.
+        </p>
+        <figure>
+          <img src="/img/tool-router/divergence.svg" alt="Bar chart comparing teacher-forced step agreement with free-running task success for the 1.5B student at 16, 40 and 80 tools" />
+          <figcaption>Figure 2: The divergence. Per-step agreement overstates end-to-end success by an order of
+            magnitude.</figcaption>
+        </figure>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Agent</th>
+                <th>16 tools</th>
+                <th>40 tools</th>
+                <th>80 tools</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Teacher (550B)</td><td>48.0%</td><td>55.3%</td><td>54.7%</td></tr>
+              <tr><td><strong>Qwen2.5-1.5B + LoRA</strong></td><td><strong>7.7%</strong> (5.8–9.5)</td><td>3.0% (1.3–4.7)</td><td>2.7% (1.5–3.8)</td></tr>
+              <tr><td>Qwen2.5-0.5B + LoRA</td><td>1.3% (−0.4–3.1)</td><td>3.7% (2.7–4.6)</td><td>3.0% (2.1–3.9)</td></tr>
+              <tr><td>Qwen2.5-3B + LoRA</td><td>8.7%*</td><td>—</td><td>2.7%</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          The headline result: <strong>3B's large forced-eval gain (57.5% vs 38.1% at 80 tools) does not show up in
+          task success</strong>, which is 2.7% for both. Reading the trajectories explains why. 3B is far more
+          tool-happy, making 8.4 tool calls per episode with 5.2 of them to distractors, and loops through
+          "tool not found" errors and guessed lookups until τ²'s error limit ends the episode. Smaller students fail
+          mostly by looping on the same lookup until they hit the step limit. Across all 1,800 Stage A episodes there
+          were zero parse errors and zero context overflows: the students produce well-formed calls, just not the
+          right sequence of them.
+        </p>
+        <p>* The 3B 16-tool cell stopped at 263/300 episodes when the simulator model lost its
+          provider; it is reported as a partial result and never topped up with a different simulator.</p>
+      </section>
+
+      <section class="content-section">
+        <h2>Beyond SFT: DPO vs GRPO</h2>
+        <p>
+          Version 2 attacks SFT's failure modes with post-training, with DPO and GRPO trained as parallel branches
+          from the same SFT checkpoint.
+        </p>
+        <p>
+          <strong>DPO on the student's own mistakes.</strong> Greedy completions over all 1,099 train states produced
+          328 preference pairs for the 1.5B student, each checked against a replayed τ²-bench database so that
+          execution-equivalent calls are never labelled "wrong". The custom DPO loop (TRL's full-logit approach does
+          not fit 12k tokens on a T4) reuses the SFT masked-position loss with a factorised backward pass, tested equal
+          to the joint-loss gradient. It failed its kill gate: plain DPO collapsed to never calling a tool, and an
+          NLL-anchored variant scored below SFT (1.5B 62.5% vs 73.3%).
+        </p>
+        <p>
+          <strong>Step-level GRPO</strong> worked. The reward scores each step on whether the tool exists, the name
+          matches, the arguments fit the schema, and the call is execution-equivalent. Trained only on the 16-tool
+          catalog, it improved the 1.5B student at every catalog size, with paired 95% CIs that exclude zero:
+        </p>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>1.5B catalog</th>
+                <th>Step agreement (SFT → GRPO)</th>
+                <th>Reply steps answered as replies</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>16 tools</td><td>73.4% → <strong>76.9%</strong></td><td>54.4% → <strong>63.0%</strong></td></tr>
+              <tr><td>40 tools</td><td>54.4% → <strong>57.9%</strong></td><td>59.3% → <strong>69.5%</strong></td></tr>
+              <tr><td>80 tools</td><td>38.1% → <strong>40.3%</strong></td><td>60.9% → <strong>67.1%</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          GRPO directly reduces SFT's over-calling habit without collapsing the other way: call steps are still
+          called 87–90% of the time, with zero parse errors. The 0.5B student shows the same pattern (28.6% → 33.5%
+          at 40 tools).
+        </p>
+      </section>
+
+      <section class="content-section">
+        <h2>The Confidence Router</h2>
+        <p>
+          The router is a LangGraph graph: the student proposes each step, and if its confidence is missing or below
+          a threshold, the step is escalated to the teacher. Confidence comes from token log-probs recorded at
+          generation time (top-20 per token), split into a call-vs-reply score and a tool-name-span score.
+        </p>
+        <p>
+          An offline simulation over the 1.5B student's 80-tool run found that <strong>tool-name confidence alone is
+          the better signal</strong>: at a matched 50% escalation rate it reaches 85.5% accuracy after escalation
+          (AUROC 0.797) versus 82.8% for the combined signal (AUROC 0.760). Decision confidence catches
+          calls-instead-of-replies well (AUROC 0.95) but premature replies are made confidently, so it adds noise.
+        </p>
+        <p>
+          The served path runs vLLM and the router with <code>docker compose up</code>, exposing
+          <code>POST /route</code>. A load test on a single T4 with ~18k-token prompts gives a p50 of 10.1 s at
+          concurrency 1 and throughput saturating around 0.13 decisions/s by concurrency 8: an honest latency floor
+          dominated by prefill, and the input for the deployment stage rather than a deployable configuration.
+        </p>
+      </section>
+
+      <section class="content-section">
+        <h2>Engineering for Honest Numbers</h2>
+        <ul>
+          <li><strong>Config fingerprints:</strong> every result row is keyed by a hash of the config that produced
+            it; optional v2 sections drop out of the fingerprint when unset, and a golden test pins the v1 values.</li>
+          <li><strong>Simulator epochs:</strong> when the user-simulator model was retired mid-project, results moved
+            to a separately labelled epoch with a re-run teacher baseline (60.3% at 80 tools). The stats code refuses
+            any file that mixes simulators.</li>
+          <li><strong>Episode-level CIs:</strong> steps inside one episode share a task and a conversation prefix,
+            so intervals are taken across episodes; a step-level CI would be about three times too narrow.</li>
+          <li><strong>No silent skips:</strong> forced evaluation refuses a completions file with any missing step,
+            since skipping would inflate agreement on exactly the hard cases.</li>
+          <li><strong>CI:</strong> GitHub Actions runs ruff, pyright, 353 pytest tests and smoke runs, with a test
+            that keeps torch out of the core modules so CI stays light.</li>
+        </ul>
+      </section>
+
+      <section class="content-section">
+        <h2>Key Findings</h2>
+        <ul>
+          <li><strong>Step accuracy is not task success.</strong> A 1.5B student that agrees with the teacher on 73%
+            of steps completes 7.7% of tasks, against the teacher's 48%.</li>
+          <li><strong>Small models know when to act, not what to call.</strong> Adding distractor tools leaves
+            decision accuracy flat and destroys tool-name accuracy.</li>
+          <li><strong>Bigger students don't automatically help.</strong> 3B's forced-eval gains vanished in free
+            running because it explores distractors more aggressively.</li>
+          <li><strong>GRPO beats DPO here.</strong> Step-level GRPO with execution-checked rewards improved every
+            catalog; DPO collapsed or regressed.</li>
+          <li><strong>Route on tool-name confidence.</strong> It is the stronger escalation signal (AUROC 0.797).</li>
+        </ul>
+      </section>
+
+      <section class="content-section">
+        <h2>Status and Next Steps</h2>
+        <p>
+          The project is in active development. Version 1 (SFT ladder, forced and free-running evaluation, router)
+          is complete and being written up; GRPO for the 3B student is training on Kaggle. Next are the headline
+          free-running comparison of SFT vs GRPO at 3B under the current simulator, the escalation sweep (Stage D)
+          across four thresholds, and a 7B rung once GPU budget allows.
+        </p>
+      </section>
