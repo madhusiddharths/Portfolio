@@ -508,6 +508,55 @@ html:has(.ag) {
   font-size: 8.5px;
   font-weight: 700;
 }
+/* the roster changes at runtime: nodes glide to their new slot when a lane
+   reflows, and a spawned agent pops in out of the lane */
+.dag-node {
+  transition: transform 0.45s cubic-bezier(0.65, 0, 0.35, 1);
+}
+.dag-lane rect {
+  transition:
+    stroke 0.4s,
+    fill 0.4s,
+    y 0.45s cubic-bezier(0.65, 0, 0.35, 1),
+    height 0.45s cubic-bezier(0.65, 0, 0.35, 1);
+}
+.dag-node[data-spawned] .dag-box {
+  stroke-dasharray: 5 2;
+}
+.dag-node[data-spawned] > * {
+  animation: dag-spawn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+}
+@keyframes dag-spawn {
+  from {
+    opacity: 0;
+    scale: 0.6;
+  }
+}
+.obs-spawned {
+  margin-left: 6px;
+  font-style: normal;
+  font-size: 0.85em;
+  color: var(--c);
+  opacity: 0.75;
+}
+/* a Planner scanning a segment before anyone builds it */
+.ag [data-planning] {
+  outline: 1px dashed var(--agent, #c8ff4d);
+  outline-offset: 6px;
+  border-radius: 4px;
+  transition: outline-color 0.3s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .dag-node,
+  .dag-lane rect {
+    transition: none;
+  }
+  .dag-node[data-spawned] > * {
+    animation: none;
+  }
+}
 .obs-table {
   padding: 2px 8px 10px;
   font-size: 10.5px;

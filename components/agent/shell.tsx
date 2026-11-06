@@ -96,6 +96,8 @@ function Chrome({
   const total = useSwarmState((s) => s.total);
   const pct = total ? Math.round((done / total) * 100) : 0;
   const building = enabled && total > 0 && done < total;
+  const onShift = useSwarmState((s) => s.roster.length);
+  const peak = useSwarmState((s) => s.peak);
   const path = fixedPath ?? tabs.find((t) => t.id === active)?.path ?? "";
 
   return (
@@ -126,11 +128,11 @@ function Chrome({
           <span className="chrome-status">
             {building ? (
               <>
-                <span className="chrome-spin" /> orchestrating {engine.roster.length} agents · {pct}%
+                <span className="chrome-spin" /> orchestrating {onShift} agents · {pct}%
               </>
             ) : (
               <>
-                <span className="chrome-ok" /> {enabled ? `built by ${engine.roster.length} agents` : "static render"}
+                <span className="chrome-ok" /> {enabled ? `built by ${peak} agents` : "static render"}
               </>
             )}
           </span>

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useTransform } from "motion/react";
 import { useSwarm, useSwarmState } from "./swarm";
-import { AGENTS, type AgentId, type RosterAgent, type Speaker } from "./engine";
+import type { AgentDef, RosterAgent, Speaker, SwarmEngine } from "./engine";
 
 /* ---------------------------------------------------------------------------
    Observability window — what the swarm is doing, two ways:
@@ -72,15 +72,13 @@ function layoutFor(roster: RosterAgent[], mode: string): Layout {
   const last = lanes[lanes.length - 1];
   return { lanes, pos, edges, h: last ? bot(last) + 6 : 60 };
 }
-const SUB = new Set<AgentId>(AGENTS.filter((a) => "parent" in a).map((a) => a.id));
-const laneOf = (id: AgentId) => LANE_OF[AGENTS.find((a) => a.id === id)!.op];
-
-export const WHO: Record<Speaker, { label: string; color: string }> = {
-  ...Object.fromEntries(AGENTS.map((a) => [a.id, { label: a.name, color: a.color }])),
+const PEOPLE: Record<string, { label: string; color: string }> = {
   user: { label: "you", color: "#f2f0ea" },
   router: { label: "router", color: "#ff4b3e" },
   system: { label: "system", color: "#6f6e78" },
-} as Record<Speaker, { label: string; color: string }>;
+};
+/** who said a log line — agents resolve through the engine, so spawned (and retired) ones work too */
+const who = (engine: SwarmEngine, s: Speaker) => PEOPLE[s] ?? { label: engine.def(s).name, color: engine.def(s).color };
 
 export function ObsWindow() {
   const [tab, setTab] = useState<"graph" | "logs">("graph");
@@ -115,11 +113,13 @@ export function ObsWindow() {
 
 function GraphTab() {
   const engine = useSwarm();
-  const { lanes, pos: POS, edges, h: VB_H } = useMemo(() => layoutFor(engine.roster, engine.rosterName), [engine]);
+  const roster = useSwarmState((s) => s.roster);
+  const { lanes, pos: POS, edges, h: VB_H } = useMemo(() => layoutFor(roster, engine.rosterName), [roster, engine]);
   const agents = useSwarmState((s) => s.agents);
+  const laneOf = (id: string) => LANE_OF[engine.def(id).op];
   const pulses = useSwarmState((s) => s.pulses);
   const hot = new Set(pulses.slice(-4).map((p) => `${laneOf(p.from)}>${laneOf(p.to)}`));
-  const laneBusy = (l: Lane) => engine.roster.some((a) => LANE_OF[a.op] === l && agents[a.id].status !== "idle");
+  const laneBusy = (l: Lane) => roster.some((a) => LANE_OF[a.op] === l && agents[a.id]?.status !== "idle");
 
   return (
     <div className="obs-graph">
@@ -135,7 +135,7 @@ function GraphTab() {
         <rect width="320" height={VB_H} fill="url(#dag-dots)" />
         {lanes.map((l) => (
           <g key={l.key} className="dag-lane" data-lane={l.key} data-busy={laneBusy(l.key) ? "true" : undefined}>
-            <rect x={20} y={l.y - 19} width={280} height={l.h} rx={9} />
+            <rect x={20} y={l.y - 19} width={280} height={l.h} rx={9} style={{ y: l.y - 19, height: l.h }} />
             <text x={26} y={l.y - 22}>
               {l.label}
             </text>
@@ -158,24 +158,25 @@ function GraphTab() {
             <motion.circle
               key={p.id}
               r={3}
-              fill={AGENTS.find((x) => x.id === p.to)!.color}
+              fill={engine.def(p.to).color}
               initial={{ cx: A.x, cy: A.y, opacity: 1 }}
               animate={{ cx: B.x, cy: B.y, opacity: [1, 1, 0] }}
               transition={{ duration: 0.7, ease: [0.5, 0, 0.2, 1] }}
             />
           );
         })}
-        {engine.roster.map((a) => {
+        {roster.map((a) => {
           const st = agents[a.id];
           const p = POS[a.id];
+          if (!st || !p) return null;
           return (
             <g
               key={a.id}
               className="dag-node"
               data-status={st.status}
-              data-sub={SUB.has(a.id) ? "true" : undefined}
-              style={{ ["--c" as string]: a.color }}
-              transform={`translate(${p.x - NW / 2} ${p.y - NH / 2})`}
+              data-sub={a.parent ? "true" : undefined}
+              data-spawned={a.spawned ? "true" : undefined}
+              style={{ ["--c" as string]: a.color, transform: `translate(${p.x - NW / 2}px, ${p.y - NH / 2}px)` }}
             >
               <rect width={NW} height={NH} rx={7} className="dag-box" />
               <circle cx={10} cy={NH / 2} r={3} className="dag-dot" />
@@ -183,7 +184,7 @@ function GraphTab() {
                 {a.name}
               </text>
               <text x={18} y={22} className="dag-op">
-                {st.status === "idle" ? (SUB.has(a.id) ? "on call" : "idle") : st.op === "review" ? st.target.slice(0, 13) : a.op}
+                {st.status === "idle" ? (a.parent ? "on call" : "idle") : st.op === "review" ? st.target.slice(0, 13) : a.op}
               </text>
               {st.q > 0 && (
                 <g transform={`translate(${NW - 19} 7)`}>
@@ -205,25 +206,25 @@ function GraphTab() {
           <span role="columnheader">cursor</span>
           <span role="columnheader">q / ✓</span>
         </div>
-        {engine.roster.map((a) => (
-          <AgentRow key={a.id} id={a.id} />
+        {roster.map((a) => (
+          <AgentRow key={a.id} a={a} />
         ))}
       </div>
     </div>
   );
 }
 
-function AgentRow({ id }: { id: AgentId }) {
+function AgentRow({ a }: { a: AgentDef }) {
   const engine = useSwarm();
-  const st = useSwarmState((s) => s.agents[id]);
-  const a = AGENTS.find((x) => x.id === id)!;
-  const c = engine.cursors[id];
+  const st = useSwarmState((s) => s.agents[a.id]) ?? { status: "idle" as const, op: null, target: "", q: 0, n: 0 };
+  const c = engine.cursors[a.id];
   const x = useTransform(c.x, (v) => Math.round(v));
   const y = useTransform(c.y, (v) => Math.round(v));
   return (
     <div className="obs-row" role="row" data-status={st.status} style={{ ["--c" as string]: a.color }}>
-      <span className="obs-agent" role="cell" data-sub={"parent" in a ? "true" : undefined}>
-        <i /> {"parent" in a ? `↳ ${a.name}` : a.name}
+      <span className="obs-agent" role="cell" data-sub={a.parent ? "true" : undefined}>
+        <i /> {a.parent ? `↳ ${a.name}` : a.name}
+        {a.spawned && <em className="obs-spawned">spawned</em>}
       </span>
       <span className="obs-task" role="cell">
         {st.status === "idle" ? (
@@ -245,6 +246,7 @@ function AgentRow({ id }: { id: AgentId }) {
 }
 
 function LogsTab() {
+  const engine = useSwarm();
   const log = useSwarmState((s) => s.log);
   const ref = useRef<HTMLOListElement>(null);
   const pinned = useRef(true);
@@ -275,8 +277,8 @@ function LogsTab() {
             title={l.t}
           >
             <span className="log-hash">{l.hash}</span>
-            <span className="log-who" style={{ color: WHO[l.who].color }}>
-              {WHO[l.who].label}
+            <span className="log-who" style={{ color: who(engine, l.who).color }}>
+              {who(engine, l.who).label}
             </span>
             <span className="log-text">{l.text}</span>
           </motion.li>

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState, type PointerEvent as RPointer
 import { motion, useTransform, type MotionValue } from "motion/react";
 import { useLenis } from "lenis/react";
 import { useSwarm, useSwarmState } from "./swarm";
-import { AGENTS } from "./engine";
+import type { AgentId } from "./engine";
 
 /* ---------------------------------------------------------------------------
    Minimap — the page in miniature, IDE style. Every build node is a block
@@ -23,6 +23,7 @@ export function MiniMap({ onJump }: { onJump?: () => void }) {
   const lenis = useLenis();
   const sections = useSwarmState((s) => s.sections);
   const enabled = useSwarmState((s) => s.enabled);
+  const roster = useSwarmState((s) => s.roster);
   const ref = useRef<HTMLDivElement>(null);
   const geoRef = useRef<Geo | null>(null);
   const [geo, setGeo] = useState<Geo | null>(null);
@@ -109,7 +110,9 @@ export function MiniMap({ onJump }: { onJump?: () => void }) {
     if (!g || !box) return;
     const y = clientY - box.getBoundingClientRect().top;
     const target = Math.max(0, g.docTop + y / g.sy - window.innerHeight / 2);
-    if (lenis) lenis.scrollTo(target, immediate ? { immediate: true } : { duration: 0.9 });
+    // clicking or scrubbing the map is a jump: sections it scrolls through don't start
+    engine.jumping(immediate ? 300 : 1100);
+    if (lenis) lenis.scrollTo(target, immediate ? { immediate: true } : { duration: 0.9, onComplete: () => engine.jumping(0) });
     else window.scrollTo({ top: target, behavior: immediate ? "auto" : "smooth" });
   }
 
@@ -156,7 +159,7 @@ export function MiniMap({ onJump }: { onJump?: () => void }) {
           />
         ))}
         <div className="mm-vp" style={{ top: vp.y, height: vp.h }} />
-        {engine.roster.map((a) => (
+        {roster.map((a) => (
           <MiniCursor key={a.id} id={a.id} color={a.color} geo={geoRef} />
         ))}
       </div>
@@ -184,7 +187,7 @@ export function MiniMap({ onJump }: { onJump?: () => void }) {
   );
 }
 
-function MiniCursor({ id, color, geo }: { id: (typeof AGENTS)[number]["id"]; color: string; geo: React.RefObject<Geo | null> }) {
+function MiniCursor({ id, color, geo }: { id: AgentId; color: string; geo: React.RefObject<Geo | null> }) {
   const engine = useSwarm();
   const c = engine.cursors[id];
   const x = useTransform(c.x, (v) => (geo.current ? (v - geo.current.mx) * geo.current.sx : -10));
