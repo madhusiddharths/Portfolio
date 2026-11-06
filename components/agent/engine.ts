@@ -69,9 +69,10 @@ export const ROSTERS = {
   // the landing page starts lean — Planner, one Builder (+ its Coder and Styler),
   // Critic — and spawns more Builders as the components pile up
   home: ["planner", "builder", "bcoder", "bstyler", "critic"],
-  report: ["planner", "coder", "coder2", "coder3", "coder4", "coder5", "coder6", "stylist", "critic"],
-  // the work index, coming-soon, 404: short labels, lots of layout — a styling crew
-  page: ["planner", "planner2", "coder", "coder2", "coder3", "stylist", "stylist2", "stylist3", "sizer", "sizer2", "aligner", "aligner2", "critic"],
+  // field reports and the other pages run the same crew; reports still only
+  // build what the reader can see, and the work index types faster
+  report: ["planner", "builder", "bcoder", "bstyler", "critic"],
+  page: ["planner", "builder", "bcoder", "bstyler", "critic"],
 } as const satisfies Record<string, readonly StaticId[]>;
 export type RosterName = keyof typeof ROSTERS;
 export type Op = (typeof AGENTS)[number]["op"];
@@ -106,7 +107,9 @@ export type SwarmState = {
 };
 
 /** `plan` marks a planning job: a Planner scans `seg` and hands its nodes to the crew. */
-type Job = { op: Op; section: HTMLElement; el?: HTMLElement; seg?: HTMLElement; plan?: HTMLElement[] };
+/** `chrome`: the non-component parts of the page (a search box, a table header,
+ *  a section rule) — revealed by the Planner's sweep, never built */
+type Job = { op: Op; section: HTMLElement; el?: HTMLElement; seg?: HTMLElement; plan?: HTMLElement[]; chrome?: HTMLElement[] };
 /** a Critic's finding, sent back to the Builder that built the node */
 type Fix = { el: HTMLElement; defect: Defect; section: HTMLElement; seg: HTMLElement };
 type Cursor = { x: MotionValue<number>; y: MotionValue<number>; o: MotionValue<number> };
@@ -148,6 +151,24 @@ const DWELL_MS = 420;
 const PASSING_SPEED = 1.1;
 /** how much of a section has to be on screen, below the browser bar, for it to start */
 const MIN_SEEN_PX = 80;
+
+/** the bounding box (viewport coordinates) around a set of elements */
+function boundsOf(els: HTMLElement[]) {
+  let top = Infinity;
+  let left = Infinity;
+  let bottom = -Infinity;
+  let right = -Infinity;
+  for (const el of els) {
+    if (!el.isConnected) continue;
+    const r = el.getBoundingClientRect();
+    top = Math.min(top, r.top);
+    left = Math.min(left, r.left);
+    bottom = Math.max(bottom, r.bottom);
+    right = Math.max(right, r.right);
+  }
+  if (top === Infinity) return new DOMRect(0, 0, 0, 0);
+  return new DOMRect(left, top, right - left, bottom - top);
+}
 
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
@@ -206,6 +227,8 @@ export class SwarmEngine {
   state: SwarmState;
   cursors: Record<AgentId, Cursor>;
   readonly rosterName: RosterName;
+  /** the Planner → Builder (Coder + Styler) → Critic crew: plan first, build each component in one pass */
+  readonly crew: boolean;
   /** the agents on shift, in display order (also in state, for React) */
   get roster() {
     return this.state.roster;
@@ -225,6 +248,8 @@ export class SwarmEngine {
   /** fixes waiting for each Builder, and fixes still open per segment */
   private fixQ = new Map<AgentId, Fix[]>();
   private segFixes = new Map<HTMLElement, number>();
+  /** page chrome already handed to a Planner */
+  private chromeQueued = new WeakSet<HTMLElement>();
   private listeners = new Set<() => void>();
   private root: HTMLElement | null = null;
   private queues = {} as Record<Op, Job[]>;
@@ -254,6 +279,7 @@ export class SwarmEngine {
 
   constructor(roster: RosterName = "home") {
     this.rosterName = roster;
+    this.crew = ROSTERS[roster].includes("builder" as never);
     const ids = new Set<string>(ROSTERS[roster]);
     AGENTS.forEach((a) => this.defs.set(a.id, { ...a } as AgentDef));
     // a sub-agent's display order follows its parent
@@ -358,7 +384,7 @@ export class SwarmEngine {
           else this.visible.delete(el);
           if (e.isIntersecting && meta && !meta.triggered) {
             // the landing page only starts a section the reader actually stops at
-            if (this.rosterName === "home") this.arm(el);
+            if (this.crew) this.arm(el);
             else {
               meta.triggered = true;
               this.enqueue(el);
@@ -395,10 +421,10 @@ export class SwarmEngine {
     });
     this.mo.observe(root, { childList: true, subtree: true });
 
-    // Report and landing agents work on what is visible first — a scroll may hand
-    // them new work. The landing page also tracks scroll speed, so a section the
-    // reader only flies past (a jump from the minimap) never starts building.
-    if (this.rosterName === "report" || this.rosterName === "home") {
+    // Agents work on what is visible first — a scroll may hand them new work.
+    // Scroll speed is tracked too, so a section the reader only flies past (a
+    // jump from the minimap) never starts building.
+    {
       let t: ReturnType<typeof setTimeout> | null = null;
       this.lastScrollY = window.scrollY;
       this.onScroll = () => {
@@ -512,11 +538,13 @@ export class SwarmEngine {
   /* ---- autoscaling ------------------------------------------------------- */
   /** Spawn another agent for `op` when each one has SPAWN_AT or more jobs waiting. */
   private maybeSpawn(op: Op) {
-    if (this.rosterName !== "home" || !this.state.enabled) return;
+    if (!this.crew || !this.state.enabled) return;
     const pool = SPAWN_COLORS[op];
     const owners = this.owners[op];
     if (!pool || !owners.length) return;
-    if (this.queues[op].length / owners.length < SPAWN_AT) return;
+    // on a report only the work on screen can be taken, so only that counts
+    const backlog = this.rosterName === "report" ? this.onScreenCount(op) : this.queues[op].length;
+    if (backlog / owners.length < SPAWN_AT) return;
     const extra = this.roster.filter((a) => a.op === op && a.spawned).length;
     if (extra >= MAX_EXTRA) return;
     const now = performance.now();
@@ -556,7 +584,6 @@ export class SwarmEngine {
     roster.forEach((a, i) => (a.op === op || (a.parent && this.def(a.parent).op === op)) && (at = i));
     roster.splice(at + 1, 0, def, ...crew);
     this.syncOwners(roster);
-    const backlog = this.queues[op].length;
     this.set({
       roster,
       peak: Math.max(this.state.peak, roster.length),
@@ -570,6 +597,15 @@ export class SwarmEngine {
     this.syncQueue(op);
     this.log("system", `spawn ${def.name}${crew.length ? ` + ${crew.map((d) => d.name).join(", ")}` : ""} · ${op} backlog ${backlog} → split ${owners.length + 1} ways`, "accent");
     this.work(id, this.gen);
+  }
+
+  /** jobs in `op`'s queue that are on screen right now */
+  private onScreenCount(op: Op) {
+    const band = this.visibleBand();
+    return this.queues[op].filter((j) => {
+      const r = j.plan ? boundsOf([...j.plan, ...(j.chrome ?? [])]) : (j.el ?? j.seg ?? j.section).getBoundingClientRect();
+      return r.bottom > band.top + 8 && r.top < band.bottom - 8;
+    }).length;
   }
 
   /** a spawned agent leaves once its kind has had nothing to do for a while */
@@ -587,6 +623,24 @@ export class SwarmEngine {
     this.set({ roster, agents });
     this.syncQueue(def.op);
     this.log("system", `retire ${def.name} · ${def.op} queue drained`, "dim");
+  }
+
+  /**
+   * The page chrome of a section: the largest pieces that are not components
+   * and hold none (a search box, a table header row, a rule). CSS hides them
+   * until a Planner's sweep reveals them, like the components.
+   */
+  private chromeOf(section: HTMLElement) {
+    const out: HTMLElement[] = [];
+    const walk = (el: Element) => {
+      for (const c of Array.from(el.children) as HTMLElement[]) {
+        if (c.hasAttribute("data-build")) continue;
+        if (c.querySelector("[data-build]")) walk(c);
+        else out.push(c);
+      }
+    };
+    walk(section);
+    return out;
   }
 
   /* ---- segments ---------------------------------------------------------- */
@@ -616,7 +670,7 @@ export class SwarmEngine {
    */
   private plan(el: HTMLElement): Op[] {
     // the landing page: one Builder takes the whole node — its Coder and Styler work it together
-    if (this.rosterName === "home") return ["build"];
+    if (this.crew) return ["build"];
     const staffed = (ops: Op[]) => ops.filter((o) => this.owners[o].length > 0);
     const forced = el.dataset.ops;
     if (forced) return staffed(forced.split(",").map((s) => s.trim() as Op).filter((o) => OPS.includes(o)));
@@ -713,16 +767,22 @@ export class SwarmEngine {
     if (this.state.startedAt === null) this.set({ startedAt: performance.now() });
     section.dataset.phase = "building";
     this.setSection(section.id, "building");
-    if (this.rosterName === "home") {
+    if (this.crew) {
       // Nothing is handed out until a Planner has scanned it: one planning job
       // per segment, so the part on screen can be planned (and built) first.
-      const bySeg = new Map<HTMLElement, HTMLElement[]>();
-      nodes.forEach((n) => {
-        const seg = this.segOf(n, section);
-        bySeg.set(seg, [...(bySeg.get(seg) ?? []), n]);
-      });
+      // The page chrome around the components (search box, table header,
+      // section rules) is hidden too, and revealed by the same sweep.
+      const bySeg = new Map<HTMLElement, { plan: HTMLElement[]; chrome: HTMLElement[] }>();
+      const slot = (seg: HTMLElement) => bySeg.get(seg) ?? (bySeg.set(seg, { plan: [], chrome: [] }), bySeg.get(seg)!);
+      nodes.forEach((n) => slot(this.segOf(n, section)).plan.push(n));
+      this.chromeOf(section)
+        .filter((c) => !this.chromeQueued.has(c))
+        .forEach((c) => {
+          this.chromeQueued.add(c);
+          slot(this.segOf(c, section)).chrome.push(c);
+        });
       this.log("system", `task ${section.dataset.sec ?? section.id} · ${nodes.length} nodes in ${bySeg.size} segment${bySeg.size > 1 ? "s" : ""} → planners`, "dim");
-      bySeg.forEach((plan, seg) => this.push({ op: "create", section, seg, plan }));
+      bySeg.forEach(({ plan, chrome }, seg) => this.push({ op: "create", section, seg, plan, chrome }));
       return;
     }
     const framed = nodes.filter((n) => this.plans.get(n)![0] === "create").length;
@@ -761,7 +821,7 @@ export class SwarmEngine {
    * handed to a Critic while the builders move on to the next one.
    */
   private take(op: Op) {
-    if (this.rosterName === "home") return this.takeVisibleFirst(op);
+    if (this.crew) return this.takeVisibleFirst(op);
     const q = this.queues[op];
     if (q.length === 0) return undefined;
     const onScreen = q.some((j) => this.visible.has(j.section));
@@ -804,19 +864,24 @@ export class SwarmEngine {
     const q = this.queues[op];
     if (q.length === 0) return undefined;
     const band = this.visibleBand();
-    let best = 0;
+    // a report is read inside IDE chrome: its agents only take what is on screen
+    const onlyVisible = this.rosterName === "report";
+    let best = -1;
     let bestKey = Infinity;
     for (let i = 0; i < q.length; i++) {
       const j = q[i];
-      const r = (j.el ?? j.seg ?? j.section).getBoundingClientRect();
+      // a planning job sits where its components are, not where its segment box starts
+      const r = j.plan ? boundsOf([...j.plan, ...(j.chrome ?? [])]) : (j.el ?? j.seg ?? j.section).getBoundingClientRect();
       const onScreen = r.bottom > band.top + 8 && r.top < band.bottom - 8;
       const dist = onScreen ? Math.max(0, r.top - band.top) : r.top >= band.bottom ? r.top - band.bottom : band.top - r.bottom;
+      if (onlyVisible && !onScreen) continue;
       const key = (onScreen ? 0 : 2e6) + (j.plan ? 0 : 1e6) + Math.min(dist, 9e5);
       if (key < bestKey) {
         bestKey = key;
         best = i;
       }
     }
+    if (best < 0) return undefined;
     const job = q.splice(best, 1)[0];
     this.syncQueue(op);
     return job;
@@ -858,7 +923,9 @@ export class SwarmEngine {
         await this.wait(op, 1500 + Math.random() * 900);
         if (gen !== this.gen) return;
         if (this.fixQ.get(id)?.length) continue;
-        if (this.def(id).spawned && this.queues[op].length === 0 && performance.now() - idleSince > RETIRE_MS) {
+        // on a report, work below the fold doesn't keep a spawned agent on shift
+        const waiting = this.rosterName === "report" ? this.onScreenCount(op) : this.queues[op].length;
+        if (this.def(id).spawned && waiting === 0 && performance.now() - idleSince > RETIRE_MS) {
           this.retire(id);
           return;
         }
@@ -1095,14 +1162,35 @@ export class SwarmEngine {
   private async planSeg(id: AgentId, job: Job, gen: number) {
     const { section } = job;
     const seg = job.seg ?? section;
-    const nodes = job.plan!.filter((n) => n.isConnected);
+    const all = job.plan!.filter((n) => n.isConnected);
     job.plan!.filter((n) => !n.isConnected).forEach((n) => this.tick(section, n));
-    if (!nodes.length || !this.root) return;
+    const allChrome = (job.chrome ?? []).filter((c) => c.isConnected);
+    if ((!all.length && !allChrome.length) || !this.root) return;
+    // Plan only what is on screen; the rest of the segment waits for its own
+    // planning job, so nothing below the fold shows up as an empty box early.
+    const band0 = this.visibleBand();
+    const seen = (el: HTMLElement) => {
+      const r = el.getBoundingClientRect();
+      return r.bottom > band0.top + 8 && r.top < band0.bottom - 8;
+    };
+    let nodes = all;
+    let chrome = allChrome;
+    let rest: Job | null = null;
+    if (all.some(seen) || allChrome.some(seen)) {
+      nodes = all.filter(seen);
+      chrome = allChrome.filter(seen);
+      const restPlan = all.filter((n) => !nodes.includes(n));
+      const restChrome = allChrome.filter((c) => !chrome.includes(c));
+      if (restPlan.length || restChrome.length) rest = { op: "create", section, seg, plan: restPlan, chrome: restChrome };
+    }
     const name = this.segName(seg, section);
     this.setAgent(id, { status: "moving", op: "create", target: `plan ${name}` });
 
-    const b = this.rel(seg);
+    // sweep only the area of the components being planned — a segment that is
+    // "the rest of the section" (e.g. one status line) must not sweep the whole section
     const o = this.root.getBoundingClientRect();
+    const u = boundsOf([...nodes, ...chrome]);
+    const b = { x: u.left - o.left, y: u.top - o.top, w: u.right - u.left, h: u.bottom - u.top };
     const band = this.visibleBand();
     const vTop = band.top - o.top;
     const vBot = band.bottom - o.top;
@@ -1114,24 +1202,28 @@ export class SwarmEngine {
     }
     if (!(await this.fly(id, b.x + 10, top + 8, gen))) return;
     this.setAgent(id, { status: "working" });
+    // the scan outline marks a real part of the section; leftovers get only the per-node flash
+    const outline = seg !== section;
     seg.style.setProperty("--agent", this.def(id).color);
-    seg.dataset.planning = "1";
+    if (outline) seg.dataset.planning = "1";
     const ms = Math.round(clamp(380 + nodes.length * 45, 480, 950));
-    // each node's empty box appears as the sweep reaches it (top → bottom)
+    // each node's empty box (and the chrome around it) appears as the sweep reaches it (top → bottom)
     const reveal = (n: HTMLElement) => (n.dataset.planned = "1");
-    const timers = nodes.map((n) => {
+    const shown = [...nodes, ...chrome];
+    const timers = shown.map((n) => {
       const y = this.rel(n).y;
       const at = clamp((y - top) / Math.max(1, bot - top), 0, 1);
       return setTimeout(() => reveal(n), at * ms * 0.9);
     });
     await this.drag(id, b.x + Math.max(40, b.w * 0.82), bot - 10, ms);
     timers.forEach(clearTimeout);
-    nodes.forEach(reveal); // anything below the fold is planned too
+    shown.forEach(reveal);
     delete seg.dataset.planning;
     if (gen !== this.gen) return;
+    if (rest) this.push(rest);
 
     const framed = nodes.filter((n) => this.plans.get(n)![0] === "create").length;
-    if (this.rosterName === "home") this.log(id, `plan ${name} · ${nodes.length} component${nodes.length > 1 ? "s" : ""} → builders`);
+    if (this.crew) this.log(id, nodes.length ? `plan ${name} · ${nodes.length} component${nodes.length > 1 ? "s" : ""} → builders${rest ? " · rest when in view" : ""}` : `plan ${name} · layout`);
     else this.log(id, `plan ${name} · ${nodes.length} node${nodes.length > 1 ? "s" : ""} · ${framed ? `${framed} to frame, ` : ""}${nodes.length - framed} to coders`);
     this.setAgent(id, { n: this.state.agents[id].n + 1 });
     // one hand-off pulse per receiving lane, not one per node
@@ -1179,7 +1271,7 @@ export class SwarmEngine {
       this.log(id, `flag ${label} · ${DEFECT_NOTE[defect][0].slice(2)}`, "warn");
       await sleep(900);
       if (gen !== this.gen) return;
-      if (this.rosterName === "home") {
+      if (this.crew) {
         // send it back to whoever built it: their Styler owns size, alignment, colour and type
         const builder = this.fixerFor(el);
         const { styler } = this.crewOf(builder);
@@ -1204,7 +1296,7 @@ export class SwarmEngine {
     }
     if (gen !== this.gen) return;
 
-    const sentBack = this.rosterName === "home" && broken.length > 0;
+    const sentBack = this.crew && broken.length > 0;
     const fixed = broken.length ? ` · ${broken.length} fix${broken.length > 1 ? "es" : ""}${sentBack ? " sent back" : ""}` : "";
     this.log(id, `${sentBack ? "◐" : "✓"} ${name} · ${nodes.length} nodes${fixed}`, sentBack ? "dim" : "ok");
     this.setAgent(id, { n: this.state.agents[id].n + 1 });
@@ -1275,7 +1367,8 @@ export class SwarmEngine {
       detail = kind === "frame" ? `frame ${Math.round(b.w)}×${Math.round(b.h)}` : "surface";
     } else {
       const b = this.rel(el);
-      const ms = Math.round(kind === "type" ? clamp(text * 22, 600, 1300) : clamp(text * 3.2, 850, 1700));
+      // index rows are short labels — they type in faster than prose
+      const ms = Math.round(this.rosterName === "page" ? clamp(text * 6, 450, 850) : kind === "type" ? clamp(text * 22, 600, 1300) : clamp(text * 3.2, 850, 1700));
       el.style.setProperty("--agent", this.def(coder).color);
       el.style.setProperty("--dur", `${ms}ms`);
       el.style.setProperty("--steps", String(clamp(Math.round(text / 1.4), 8, 48)));
@@ -1543,6 +1636,8 @@ export class SwarmEngine {
       n.dispatchEvent(new CustomEvent("swarm:reset"));
     });
     this.root?.querySelectorAll<HTMLElement>("[data-defects-planned]").forEach((s) => delete s.dataset.defectsPlanned);
+    this.root?.querySelectorAll<HTMLElement>("[data-planned]").forEach((el) => delete el.dataset.planned);
+    this.chromeQueued = new WeakSet();
     this.remaining.clear();
     this.openSegs.clear();
     html.classList.add("build-on");

@@ -1280,19 +1280,32 @@ html:has(.ag) {
   border: 1px dotted rgba(77, 225, 255, 0.16);
 }
 
-/* Landing page: until a Planner has planned it, a node is not there at all —
+/* Every agent page: until a Planner has planned it, a node is not there at all —
    only the page background shows (a solid cover would hide the grid behind it
    and read as a box). Its empty box appears as the Planner's sweep passes over
    it, with a brief flash in the Planner's colour; then the Builders take over.
    Layout is untouched: visibility keeps the space. */
-.build-on .ag-home [data-build]:not([data-state]):not([data-planned]) {
+.build-on .ag [data-build]:not([data-state]):not([data-planned]) {
   visibility: hidden;
 }
 /* a planned node inside a not-yet-planned one (e.g. inside the playground frame) still shows */
-.build-on .ag-home [data-build]:is([data-planned], [data-state]) {
+.build-on .ag [data-build]:is([data-planned], [data-state]) {
   visibility: visible;
 }
-.build-on .ag-home [data-build][data-planned]:not([data-state]) {
+/* The rest of a section — page chrome that is not a component (a search box,
+   a table header, a rule) and the containers around components — is hidden
+   the same way until a Planner's sweep reaches it. Containers show once
+   anything inside them has been planned. */
+.build-on .ag .ag-section :not([data-build], [data-build] *, [data-planned], [data-planned] *):not(:has([data-build])) {
+  visibility: hidden;
+}
+.build-on .ag .ag-section :not([data-build], [data-build] *):has([data-build]):not(:has([data-planned])) {
+  visibility: hidden;
+}
+.build-on .ag .ag-section [data-planned]:not([data-build]) {
+  visibility: visible;
+}
+.build-on .ag [data-build][data-planned]:not([data-state]) {
   animation: bn-planned 0.6s var(--ease) both;
 }
 @keyframes bn-planned {
@@ -1306,7 +1319,7 @@ html:has(.ag) {
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .build-on .ag-home [data-build][data-planned]:not([data-state]) {
+  .build-on .ag [data-build][data-planned]:not([data-state]) {
     animation: none;
   }
 }

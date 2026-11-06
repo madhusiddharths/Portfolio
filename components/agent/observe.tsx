@@ -52,7 +52,9 @@ function layoutFor(roster: RosterAgent[], mode: string): Layout {
       const inRow = Math.min(per, inLane.length - row * per);
       pos[a.id] = { x: 160 + ((i % per) - (inRow - 1) / 2) * 100, y: y + row * ROW_H };
     });
-    const label = (mode === "report" ? def.report : mode === "page" ? def.page : mode === "home" ? def.home : undefined) ?? def.label;
+    // every page runs the Planner → Builder → Critic crew now
+    const crew = inLane.some((a) => a.op === "build") || roster.some((a) => a.op === "build");
+    const label = (crew ? def.home : mode === "report" ? def.report : mode === "page" ? def.page : undefined) ?? def.label;
     lanes.push({ key: def.key, label, y, h });
     y += h + 24;
   }
