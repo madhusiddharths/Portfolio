@@ -429,16 +429,16 @@ export const CERTS = [
     url: "https://www.credly.com/badges/fae85859-f892-4376-b864-813f2121650e/public_url",
   },
   {
-    name: "IBM Data Science Professional Certificate",
-    issuer: "IBM",
-    img: "/img/certification/ibm-data-science-professional-certificate.png",
-    url: "https://www.credly.com/badges/1c045c4e-4493-435a-8029-782cd961988c/public_url",
-  },
-  {
     name: "AWS Certified Cloud Practitioner",
     issuer: "Amazon Web Services",
     img: "/img/certification/aws-certified-cloud-practitioner.png",
     url: "https://www.credly.com/badges/b6bad1eb-1fa3-4947-98bb-692045b56d7f/public_url",
+  },
+  {
+    name: "IBM Data Science Professional Certificate",
+    issuer: "IBM",
+    img: "/img/certification/ibm-data-science-professional-certificate.png",
+    url: "https://www.credly.com/badges/1c045c4e-4493-435a-8029-782cd961988c/public_url",
   },
   {
     name: "Google Data Analytics Professional Certificate",
