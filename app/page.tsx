@@ -1,10 +1,13 @@
 import Link from "next/link";
 import "./console.css";
-import { PROFILE, METRICS, FEATURED, PROJECTS, SKILLS, CERTS, techIcon, usesSkill } from "@/lib/projects";
+import { PROFILE, METRICS, FEATURED, PROJECTS, SKILLS, CERTS, techIcon, usesSkill, projectHref, skillHref } from "@/lib/projects";
 import { AgentShell } from "@/components/agent/shell";
 import { BuildSection, SwarmCount } from "@/components/agent/swarm";
 import { B } from "@/components/agent/b";
 import { SecHead as Head } from "@/components/agent/sec-head";
+import { RunStatus, RunUsage, BuildCredit } from "@/components/agent/live";
+import { StatusClock } from "@/components/status-clock";
+import { ArrowIcon, ArrowUpRight, GithubIcon, LinkedinIcon, DiscordIcon, MailIcon, LockIcon } from "@/components/icons";
 
 /** Home section header — a shell line ("madhu@agent:~$ cat work.md"), eyebrow, title. */
 function SecHead({ n, sec, eyebrow, title, children }: { n: string; sec: string; eyebrow: string; title: string; children?: React.ReactNode }) {
@@ -14,10 +17,6 @@ function SecHead({ n, sec, eyebrow, title, children }: { n: string; sec: string;
     </Head>
   );
 }
-import { RunStatus, RunUsage, BuildCredit } from "@/components/agent/live";
-import { StatusClock } from "@/components/status-clock";
-import { ArrowIcon, ArrowUpRight, GithubIcon, LinkedinIcon, DiscordIcon, MailIcon, LockIcon } from "@/components/icons";
-
 
 const SENTENCES = PROFILE.bio.split(/(?<=\.)\s+/);
 const QUOTE = SENTENCES[SENTENCES.length - 1];
@@ -130,7 +129,7 @@ function RegPanel({ ns, title, items, order }: RegGroup) {
           const n = calls(item);
           return (
             <li key={item} style={{ ["--i" as string]: i }}>
-              <Link href={`/work/?skill=${encodeURIComponent(item)}`} className="reg-row" data-zero={n === 0 ? "true" : undefined}>
+              <Link href={skillHref(item)} className="reg-row" data-zero={n === 0 ? "true" : undefined}>
                 {icon ? <img src={icon} alt="" loading="lazy" width={15} height={15} /> : <i className="reg-dot" />}
                 <span className="reg-name">{item}</span>
                 <span className="reg-calls">
@@ -183,7 +182,7 @@ export default function Home() {
                     <B as="p" kind="type" label="msg.system" className="pg-system">
                       Answer as Madhu. Ground every claim in the résumé, the project logs and the repos.
                     </B>
-                    <B as="ul" kind="list" label="ctx.retrieved" className="pg-ctx" data-ops="write,style">
+                    <B as="ul" kind="list" label="ctx.retrieved" className="pg-ctx">
                       <li style={{ ["--i" as string]: 0 }}>
                         <b>ctx</b> resume_kb.yaml
                       </li>
@@ -214,7 +213,7 @@ export default function Home() {
                     <B as="p" kind="type" label="p.tagline" className="hero-tagline">
                       I ship <mark>agents that do the work</mark>, then measure exactly where they break.
                     </B>
-                    <B kind="block" label="tool_calls" className="pg-calls" data-ops="create,write,style,resize,place">
+                    <B kind="block" label="tool_calls" className="pg-calls">
                       <span className="pg-calls-h">tool_calls · 3</span>
                       <a href={PROFILE.resume} target="_blank" rel="noopener noreferrer" className="pg-call pg-call-go">
                         <code>get_resume</code>
@@ -255,7 +254,7 @@ export default function Home() {
                         const icon = techIcon(name);
                         return (
                           <li key={name} style={{ ["--i" as string]: i }}>
-                            <Link href={`/work/?skill=${encodeURIComponent(skill)}`} title={`Projects using ${name}`}>
+                            <Link href={skillHref(skill)} title={`Projects using ${name}`}>
                               {icon && <img src={icon} alt="" width={14} height={14} loading="lazy" />}
                               {name}
                             </Link>
@@ -264,7 +263,7 @@ export default function Home() {
                       })}
                     </ul>
                   </B>
-                  <B kind="block" label="cfg.usage" className="pg-field" data-ops="create,write,style,place">
+                  <B kind="block" label="cfg.usage" className="pg-field">
                     <span className="pg-k">this run</span>
                     <RunUsage />
                   </B>
@@ -273,8 +272,8 @@ export default function Home() {
             </B>
 
             <dl className="hero-metrics" data-seg="metrics">
-              {METRICS.map((m, i) => (
-                <B key={m.label} kind="block" label="eval.metric" className="metric" data-ops={i % 2 ? "create,write,style,place" : "create,write,style"}>
+              {METRICS.map((m) => (
+                <B key={m.label} kind="block" label="eval.metric" className="metric">
                   <dt>
                     <SwarmCount value={m.value} prefix={m.prefix} suffix={m.suffix} decimals={m.decimals} />
                   </dt>
@@ -306,7 +305,7 @@ export default function Home() {
                   </a>
                 </B>
               </div>
-              <B kind="block" label="memory.principle" className="principle" data-ops="create,write,style">
+              <B kind="block" label="memory.principle" className="principle">
                 <p className="principle-h">
                   <span>memory/</span>principle.md
                 </p>
@@ -409,7 +408,7 @@ export default function Home() {
 
             <div className="work-grid" data-project-grid data-seg="cards">
               {FEATURED.slice(0, 6).map((p, i) => {
-                const href = p.hasCaseStudy ? `/work/${p.slug}/` : `/work/coming-soon/?p=${p.slug}`;
+                const href = projectHref(p);
                 const extra = p.tech.length - 5;
                 return (
                   <B as="article" key={p.slug} kind="block" label={`article.${p.slug}`} className={`card ${i === 0 ? "card-lead" : ""}`} data-project={p.slug}>
@@ -525,7 +524,7 @@ export default function Home() {
                   Hiring for agentic AI, LLM post-training or applied ML? Send the request. Email, LinkedIn or GitHub all reach
                   me, and every one gets a reply.
                 </B>
-                <B kind="block" label="div.actions" className="contact-actions" data-ops="create,write,style">
+                <B kind="block" label="div.actions" className="contact-actions">
                   <a href={`mailto:${PROFILE.email}`} className="btn btn-red">
                     <MailIcon width={16} height={16} /> Get in touch
                   </a>

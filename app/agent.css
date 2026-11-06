@@ -734,7 +734,7 @@ html:has(.ag) {
     background 0.4s,
     border-color 0.4s;
 }
-.mm-node:is([data-state="creating"], [data-state="framed"]) {
+.mm-node[data-state="creating"] {
   border: 1px solid var(--a, var(--wire));
   background: color-mix(in srgb, var(--a, var(--wire)) 14%, transparent);
 }
@@ -743,11 +743,7 @@ html:has(.ag) {
   background: var(--a, var(--wire));
   animation: blink 0.8s infinite;
 }
-.mm-node[data-state="raw"] {
-  border-color: transparent;
-  background: rgba(255, 255, 255, 0.24);
-}
-.mm-node:is([data-state="styling"], [data-state="filled"], [data-state="resizing"], [data-state="placing"]) {
+.mm-node[data-state="styling"] {
   border-color: transparent;
   background: var(--a, #ff6bd6);
 }
@@ -1038,12 +1034,9 @@ html:has(.ag) {
 /* ---------------------------------------------------------------------------
    BUILD STATES
      (none)     faint blueprint ghost
-     creating   Planner drags the frame open from the top-left corner
-     framed     wireframe + label, waiting for content
-     building   Coder / Stylist wipe the content in
-     filled     content in, selection box (still off-size / off-grid)
-     resizing   Sizer drags the corner — scale → 1 (WAAPI, engine.ts)
-     placing    Aligner nudges it onto the grid — translate → 0
+     creating   the Styler draws a frame open from the top-left corner
+     building   the Coder writes the content in (or the Styler paints it)
+     styling    the Styler styles what the Coder wrote
      done       brief outline in the last agent's color
    --------------------------------------------------------------------------- */
 .ag-section {
@@ -1073,7 +1066,7 @@ html:has(.ag) {
   isolation: isolate;
 }
 /* the cover — everything before the content lands */
-.build-on .ag [data-build]:is(:not([data-state]), [data-state="creating"], [data-state="framed"], [data-state="building"])::after {
+.build-on .ag [data-build]:is(:not([data-state]), [data-state="creating"], [data-state="building"])::after {
   content: "";
   position: absolute;
   inset: -4px;
@@ -1118,29 +1111,6 @@ html:has(.ag) {
   clip-path: inset(-2px max(-2px, calc(100% - var(--p))) max(-2px, calc(100% - var(--p))) -2px);
 }
 
-/* framed: the label */
-.build-on .ag [data-build][data-state="framed"]::before {
-  content: attr(data-label);
-  position: absolute;
-  z-index: 6;
-  top: 2px;
-  left: 3px;
-  max-width: calc(100% - 6px);
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  padding: 2px 5px;
-  border-radius: 3px;
-  background: rgba(77, 225, 255, 0.14);
-  color: var(--wire);
-  font: 600 9px/1.2 var(--mono);
-  letter-spacing: 0.04em;
-  text-transform: none;
-  font-style: normal;
-  -webkit-text-stroke: 0;
-  pointer-events: none;
-  animation: bn-label 0.3s var(--ease);
-}
 @keyframes bn-label {
   from {
     opacity: 0;
@@ -1227,52 +1197,13 @@ html:has(.ag) {
   }
 }
 
-/* filled / resizing / placing — a selection box with handles */
-.build-on .ag [data-build]:is([data-state="filled"], [data-state="resizing"], [data-state="placing"])::after {
-  content: "";
-  position: absolute;
-  inset: -5px;
-  z-index: 5;
-  pointer-events: none;
-  border: 1px dashed color-mix(in srgb, var(--agent, var(--wire)) 70%, transparent);
-  border-radius: 4px;
-  background:
-    linear-gradient(var(--agent), var(--agent)) 0 0 / 7px 7px no-repeat,
-    linear-gradient(var(--agent), var(--agent)) 100% 0 / 7px 7px no-repeat,
-    linear-gradient(var(--agent), var(--agent)) 0 100% / 7px 7px no-repeat,
-    linear-gradient(var(--agent), var(--agent)) 100% 100% / 7px 7px no-repeat;
-}
-.build-on .ag [data-build]:is([data-state="resizing"], [data-state="placing"])::after {
-  border-style: solid;
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--agent) 20%, transparent), 0 0 24px -6px var(--agent);
-}
-.build-on .ag [data-build][data-state="resizing"]::after {
-  background:
-    linear-gradient(var(--agent), var(--agent)) 0 0 / 7px 7px no-repeat,
-    linear-gradient(var(--agent), var(--agent)) 100% 0 / 7px 7px no-repeat,
-    linear-gradient(var(--agent), var(--agent)) 0 100% / 7px 7px no-repeat,
-    linear-gradient(#fff, #fff) 100% 100% / 9px 9px no-repeat;
-}
-.build-on .ag [data-build][data-state="placing"] {
-  cursor: grabbing;
-}
-.build-on .ag [data-build][data-state="placing"]::before {
-  content: "";
-  position: absolute;
-  z-index: 6;
-  inset: -5px;
-  pointer-events: none;
-  border-radius: 4px;
-  background: color-mix(in srgb, var(--agent) 5%, transparent);
-}
-
 /* frames: a container whose own surface is drawn; children build inside it */
 .build-on .ag [data-build="frame"]:not([data-state="done"]) {
   background: transparent !important;
   border-color: transparent !important;
   box-shadow: none !important;
 }
-.build-on .ag [data-build="frame"]:is(:not([data-state]), [data-state="creating"], [data-state="framed"])::after {
+.build-on .ag [data-build="frame"]:is(:not([data-state]), [data-state="creating"])::after {
   background: none;
   border-radius: 14px;
 }
@@ -1357,31 +1288,6 @@ html:has(.ag) {
 }
 .build-on .ag [data-build][data-raw] :is(img, svg, .live-dot, .hero-role i) {
   opacity: 0 !important;
-}
-.build-on .ag [data-build][data-state="raw"]::after {
-  content: "";
-  position: absolute;
-  inset: -4px;
-  z-index: 5;
-  pointer-events: none;
-  border: 1px dotted rgba(255, 255, 255, 0.22);
-  border-radius: 5px;
-}
-.build-on .ag [data-build][data-state="raw"]::before {
-  content: "unstyled";
-  position: absolute;
-  z-index: 6;
-  top: -9px;
-  right: 2px;
-  padding: 1px 5px;
-  border-radius: 3px;
-  background: #1b1b23;
-  color: var(--faint);
-  font: 600 8.5px/1.3 var(--mono);
-  letter-spacing: 0.04em;
-  text-transform: none;
-  -webkit-text-stroke: 0;
-  pointer-events: none;
 }
 .build-on .ag [data-build][data-state="styling"],
 .build-on .ag [data-build][data-state="styling"] * {
@@ -1525,13 +1431,6 @@ html:has(.ag) {
 .btn-line:hover {
   border-color: var(--red);
   color: #fff;
-}
-.btn-text {
-  color: var(--muted);
-  padding: 0 0.4rem;
-}
-.btn-text:hover {
-  color: var(--ink);
 }
 .icon-btn {
   display: grid;
@@ -2894,11 +2793,6 @@ a.j-s:hover {
   font-family: var(--mono);
   font-size: 0.7rem;
 }
-.ag .work-preview {
-  border-color: rgba(255, 65, 51, 0.45);
-  border-radius: 10px;
-  box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 65, 51, 0.15);
-}
 .work-filter {
   display: flex;
   flex-wrap: wrap;
@@ -3227,13 +3121,6 @@ a.j-s:hover {
 .chrome-address:has(.chrome-edit) {
   border-color: var(--line-2);
   box-shadow: 0 0 0 1px var(--line-2);
-}
-
-/* A frame can be sized / aligned before its text is written (the work index
-   runs layout in parallel with the coders): until a Coder starts on it, the
-   selection box keeps the cover so no unwritten text shows through. */
-.build-on .ag [data-build]:is([data-state="filled"], [data-state="resizing"], [data-state="placing"]):not([data-mode])::after {
-  background-color: var(--cover);
 }
 
 /* ---------------------------------------------------------------------------

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useTransform } from "motion/react";
 import { useSwarm, useSwarmState } from "./swarm";
-import type { AgentDef, RosterAgent, Speaker, SwarmEngine } from "./engine";
+import type { AgentDef, Speaker, SwarmEngine } from "./engine";
 
 /* ---------------------------------------------------------------------------
    Observability window — what the swarm is doing, two ways:
@@ -15,18 +15,15 @@ import type { AgentDef, RosterAgent, Speaker, SwarmEngine } from "./engine";
 /* Lanes of the pipeline, top → bottom. Agents in a lane share one queue.
    The layout is computed from the roster on shift: empty lanes drop out and
    a lane with more than three agents wraps onto extra rows. */
-type Lane = "plan" | "build" | "code" | "style" | "subs" | "review";
-const LANE_DEFS: { key: Lane; label: string; report?: string; page?: string; home?: string }[] = [
-  { key: "plan", label: "planners · frame blocks", report: "planner · frames figures + code", home: "planners · split sections into components" },
+type Lane = "plan" | "build" | "review";
+const LANE_DEFS: { key: Lane; label: string }[] = [
+  { key: "plan", label: "planners · split sections into components" },
   { key: "build", label: "builders · coder + styler build each component at once" },
-  { key: "code", label: "coders · write markup", report: "coders · write the report in parallel" },
-  { key: "style", label: "stylists · style + place media", report: "stylist · places media", page: "stylists · style each row" },
-  { key: "subs", label: "stylist sub-agents · spawned per call", page: "sizer + aligner · only rows that need it" },
-  { key: "review", label: "critics · review finished segments", report: "critic · reviews each section", home: "critics · review, send fixes back to the builder" },
+  { key: "review", label: "critics · review, send fixes back to the builder" },
 ];
-const LANE_OF: Record<string, Lane> = { create: "plan", build: "build", write: "code", style: "style", resize: "subs", place: "subs", review: "review" };
+const LANE_OF: Partial<Record<string, Lane>> = { create: "plan", build: "build", review: "review" };
 /** a Builder's Coder and Styler sit in the Builder's row, not in lanes of their own */
-const laneFor = (a: RosterAgent) => (a.driven ? "build" : LANE_OF[a.op]);
+const laneFor = (a: AgentDef) => (a.driven ? "build" : LANE_OF[a.op]);
 const NW = 88;
 const NH = 28;
 const PER_ROW = 3;
@@ -35,14 +32,14 @@ const ROW_H = 34;
 type LaneBox = { key: Lane; label: string; y: number; h: number };
 type Layout = { lanes: LaneBox[]; pos: Record<string, { x: number; y: number }>; edges: { from: Lane; to: Lane; d: string }[]; h: number };
 
-function layoutFor(roster: RosterAgent[], mode: string): Layout {
+function layoutFor(roster: AgentDef[]): Layout {
   const lanes: LaneBox[] = [];
   const pos: Layout["pos"] = {};
   let y = 30;
   for (const def of LANE_DEFS) {
     const inLane = roster.filter((a) => laneFor(a) === def.key);
     if (!inLane.length) continue;
-    // four agents read better as two pairs (e.g. Sizer | Aligner × 2) than 3 + 1;
+    // four agents read better as two pairs than 3 + 1;
     // builders are always a row of three: Builder | ↳ Coder | ↳ Styler
     const per = def.key === "build" ? 3 : inLane.length === 4 ? 2 : PER_ROW;
     const rows = Math.ceil(inLane.length / per);
@@ -52,10 +49,7 @@ function layoutFor(roster: RosterAgent[], mode: string): Layout {
       const inRow = Math.min(per, inLane.length - row * per);
       pos[a.id] = { x: 160 + ((i % per) - (inRow - 1) / 2) * 100, y: y + row * ROW_H };
     });
-    // every page runs the Planner → Builder → Critic crew now
-    const crew = inLane.some((a) => a.op === "build") || roster.some((a) => a.op === "build");
-    const label = (crew ? def.home : mode === "report" ? def.report : mode === "page" ? def.page : undefined) ?? def.label;
-    lanes.push({ key: def.key, label, y, h });
+    lanes.push({ key: def.key, label: def.label, y, h });
     y += h + 24;
   }
   const at = Object.fromEntries(lanes.map((l) => [l.key, l])) as Record<Lane, LaneBox | undefined>;
@@ -66,15 +60,6 @@ function layoutFor(roster: RosterAgent[], mode: string): Layout {
   for (let i = 0; i < lanes.length - 1; i++) {
     edges.push({ from: lanes[i].key, to: lanes[i + 1].key, d: `M160 ${bot(lanes[i]) - 1} V${top(lanes[i + 1]) + 1}` });
   }
-  // bypasses on the sides
-  const side = (from: Lane, to: Lane, x: number) => {
-    const a = at[from];
-    const b = at[to];
-    if (a && b && lanes.indexOf(b) - lanes.indexOf(a) > 1) edges.push({ from, to, d: `M${x} ${a.y} V${b.y}` });
-  };
-  side("plan", "style", 10);
-  side("code", "review", 310);
-  side("style", "review", 302);
   // the Critic sends fixes back up to the builder that made the component
   const rv = at.review;
   const bd = at.build;
@@ -124,7 +109,7 @@ export function ObsWindow() {
 function GraphTab() {
   const engine = useSwarm();
   const roster = useSwarmState((s) => s.roster);
-  const { lanes, pos: POS, edges, h: VB_H } = useMemo(() => layoutFor(roster, engine.rosterName), [roster, engine]);
+  const { lanes, pos: POS, edges, h: VB_H } = useMemo(() => layoutFor(roster), [roster]);
   const agents = useSwarmState((s) => s.agents);
   const laneOf = (id: string) => laneFor(engine.def(id));
   const pulses = useSwarmState((s) => s.pulses);

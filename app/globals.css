@@ -228,12 +228,6 @@ h4 {
 /* ----------------------------------------------------------------------------
    4 · REUSABLE PRIMITIVES
    --------------------------------------------------------------------------- */
-.u-container {
-  width: 100%;
-  max-width: var(--container-wide);
-  margin-inline: auto;
-  padding-inline: clamp(1.4rem, 4vw, 3.2rem);
-}
 
 /* Monospace "chrome" label — section indices, tags, captions, readouts. */
 .u-mono {
@@ -241,66 +235,6 @@ h4 {
   font-size: 0.72rem;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-}
-
-/* Eyebrow with leading index tick. */
-.u-eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.7rem;
-  font-family: var(--font-mono);
-  font-size: 0.74rem;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-.u-eyebrow::before {
-  content: "";
-  width: 1.8rem;
-  height: 1px;
-  background: var(--accent);
-}
-
-.u-hairline {
-  height: 1px;
-  width: 100%;
-  background: var(--line);
-}
-
-/* Underline-on-hover inline link. */
-.u-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-family: var(--font-mono);
-  font-size: 0.78rem;
-  letter-spacing: 0.08em;
-  color: var(--ink);
-  position: relative;
-}
-.u-link::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  bottom: -3px;
-  height: 1px;
-  width: 100%;
-  background: currentColor;
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform 0.4s var(--ease-out);
-}
-.u-link:hover {
-  color: var(--accent);
-}
-.u-link:hover::after {
-  transform: scaleX(1);
-}
-.u-link .u-arrow {
-  transition: transform 0.4s var(--ease-out);
-}
-.u-link:hover .u-arrow {
-  transform: translateX(0.35rem);
 }
 
 /* ----------------------------------------------------------------------------

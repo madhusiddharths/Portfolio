@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
+import { skillHref } from "@/lib/projects";
 
 export type SkillRow = { name: string; icon: string | null; uses: number };
 
@@ -44,7 +45,7 @@ export function RailSkills({ domain, repo, skills }: { domain: string; repo: str
       <ul className="rs-list" data-lenis-prevent>
         {skills.map((s) => (
           <li key={s.name}>
-            <Link href={`/work/?skill=${encodeURIComponent(s.name)}`} title={`Projects using ${s.name}`}>
+            <Link href={skillHref(s.name)} title={`Projects using ${s.name}`}>
               {s.icon ? <img src={s.icon} alt="" width={14} height={14} loading="lazy" /> : <i className="rs-dot" />}
               <span className="rs-name">{s.name}</span>
               <span className="rs-uses">

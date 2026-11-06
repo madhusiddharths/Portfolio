@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import {
   getProject,
   CASE_STUDY_SLUGS,
+  CASE_STUDIES,
   PROJECTS,
   techIcon,
 } from "@/lib/projects";
@@ -51,8 +52,6 @@ export async function generateMetadata({
   };
 }
 
-const STUDY_PROJECTS = PROJECTS.filter((p) => p.hasCaseStudy);
-
 export default async function CaseStudyPage({
   params,
 }: {
@@ -65,12 +64,12 @@ export default async function CaseStudyPage({
   const data = loadCaseStudy(slug);
   if (!data) notFound();
 
-  const pos = STUDY_PROJECTS.findIndex((p) => p.slug === slug);
-  const next = STUDY_PROJECTS[(pos + 1) % STUDY_PROJECTS.length];
+  const pos = CASE_STUDIES.findIndex((p) => p.slug === slug);
+  const next = CASE_STUDIES[(pos + 1) % CASE_STUDIES.length];
   const pipe = getPipeline(slug);
   const order = data.toc.map((t) => t.id);
   const labels = Object.fromEntries(data.toc.map((t) => [t.id, t.label]));
-  const others = STUDY_PROJECTS.filter((p) => p.slug !== slug).map((p) => ({ slug: p.slug, name: p.name, index: p.index }));
+  const others = CASE_STUDIES.filter((p) => p.slug !== slug).map((p) => ({ slug: p.slug, name: p.name, index: p.index }));
   const skills = project.tech.map((t) => ({
     name: t,
     icon: techIcon(t) ?? null,

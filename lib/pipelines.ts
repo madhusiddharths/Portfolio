@@ -31,20 +31,6 @@ export type Pipeline = {
   edges: PEdge[];
 };
 
-export const KIND_LABEL: Record<NodeKind, string> = {
-  source: "source",
-  ingest: "ingest",
-  stream: "stream",
-  store: "store",
-  transform: "transform",
-  model: "model",
-  agent: "agent",
-  eval: "eval",
-  serve: "serve",
-  ui: "ui",
-  ops: "ops",
-};
-
 export const PIPELINES: Record<string, Pipeline> = {
   /* ------------------------------------------------------------------ */
   "tool-router-ladder": {

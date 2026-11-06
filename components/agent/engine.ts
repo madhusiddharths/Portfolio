@@ -1,20 +1,19 @@
 /* =============================================================================
    Swarm engine — the "agentic browser" build.
-   A tiny external store + a pipeline of agents. When a section scrolls into
-   view its [data-build] nodes enter the pipeline, in this order:
+   A tiny external store + a crew of agents. When a section scrolls into
+   view its [data-build] nodes go through the crew, in this order:
 
-     Planner    create  frames a block (deliberately a little off-size / off-grid)
-     Coder ×2   write   types the text in — raw, unstyled markup
-     Stylist    style   applies the styles and places images / icons
-       ↳ Sizer  resize  sub-agent: drags the corner to the real size
-       ↳ Aligner place  sub-agent: nudges the block onto the grid
-     Critic     review  walks the finished section and fixes the Stylist's
+     Planner    create  scans a segment and hands its components to the Builders
+     Builder    build   owns one component end to end:
+       ↳ Coder          sub-agent: streams the text in — raw, unstyled markup
+       ↳ Styler         sub-agent: styles it a beat behind and places the media
+     Critic     review  walks each finished segment and sends the Styler's
                         mistakes (an overlap, low contrast, cramped kerning)
+                        back to the Builder that made them
 
-   Each op has one queue; every agent that owns the op pulls from it, so the
-   two Coders share the writing.
+   Each op has one queue; every agent that owns the op pulls from it.
 
-   On the landing page the run behaves like a real orchestrated job:
+   Every page runs the crew like a real orchestrated job:
      · a section starts only when the reader stops on it (not when a minimap
        jump scrolls through it),
      · nothing is built until a Planner has scanned its segment,
@@ -28,58 +27,29 @@
 
 import { animate, motionValue, type MotionValue } from "motion/react";
 
-export const AGENTS = [
+/**
+ * The crew every page starts with — Planner, one Builder (+ its Coder and
+ * Styler), Critic — spawning more Builders as the components pile up. A
+ * Builder owns one component end to end; its Coder and Styler work on it at
+ * the same time.
+ */
+const AGENTS = [
   { id: "planner", name: "Planner·1", op: "create", role: "frames blocks", color: "#c8ff4d" },
-  { id: "planner2", name: "Planner·2", op: "create", role: "frames blocks", color: "#8fe36a" },
-  { id: "coder", name: "Coder·1", op: "write", role: "writes markup", color: "#4de1ff" },
-  { id: "coder2", name: "Coder·2", op: "write", role: "writes markup", color: "#6f9bff" },
-  { id: "coder3", name: "Coder·3", op: "write", role: "writes markup", color: "#3fd0c0" },
-  { id: "coder4", name: "Coder·4", op: "write", role: "writes markup", color: "#8ab4ff" },
-  { id: "coder5", name: "Coder·5", op: "write", role: "writes markup", color: "#5fe3ff" },
-  { id: "coder6", name: "Coder·6", op: "write", role: "writes markup", color: "#4fb8a8" },
-  { id: "stylist", name: "Stylist·1", op: "style", role: "styles + places media", color: "#ff6bd6" },
-  { id: "stylist2", name: "Stylist·2", op: "style", role: "styles + places media", color: "#ff8f9f" },
-  { id: "stylist3", name: "Stylist·3", op: "style", role: "styles + places media", color: "#e58cff" },
-  { id: "sizer", name: "Sizer", op: "resize", role: "stylist sub-agent", color: "#a78bff", parent: "stylist" },
-  { id: "aligner", name: "Aligner", op: "place", role: "stylist sub-agent", color: "#5dffc4", parent: "stylist" },
-  { id: "sizer2", name: "Sizer·2", op: "resize", role: "stylist sub-agent", color: "#c4b0ff", parent: "stylist2" },
-  { id: "aligner2", name: "Aligner·2", op: "place", role: "stylist sub-agent", color: "#9dffd9", parent: "stylist2" },
-  // the landing page's crew: a Builder owns one component end to end, and its
-  // Coder and Styler sub-agents work on it at the same time
   { id: "builder", name: "Builder·1", op: "build", role: "builds one component end to end", color: "#9fd8ff" },
   { id: "bcoder", name: "Coder·1", op: "write", role: "builder sub-agent · writes", color: "#4de1ff", parent: "builder", driven: true },
   { id: "bstyler", name: "Styler·1", op: "style", role: "builder sub-agent · styles, sizes, aligns", color: "#ff6bd6", parent: "builder", driven: true },
   { id: "critic", name: "Critic·1", op: "review", role: "reviews + fixes", color: "#ffb547" },
-  { id: "critic2", name: "Critic·2", op: "review", role: "reviews + fixes", color: "#ffd56b" },
 ] as const;
 
-type StaticId = (typeof AGENTS)[number]["id"];
 /** Static agents use their AGENTS id; agents spawned at runtime get a generated one. */
 export type AgentId = string;
 
-/**
- * Who is on shift. The landing page is a design job (planners, stylists and
- * their sub-agents, critics); a field report is mostly text, so it gets a
- * planner for the figures, six coders writing in parallel, one stylist for
- * media and one critic. The other pages (the work index) are rows of short
- * labels, so they get a styling crew: three stylists and two Sizer / Aligner
- * pairs, so the last rows are fixed side by side rather than one after another.
- */
-export const ROSTERS = {
-  // the landing page starts lean — Planner, one Builder (+ its Coder and Styler),
-  // Critic — and spawns more Builders as the components pile up
-  home: ["planner", "builder", "bcoder", "bstyler", "critic"],
-  // field reports and the other pages run the same crew; reports still only
-  // build what the reader can see, and the work index types faster
-  report: ["planner", "builder", "bcoder", "bstyler", "critic"],
-  page: ["planner", "builder", "bcoder", "bstyler", "critic"],
-} as const satisfies Record<string, readonly StaticId[]>;
-export type RosterName = keyof typeof ROSTERS;
-export type Op = (typeof AGENTS)[number]["op"];
+/** Which page the crew is on: reports only build what the reader can see, and the work index types faster. */
+export type RosterName = "home" | "report" | "page";
+type Op = (typeof AGENTS)[number]["op"];
 /** One agent on shift: a static one from AGENTS, or one spawned to split a backlog. */
 /** `driven`: a sub-agent its parent drives directly — it has no queue of its own. */
 export type AgentDef = { id: AgentId; name: string; op: Op; role: string; color: string; parent?: AgentId; spawned?: boolean; driven?: boolean };
-export type RosterAgent = AgentDef;
 export type Speaker = AgentId | "user" | "router" | "system";
 export type LogLine = { id: number; hash: string; t: string; who: Speaker; text: string; tone?: "ok" | "dim" | "accent" | "warn" };
 export type SectionPhase = "idle" | "building" | "review" | "done";
@@ -113,10 +83,9 @@ type Job = { op: Op; section: HTMLElement; el?: HTMLElement; seg?: HTMLElement; 
 /** a Critic's finding, sent back to the Builder that built the node */
 type Fix = { el: HTMLElement; defect: Defect; section: HTMLElement; seg: HTMLElement };
 type Cursor = { x: MotionValue<number>; y: MotionValue<number>; o: MotionValue<number> };
-type Pose = { dx: number; dy: number; sx: number; sy: number };
 type Box = { x: number; y: number; w: number; h: number };
 
-const OPS: Op[] = ["create", "build", "write", "style", "resize", "place", "review"];
+const OPS: Op[] = ["create", "build", "write", "style", "review"];
 
 const DEFECT_NOTE: Record<Defect, [string, string]> = {
   overlap: ["✗ overlaps the line above", "✓ margin restored"],
@@ -136,8 +105,6 @@ const RETIRE_MS = 3200;
 const SPAWN_COLORS: Partial<Record<Op, string[]>> = {
   create: ["#8fe36a", "#a8f060", "#d9ff8f", "#6fd35a"],
   build: ["#b9c6ff", "#a6f0e0", "#ffd0a6", "#d6b3ff"],
-  write: ["#6f9bff", "#3fd0c0", "#8ab4ff", "#5fe3ff"],
-  style: ["#ff8f9f", "#e58cff", "#ffa3c4", "#c77dff"],
   review: ["#ffd56b", "#ffc98a", "#f5a623", "#ffe39a"],
 };
 /** a spawned Builder's sub-agents, per Builder */
@@ -173,7 +140,6 @@ function boundsOf(els: HTMLElement[]) {
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 const rand = (a: number, b: number) => a + Math.random() * (b - a);
-const sign = () => (Math.random() < 0.5 ? -1 : 1);
 
 /* ---------------------------------------------------------------------------
    Token streaming for the Coders. Text is never rewritten: the part not yet
@@ -215,9 +181,8 @@ function chunkEnds(words: number): number[] {
 }
 const stamp = () => new Date().toLocaleTimeString("en-GB", { hour12: false });
 const hex = () => Math.floor(Math.random() * 0xfffffff).toString(16).padStart(7, "0");
-/** One curve for the CSS wipe, the WAAPI resize/nudge and the cursor drag. */
+/** One curve for the CSS wipe and the cursor drag. */
 const EASE: [number, number, number, number] = [0.65, 0, 0.35, 1];
-const EASE_CSS = "cubic-bezier(0.65, 0, 0.35, 1)";
 const FLY: [number, number, number, number] = [0.5, 0, 0.2, 1];
 
 let lineId = 0;
@@ -227,8 +192,6 @@ export class SwarmEngine {
   state: SwarmState;
   cursors: Record<AgentId, Cursor>;
   readonly rosterName: RosterName;
-  /** the Planner → Builder (Coder + Styler) → Critic crew: plan first, build each component in one pass */
-  readonly crew: boolean;
   /** the agents on shift, in display order (also in state, for React) */
   get roster() {
     return this.state.roster;
@@ -254,8 +217,6 @@ export class SwarmEngine {
   private root: HTMLElement | null = null;
   private queues = {} as Record<Op, Job[]>;
   private waiters = {} as Record<Op, (() => void)[]>;
-  private plans = new WeakMap<HTMLElement, Op[]>();
-  private poses = new WeakMap<HTMLElement, Pose>();
   private defects = new WeakMap<HTMLElement, Defect>();
   private gen = 0;
   /** text nodes a Coder is streaming right now: the hidden range and its caret */
@@ -279,11 +240,9 @@ export class SwarmEngine {
 
   constructor(roster: RosterName = "home") {
     this.rosterName = roster;
-    this.crew = ROSTERS[roster].includes("builder" as never);
-    const ids = new Set<string>(ROSTERS[roster]);
     AGENTS.forEach((a) => this.defs.set(a.id, { ...a } as AgentDef));
     // a sub-agent's display order follows its parent
-    this.baseRoster = AGENTS.filter((a) => ids.has(a.id)).map((a) => this.defs.get(a.id)!);
+    this.baseRoster = AGENTS.map((a) => this.defs.get(a.id)!);
     const agents = {} as SwarmState["agents"];
     const cursors = {} as Record<AgentId, Cursor>;
     AGENTS.forEach((a, i) => {
@@ -383,12 +342,8 @@ export class SwarmEngine {
           if (e.isIntersecting) this.visible.add(el);
           else this.visible.delete(el);
           if (e.isIntersecting && meta && !meta.triggered) {
-            // the landing page only starts a section the reader actually stops at
-            if (this.crew) this.arm(el);
-            else {
-              meta.triggered = true;
-              this.enqueue(el);
-            }
+            // only start a section the reader actually stops at
+            this.arm(el);
           }
         }
       },
@@ -538,7 +493,7 @@ export class SwarmEngine {
   /* ---- autoscaling ------------------------------------------------------- */
   /** Spawn another agent for `op` when each one has SPAWN_AT or more jobs waiting. */
   private maybeSpawn(op: Op) {
-    if (!this.crew || !this.state.enabled) return;
+    if (!this.state.enabled) return;
     const pool = SPAWN_COLORS[op];
     const owners = this.owners[op];
     if (!pool || !owners.length) return;
@@ -663,53 +618,6 @@ export class SwarmEngine {
   }
 
   /* ---- planning ---------------------------------------------------------- */
-  /**
-   * Which stages a node goes through. `data-ops` on the node overrides.
-   * Text is always written first (Coder), then styled (Stylist); one-line
-   * labels are written straight into their final style.
-   */
-  private plan(el: HTMLElement): Op[] {
-    // the landing page: one Builder takes the whole node — its Coder and Styler work it together
-    if (this.crew) return ["build"];
-    const staffed = (ops: Op[]) => ops.filter((o) => this.owners[o].length > 0);
-    const forced = el.dataset.ops;
-    if (forced) return staffed(forced.split(",").map((s) => s.trim() as Op).filter((o) => OPS.includes(o)));
-    if (this.rosterName === "report") {
-      // prose is written straight into its final style; figures and code are framed and styled
-      const kind = el.dataset.build ?? "block";
-      const hasText = (el.textContent ?? "").trim().length > 0;
-      if (kind === "type" || kind === "para" || kind === "list") return ["write"];
-      if (kind === "frame") return ["create"];
-      return staffed(hasText && kind !== "media" ? ["create", "write", "style"] : ["create", "style"]);
-    }
-    const ops = staffed(this.basePlan(el));
-    if (this.rosterName === "page" && ops.includes("resize")) {
-      // On the index most rows land right the first time: only about a third are
-      // framed off-size / off-grid. The rest skip the Planner, Sizer and Aligner.
-      if (Math.random() > 0.35) return ops.filter((o) => o !== "create" && o !== "resize" && o !== "place");
-      // The ones that need fixing get sized and aligned straight after framing,
-      // while the coders and stylists work on other rows — layout runs in
-      // parallel with colour instead of queueing up behind it, so the Critic
-      // can follow the last stylist almost immediately.
-      return ["create", "resize", "place", ...ops.filter((o) => o !== "create" && o !== "resize" && o !== "place")];
-    }
-    return ops;
-  }
-
-  private basePlan(el: HTMLElement): Op[] {
-    const kind = el.dataset.build ?? "block";
-    if (kind === "frame") return ["create"];
-    const r = el.getBoundingClientRect();
-    const hasText = (el.textContent ?? "").trim().length > 0;
-    if (kind === "type" && r.height < 34) return ["write"];
-    const ops: Op[] = [];
-    if (kind !== "type" || r.height > 60) ops.push("create");
-    if (hasText) ops.push("write");
-    ops.push("style");
-    if ((kind === "block" || kind === "media" || kind === "fill") && r.width > 150 && r.height > 56) ops.push("resize", "place");
-    return ops;
-  }
-
   /** The Stylist's mistakes for this section — the Critic will catch them. */
   private planDefects(section: HTMLElement, nodes: HTMLElement[]) {
     let n = 0;
@@ -722,9 +630,8 @@ export class SwarmEngine {
       }
     }
     const pool = nodes.filter((el) => {
-      const ops = this.plans.get(el)!;
       const kind = el.dataset.build;
-      return (ops.includes("style") || ops.includes("build")) && !this.defects.has(el) && (kind === "type" || kind === "para") && (el.textContent ?? "").trim().length > 12;
+      return !this.defects.has(el) && (kind === "type" || kind === "para") && (el.textContent ?? "").trim().length > 12;
     });
     const want = 1 + (section.id !== "home" && Math.random() < 0.35 ? 1 : 0);
     while (n < want && pool.length) {
@@ -748,10 +655,7 @@ export class SwarmEngine {
       if (!all.some((n) => n.dataset.queued)) this.finishSection(section);
       return;
     }
-    nodes.forEach((n) => {
-      n.dataset.queued = "1";
-      this.plans.set(n, this.plan(n));
-    });
+    nodes.forEach((n) => (n.dataset.queued = "1"));
     if (!section.dataset.defectsPlanned) {
       section.dataset.defectsPlanned = "1";
       this.planDefects(section, nodes);
@@ -767,40 +671,28 @@ export class SwarmEngine {
     if (this.state.startedAt === null) this.set({ startedAt: performance.now() });
     section.dataset.phase = "building";
     this.setSection(section.id, "building");
-    if (this.crew) {
-      // Nothing is handed out until a Planner has scanned it: one planning job
-      // per segment, so the part on screen can be planned (and built) first.
-      // The page chrome around the components (search box, table header,
-      // section rules) is hidden too, and revealed by the same sweep.
-      const bySeg = new Map<HTMLElement, { plan: HTMLElement[]; chrome: HTMLElement[] }>();
-      const slot = (seg: HTMLElement) => bySeg.get(seg) ?? (bySeg.set(seg, { plan: [], chrome: [] }), bySeg.get(seg)!);
-      nodes.forEach((n) => slot(this.segOf(n, section)).plan.push(n));
-      this.chromeOf(section)
-        .filter((c) => !this.chromeQueued.has(c))
-        .forEach((c) => {
-          this.chromeQueued.add(c);
-          slot(this.segOf(c, section)).chrome.push(c);
-        });
-      this.log("system", `task ${section.dataset.sec ?? section.id} · ${nodes.length} nodes in ${bySeg.size} segment${bySeg.size > 1 ? "s" : ""} → planners`, "dim");
-      bySeg.forEach(({ plan, chrome }, seg) => this.push({ op: "create", section, seg, plan, chrome }));
-      return;
-    }
-    const framed = nodes.filter((n) => this.plans.get(n)![0] === "create").length;
-    this.log("planner", `plan ${section.dataset.sec ?? section.id} · ${nodes.length} nodes · ${framed} frames, rest straight to coders`);
-    nodes.forEach((el) => this.push({ op: this.plans.get(el)![0], section, el }));
+    // Nothing is handed out until a Planner has scanned it: one planning job
+    // per segment, so the part on screen can be planned (and built) first.
+    // The page chrome around the components (search box, table header,
+    // section rules) is hidden too, and revealed by the same sweep.
+    const bySeg = new Map<HTMLElement, { plan: HTMLElement[]; chrome: HTMLElement[] }>();
+    const slot = (seg: HTMLElement) => bySeg.get(seg) ?? (bySeg.set(seg, { plan: [], chrome: [] }), bySeg.get(seg)!);
+    nodes.forEach((n) => slot(this.segOf(n, section)).plan.push(n));
+    this.chromeOf(section)
+      .filter((c) => !this.chromeQueued.has(c))
+      .forEach((c) => {
+        this.chromeQueued.add(c);
+        slot(this.segOf(c, section)).chrome.push(c);
+      });
+    this.log("system", `task ${section.dataset.sec ?? section.id} · ${nodes.length} nodes in ${bySeg.size} segment${bySeg.size > 1 ? "s" : ""} → planners`, "dim");
+    bySeg.forEach(({ plan, chrome }, seg) => this.push({ op: "create", section, seg, plan, chrome }));
   }
 
   private push(job: Job, from?: AgentId) {
     this.queues[job.op].push(job);
     const owners = this.owners[job.op];
     const to = owners.find((id) => this.state.agents[id].status === "idle") ?? owners[0];
-    if (from && from !== to) {
-      this.set({ pulses: [...this.state.pulses.slice(-12), { id: ++pulseId, from, to }] });
-      if (this.def(to).parent && this.def(from).op === "style") {
-        this.spawnFrom[to] = from;
-        this.log(from, `spawn ${this.def(to).name.toLowerCase()} → ${job.el?.dataset.label ?? ""}`, "dim");
-      }
-    }
+    if (from && from !== to) this.set({ pulses: [...this.state.pulses.slice(-12), { id: ++pulseId, from, to }] });
     this.syncQueue(job.op);
     const w = this.waiters[job.op].shift();
     w?.();
@@ -808,59 +700,16 @@ export class SwarmEngine {
   }
 
   private wakeAll() {
-    OPS.forEach((op) => {
-      const w = this.waiters[op];
-      this.waiters[op] = [];
-      w.forEach((r) => r());
-    });
+    OPS.forEach((op) => this.wakeOp(op));
   }
 
   /**
-   * Next job: on-screen sections first (jump ahead and the swarm follows),
-   * then the earliest node in the page — so a block is finished top-down and
-   * handed to a Critic while the builders move on to the next one.
-   */
-  private take(op: Op) {
-    if (this.crew) return this.takeVisibleFirst(op);
-    const q = this.queues[op];
-    if (q.length === 0) return undefined;
-    const onScreen = q.some((j) => this.visible.has(j.section));
-    // A report is one long section, read inside IDE chrome: agents only take
-    // work that is actually visible — between the browser bar and the bottom
-    // panel — and wait for the reader to scroll to the rest.
-    const report = this.rosterName === "report";
-    const band = report ? this.visibleBand() : null;
-    const inBand = (j: Job) => {
-      if (!band) return true;
-      const r = (j.el ?? j.seg ?? j.section).getBoundingClientRect();
-      return r.bottom > band.top + 8 && r.top < band.bottom - 16;
-    };
-    if (report && !q.some(inBand)) return undefined;
-    let best = -1;
-    for (let i = 0; i < q.length; i++) {
-      const j = q[i];
-      if (onScreen && !this.visible.has(j.section)) continue;
-      if (!inBand(j)) continue;
-      if (best < 0) {
-        best = i;
-        continue;
-      }
-      const a = q[best].el ?? q[best].seg ?? q[best].section;
-      const b = j.el ?? j.seg ?? j.section;
-      if (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_PRECEDING) best = i;
-    }
-    const job = q.splice(Math.max(0, best), 1)[0];
-    this.syncQueue(op);
-    return job;
-  }
-
-  /**
-   * Landing page: whatever is on screen right now comes first — even a sliver
+   * Next job: whatever is on screen right now comes first — even a sliver
    * of a section — top-down; then the rest, nearest to the viewport first.
    * For Planners, planning a segment beats framing a block in the same band,
    * since a plan unblocks everyone else.
    */
-  private takeVisibleFirst(op: Op) {
+  private take(op: Op) {
     const q = this.queues[op];
     if (q.length === 0) return undefined;
     const band = this.visibleBand();
@@ -958,26 +807,6 @@ export class SwarmEngine {
     const o = this.root!.getBoundingClientRect();
     return { x: r.left - o.left, y: r.top - o.top, w: r.width, h: r.height };
   }
-  /** The node's box with its build pose (scale + offset) taken out. */
-  private natural(el: HTMLElement): Box {
-    const r = this.rel(el);
-    const p = this.poses.get(el);
-    if (!p) return r;
-    return { x: r.x - p.dx, y: r.y - p.dy, w: r.w / p.sx, h: r.h / p.sy };
-  }
-  private applyPose(el: HTMLElement, p: Pose) {
-    this.poses.set(el, p);
-    el.style.transformOrigin = "0 0";
-    el.style.scale = p.sx === 1 && p.sy === 1 ? "" : `${p.sx} ${p.sy}`;
-    el.style.translate = p.dx === 0 && p.dy === 0 ? "" : `${p.dx}px ${p.dy}px`;
-  }
-  private clearPose(el: HTMLElement) {
-    this.poses.delete(el);
-    el.style.removeProperty("transform-origin");
-    el.style.removeProperty("scale");
-    el.style.removeProperty("translate");
-  }
-
   /** on a report, keep a cursor target inside the visible band (root coordinates) */
   private clampY(y: number) {
     if (this.rosterName !== "report" || !this.root) return y;
@@ -1016,148 +845,12 @@ export class SwarmEngine {
   private async perform(id: AgentId, job: Job, gen: number) {
     if (job.op === "review") return this.review(id, job.section, job.seg ?? job.section, gen);
     if (job.plan) return this.planSeg(id, job, gen);
-    if (job.op === "build") return this.buildNode(id, job, gen);
-    const el = job.el!;
-    if (!el.isConnected || !this.root) return this.tick(job.section, el);
-    const label = el.dataset.label ?? el.dataset.build ?? "node";
-    const ops = this.plans.get(el) ?? [];
-    const t0 = performance.now();
-    let detail = "";
-
-    this.setAgent(id, { status: "moving", op: job.op, target: label });
-    el.style.setProperty("--agent", this.def(id).color);
-    switch (job.op) {
-      case "create": {
-        const b = this.natural(el);
-        const pose: Pose = {
-          sx: ops.includes("resize") ? rand(0.84, 0.92) : 1,
-          sy: ops.includes("resize") ? rand(0.8, 0.9) : 1,
-          dx: ops.includes("place") ? sign() * rand(10, 22) : 0,
-          dy: ops.includes("place") ? sign() * rand(6, 14) : 0,
-        };
-        this.applyPose(el, pose);
-        const x0 = b.x + pose.dx;
-        const y0 = b.y + pose.dy;
-        if (!(await this.fly(id, x0 - 4, y0 - 4, gen))) return;
-        const ms = Math.round(clamp(420 + Math.hypot(b.w, b.h) * 0.4, 520, 950));
-        el.style.setProperty("--dur", `${ms}ms`);
-        el.dataset.state = "creating";
-        this.setAgent(id, { status: "working" });
-        await Promise.all([sleep(ms), this.drag(id, x0 + b.w * pose.sx + 2, y0 + b.h * pose.sy + 2, ms)]);
-        if (gen !== this.gen) return;
-        detail = `${Math.round(b.w * pose.sx)}×${Math.round(b.h * pose.sy)}`;
-        el.dataset.state = "framed";
-        break;
-      }
-      case "write": {
-        const b = this.rel(el);
-        const kind = el.dataset.build ?? "block";
-        const tx = b.x + Math.min(10, b.w * 0.1);
-        const ty = b.y + Math.min(b.h * 0.55, 22);
-        if (!(await this.fly(id, tx, ty, gen))) return;
-        const text = (el.textContent ?? "").trim().length;
-        // index rows are short labels — they type in faster than prose
-        const ms = this.rosterName === "page" ? Math.round(clamp(text * 6, 450, 850)) : Math.round(kind === "type" ? clamp(text * 22, 500, 1300) : clamp(text * 3.2, 800, 1600));
-        el.style.setProperty("--dur", `${ms}ms`);
-        el.style.setProperty("--steps", String(clamp(Math.round(text / 1.4), 8, 48)));
-        // text lands unstyled when a Stylist pass follows
-        if (ops.includes("style")) el.dataset.raw = "1";
-        // prose, headings and lists stream in word by word; other nodes keep the wipe
-        const words = kind === "type" || kind === "para" || kind === "list" ? this.streamStart(el, id) : null;
-        el.dataset.mode = words ? "stream" : "write";
-        el.dataset.state = "building";
-        this.setAgent(id, { status: "working" });
-        await Promise.all([
-          words ? this.streamRun(el, words, ms, gen) : sleep(ms),
-          kind === "type"
-            ? this.drag(id, b.x + b.w, ty, ms, "linear")
-            : this.drag(id, tx + rand(0, Math.min(60, b.w * 0.3)), b.y + b.h - 8, ms, "linear"),
-        ]);
-        if (gen !== this.gen) return;
-        detail = words ? `${words.length} words streamed` : `${text} chars`;
-        if (ops.includes("style")) el.dataset.state = "raw";
-        break;
-      }
-      case "style": {
-        const b = this.rel(el);
-        const raw = el.dataset.raw === "1";
-        if (!(await this.fly(id, b.x + Math.min(14, b.w * 0.1), b.y + Math.min(b.h * 0.5, 26), gen))) return;
-        const media = el.querySelectorAll("img, svg").length;
-        const ms = raw ? Math.round(clamp(520 + b.h * 0.6, 600, 1000)) : 900;
-        el.style.setProperty("--dur", `${ms}ms`);
-        this.setAgent(id, { status: "working" });
-        if (raw) {
-          // styles transition in while the brush crosses the node
-          el.dataset.state = "styling";
-          delete el.dataset.raw;
-        } else {
-          // nothing written here (pure media) — paint it in
-          el.dataset.mode = "paint";
-          el.dataset.state = "building";
-        }
-        await Promise.all([sleep(ms), this.drag(id, b.x + b.w * 0.88, b.y + b.h * 0.72, ms)]);
-        if (gen !== this.gen) return;
-        detail = media ? `placed ${media} icon${media > 1 ? "s" : ""}` : raw ? "type · color · surface" : "surface";
-        const defect = this.defects.get(el);
-        if (defect) el.dataset.defect = defect; // a mistake the Stylist doesn't notice
-        break;
-      }
-      case "resize": {
-        const p = this.poses.get(el) ?? { dx: 0, dy: 0, sx: 1, sy: 1 };
-        const b = this.natural(el);
-        const x0 = b.x + p.dx;
-        const y0 = b.y + p.dy;
-        if (!(await this.fly(id, x0 + b.w * p.sx, y0 + b.h * p.sy, gen))) return;
-        el.dataset.state = "resizing";
-        this.setAgent(id, { status: "working" });
-        await sleep(160); // grab the handle
-        const ms = 800;
-        const anim = el.animate([{ scale: `${p.sx} ${p.sy}` }, { scale: "1 1" }], { duration: ms, easing: EASE_CSS, fill: "forwards" });
-        await Promise.all([anim.finished.catch(() => {}), this.drag(id, x0 + b.w, y0 + b.h, ms)]);
-        this.applyPose(el, { ...p, sx: 1, sy: 1 });
-        anim.cancel();
-        if (gen !== this.gen) return;
-        detail = `${Math.round(b.w * p.sx)}×${Math.round(b.h * p.sy)} → ${Math.round(b.w)}×${Math.round(b.h)}`;
-        break;
-      }
-      case "place": {
-        const p = this.poses.get(el) ?? { dx: 0, dy: 0, sx: 1, sy: 1 };
-        const b = this.natural(el);
-        const gx = b.x + p.dx + Math.min(b.w * 0.5, 120);
-        const gy = b.y + p.dy + Math.min(b.h * 0.5, 80);
-        if (!(await this.fly(id, gx, gy, gen))) return;
-        el.dataset.state = "placing";
-        this.setAgent(id, { status: "working" });
-        await sleep(180);
-        const ms = 700;
-        const anim = el.animate([{ translate: `${p.dx}px ${p.dy}px` }, { translate: "0px 0px" }], { duration: ms, easing: EASE_CSS, fill: "forwards" });
-        await Promise.all([anim.finished.catch(() => {}), this.drag(id, gx - p.dx, gy - p.dy, ms)]);
-        this.applyPose(el, { ...p, dx: 0, dy: 0 });
-        anim.cancel();
-        if (gen !== this.gen) return;
-        detail = `Δ(${Math.round(p.dx)}, ${Math.round(p.dy)}) → grid`;
-        break;
-      }
-    }
-
-    const ms = Math.round(performance.now() - t0);
-    this.log(id, `${job.op} ${label}${detail ? ` · ${detail}` : ""} · ${ms}ms`);
-    this.setAgent(id, { n: this.state.agents[id].n + 1 });
-
-    const next = ops[ops.indexOf(job.op) + 1];
-    if (next) {
-      if (next === "resize" || next === "place") el.dataset.state = "filled";
-      this.push({ op: next, section: job.section, el }, id);
-    } else {
-      this.complete(el, true);
-      this.tick(job.section, el, id);
-    }
-    await sleep(120);
+    return this.buildNode(id, job, gen);
   }
 
   /**
    * A Planner scans one segment — the part of it on screen — then hands every
-   * node to the first agent in its plan. Until this runs nobody touches it.
+   * node to the Builders. Until this runs nobody touches it.
    */
   private async planSeg(id: AgentId, job: Job, gen: number) {
     const { section } = job;
@@ -1222,17 +915,10 @@ export class SwarmEngine {
     if (gen !== this.gen) return;
     if (rest) this.push(rest);
 
-    const framed = nodes.filter((n) => this.plans.get(n)![0] === "create").length;
-    if (this.crew) this.log(id, nodes.length ? `plan ${name} · ${nodes.length} component${nodes.length > 1 ? "s" : ""} → builders${rest ? " · rest when in view" : ""}` : `plan ${name} · layout`);
-    else this.log(id, `plan ${name} · ${nodes.length} node${nodes.length > 1 ? "s" : ""} · ${framed ? `${framed} to frame, ` : ""}${nodes.length - framed} to coders`);
+    this.log(id, nodes.length ? `plan ${name} · ${nodes.length} component${nodes.length > 1 ? "s" : ""} → builders${rest ? " · rest when in view" : ""}` : `plan ${name} · layout`);
     this.setAgent(id, { n: this.state.agents[id].n + 1 });
-    // one hand-off pulse per receiving lane, not one per node
-    const pulsed = new Set<Op>();
-    nodes.forEach((el) => {
-      const op = this.plans.get(el)![0];
-      this.push({ op, section, el }, pulsed.has(op) ? undefined : id);
-      pulsed.add(op);
-    });
+    // one hand-off pulse to the Builders, not one per node
+    nodes.forEach((el, i) => this.push({ op: "build", section, el }, i ? undefined : id));
     await sleep(100);
   }
 
@@ -1271,32 +957,18 @@ export class SwarmEngine {
       this.log(id, `flag ${label} · ${DEFECT_NOTE[defect][0].slice(2)}`, "warn");
       await sleep(900);
       if (gen !== this.gen) return;
-      if (this.crew) {
-        // send it back to whoever built it: their Styler owns size, alignment, colour and type
-        const builder = this.fixerFor(el);
-        const { styler } = this.crewOf(builder);
-        this.fixQ.set(builder, [...(this.fixQ.get(builder) ?? []), { el, defect, section, seg }]);
-        this.segFixes.set(seg, (this.segFixes.get(seg) ?? 0) + 1);
-        this.log(id, `→ ${this.def(builder).name} · ${styler ? this.def(styler).name : "styler"} to fix ${label}`, "dim");
-        this.set({ pulses: [...this.state.pulses.slice(-12), { id: ++pulseId, from: id, to: styler ?? builder }] });
-        this.wakeOp("build");
-        continue;
-      }
-      el.dataset.fixing = "1";
-      delete el.dataset.defect;
-      await Promise.all([sleep(700), this.drag(id, px + 18, py + 10, 700)]);
-      el.dataset.review = "fixed";
-      el.dataset.reviewNote = DEFECT_NOTE[defect][1];
-      this.log(id, `fix ${label} · ${DEFECT_NOTE[defect][1].slice(2)}`, "ok");
-      this.set({ fixes: this.state.fixes + 1 });
-      await sleep(650);
-      delete el.dataset.review;
-      delete el.dataset.reviewNote;
-      delete el.dataset.fixing;
+      // send it back to whoever built it: their Styler owns size, alignment, colour and type
+      const builder = this.fixerFor(el);
+      const { styler } = this.crewOf(builder);
+      this.fixQ.set(builder, [...(this.fixQ.get(builder) ?? []), { el, defect, section, seg }]);
+      this.segFixes.set(seg, (this.segFixes.get(seg) ?? 0) + 1);
+      this.log(id, `→ ${this.def(builder).name} · ${styler ? this.def(styler).name : "styler"} to fix ${label}`, "dim");
+      this.set({ pulses: [...this.state.pulses.slice(-12), { id: ++pulseId, from: id, to: styler ?? builder }] });
+      this.wakeOp("build");
     }
     if (gen !== this.gen) return;
 
-    const sentBack = this.crew && broken.length > 0;
+    const sentBack = broken.length > 0;
     const fixed = broken.length ? ` · ${broken.length} fix${broken.length > 1 ? "es" : ""}${sentBack ? " sent back" : ""}` : "";
     this.log(id, `${sentBack ? "◐" : "✓"} ${name} · ${nodes.length} nodes${fixed}`, sentBack ? "dim" : "ok");
     this.setAgent(id, { n: this.state.agents[id].n + 1 });
@@ -1463,7 +1135,6 @@ export class SwarmEngine {
   private complete(el: HTMLElement, count: boolean) {
     if (el.dataset.state === "done") return;
     el.getAnimations().forEach((a) => a.cancel());
-    this.clearPose(el);
     delete el.dataset.raw;
     delete el.dataset.mode;
     el.dataset.state = "done";
@@ -1589,7 +1260,6 @@ export class SwarmEngine {
 
   private clearMarks(n: HTMLElement) {
     n.getAnimations().forEach((a) => a.cancel());
-    this.clearPose(n);
     ["raw", "mode", "defect", "review", "reviewNote", "fixing", "planned"].forEach((k) => delete n.dataset[k]);
   }
 

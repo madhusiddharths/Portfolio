@@ -96,6 +96,11 @@ export function usesSkill(tech: string[], skill: string): boolean {
   return tech.includes(skill) || (SKILL_ALIASES[skill] ?? []).some((t) => tech.includes(t));
 }
 
+/** The /work index filtered to one skill. */
+export function skillHref(skill: string) {
+  return `/work/?skill=${encodeURIComponent(skill)}`;
+}
+
 export function techIcon(name: string): string | null {
   const p = TECH[name];
   return p ? p.replace(/ /g, "%20") : null;
@@ -383,7 +388,12 @@ export const PROJECTS: Project[] = [
 
 // Array order is display order: AI engineering first, then data science, then analytics.
 export const FEATURED = PROJECTS.filter((p) => p.featured);
-export const CASE_STUDY_SLUGS = PROJECTS.filter((p) => p.hasCaseStudy).map((p) => p.slug);
+export const CASE_STUDIES = PROJECTS.filter((p) => p.hasCaseStudy);
+export const CASE_STUDY_SLUGS = CASE_STUDIES.map((p) => p.slug);
+/** A project's field report, or the coming-soon page when it has none yet. */
+export function projectHref(p: Project) {
+  return p.hasCaseStudy ? `/work/${p.slug}/` : `/work/coming-soon/?p=${p.slug}`;
+}
 export function getProject(slug: string) {
   return PROJECTS.find((p) => p.slug === slug) ?? null;
 }

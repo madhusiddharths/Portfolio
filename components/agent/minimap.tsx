@@ -99,9 +99,19 @@ export function MiniMap({ onJump }: { onJump?: () => void }) {
   }, [engine, measure, measureVp]);
 
   useEffect(() => {
-    const onScroll = () => requestAnimationFrame(measureVp);
+    let raf = 0;
+    const onScroll = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        measureVp();
+      });
+    };
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      cancelAnimationFrame(raf);
+    };
   }, [measureVp]);
 
   function scrollToMap(clientY: number, immediate: boolean) {
