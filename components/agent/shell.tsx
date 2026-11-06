@@ -306,6 +306,7 @@ function NavWindow({ tabs, current, onDone, railTabs }: { tabs: Tab[]; current?:
     if (!tabs.some((t) => t.href === "/work/")) base.push({ id: "index", label: "all projects", hint: "/work", href: "/work/" });
     base.push({ id: "resume", label: "résumé", hint: "doc ↗", href: PROFILE.resume, external: true });
     base.push({ id: "github", label: "github", hint: "↗", href: PROFILE.github, external: true });
+    base.push({ id: "linkedin", label: "linkedin", hint: "↗", href: PROFILE.linkedin, external: true });
     return base;
   }, [tabs]);
 
