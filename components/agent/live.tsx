@@ -29,6 +29,7 @@ export function RunUsage() {
   const total = useSwarmState((s) => s.total);
   const elapsed = useSwarmState((s) => s.elapsed);
   const startedAt = useSwarmState((s) => s.startedAt);
+  const agentsOn = useSwarmState((s) => s.roster.length);
   const [now, setNow] = useState(0);
 
   useEffect(() => {
@@ -53,7 +54,7 @@ export function RunUsage() {
       </div>
       <div>
         <dt>agents</dt>
-        <dd>{engine.roster.length}</dd>
+        <dd>{agentsOn}</dd>
       </div>
     </dl>
   );
@@ -65,7 +66,8 @@ const article = (n: number) => (n === 11 || n === 18 || String(n).startsWith("8"
 
 export function BuildCredit() {
   const engine = useSwarm();
-  const n = engine.roster.length;
+  // the most agents on shift at once this run, spawned ones included
+  const n = useSwarmState((s) => s.peak);
   const elapsed = useSwarmState((s) => s.elapsed);
   const enabled = useSwarmState((s) => s.enabled);
   // Replay is a no-op under reduced motion, so the phrase stays plain text there.

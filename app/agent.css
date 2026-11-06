@@ -508,6 +508,68 @@ html:has(.ag) {
   font-size: 8.5px;
   font-weight: 700;
 }
+/* the roster changes at runtime: nodes glide to their new slot when a lane
+   reflows, and a spawned agent pops in out of the lane */
+.dag-node {
+  transition: transform 0.45s cubic-bezier(0.65, 0, 0.35, 1);
+}
+.dag-lane rect {
+  transition:
+    stroke 0.4s,
+    fill 0.4s,
+    y 0.45s cubic-bezier(0.65, 0, 0.35, 1),
+    height 0.45s cubic-bezier(0.65, 0, 0.35, 1);
+}
+/* the Critic's way back to a builder: dashed, warm when a fix is on its way */
+.dag-edge[data-fix] {
+  stroke: rgba(255, 181, 71, 0.28);
+  stroke-dasharray: 2 3;
+}
+.dag-edge[data-fix][data-hot] {
+  stroke: #ffb547;
+  stroke-dasharray: 2 3;
+  stroke-opacity: 0.9;
+}
+.dag-node[data-kind="builder"] .dag-name {
+  font-weight: 700;
+}
+.dag-node[data-spawned] .dag-box {
+  stroke-dasharray: 5 2;
+}
+.dag-node[data-spawned] > * {
+  animation: dag-spawn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+}
+@keyframes dag-spawn {
+  from {
+    opacity: 0;
+    scale: 0.6;
+  }
+}
+.obs-spawned {
+  margin-left: 3px;
+  font-style: normal;
+  font-weight: 700;
+  color: var(--c);
+  opacity: 0.75;
+}
+/* a Planner scanning a segment before anyone builds it */
+.ag [data-planning] {
+  outline: 1px dashed var(--agent, #c8ff4d);
+  outline-offset: 6px;
+  border-radius: 4px;
+  transition: outline-color 0.3s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .dag-node,
+  .dag-lane rect {
+    transition: none;
+  }
+  .dag-node[data-spawned] > * {
+    animation: none;
+  }
+}
 .obs-table {
   padding: 2px 8px 10px;
   font-size: 10.5px;
@@ -1216,6 +1278,50 @@ html:has(.ag) {
 }
 .build-on .ag [data-build="frame"]:not([data-state])::after {
   border: 1px dotted rgba(77, 225, 255, 0.16);
+}
+
+/* Every agent page: until a Planner has planned it, a node is not there at all —
+   only the page background shows (a solid cover would hide the grid behind it
+   and read as a box). Its empty box appears as the Planner's sweep passes over
+   it, with a brief flash in the Planner's colour; then the Builders take over.
+   Layout is untouched: visibility keeps the space. */
+.build-on .ag [data-build]:not([data-state]):not([data-planned]) {
+  visibility: hidden;
+}
+/* a planned node inside a not-yet-planned one (e.g. inside the playground frame) still shows */
+.build-on .ag [data-build]:is([data-planned], [data-state]) {
+  visibility: visible;
+}
+/* The rest of a section — page chrome that is not a component (a search box,
+   a table header, a rule) and the containers around components — is hidden
+   the same way until a Planner's sweep reaches it. Containers show once
+   anything inside them has been planned. */
+.build-on .ag .ag-section :not([data-build], [data-build] *, [data-planned], [data-planned] *):not(:has([data-build])) {
+  visibility: hidden;
+}
+.build-on .ag .ag-section :not([data-build], [data-build] *):has([data-build]):not(:has([data-planned])) {
+  visibility: hidden;
+}
+.build-on .ag .ag-section [data-planned]:not([data-build]) {
+  visibility: visible;
+}
+.build-on .ag [data-build][data-planned]:not([data-state]) {
+  animation: bn-planned 0.6s var(--ease) both;
+}
+@keyframes bn-planned {
+  from {
+    outline: 1px solid var(--agent, var(--wire));
+    outline-offset: 1px;
+  }
+  to {
+    outline: 1px solid transparent;
+    outline-offset: 6px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .build-on .ag [data-build][data-planned]:not([data-state]) {
+    animation: none;
+  }
 }
 
 /* done */

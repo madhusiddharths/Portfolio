@@ -45,7 +45,10 @@ export function Swarm({ children, className, task, roster = "home" }: { children
 
   useEffect(() => {
     if (!lenis) return;
-    engine.scrollTo = (t) => lenis.scrollTo(t, { duration: 1.2 });
+    engine.scrollTo = (t) => {
+      engine.jumping(1500);
+      lenis.scrollTo(t, { duration: 1.2, onComplete: () => engine.jumping(0) });
+    };
   }, [lenis, engine]);
 
   return (
@@ -60,11 +63,13 @@ export function Swarm({ children, className, task, roster = "home" }: { children
 
 function CursorLayer({ engine }: { engine: SwarmEngine }) {
   const agents = useSyncExternalStore(engine.subscribe, () => engine.state.agents, () => engine.state.agents);
+  const roster = useSyncExternalStore(engine.subscribe, () => engine.state.roster, () => engine.state.roster);
   return (
     <div className="swarm-layer" aria-hidden="true">
-      {engine.roster.map((a) => {
+      {roster.map((a) => {
         const c = engine.cursors[a.id];
         const st = agents[a.id];
+        if (!c || !st) return null;
         return (
           <motion.div
             key={a.id}
@@ -77,7 +82,7 @@ function CursorLayer({ engine }: { engine: SwarmEngine }) {
               <path d="M1.5 1.5 L16 9.2 L9.4 10.9 L6.2 17.6 Z" fill="currentColor" stroke="#050507" strokeWidth="1.4" strokeLinejoin="round" />
             </svg>
             <span className="swarm-tag">
-              {"parent" in a ? `↳ ${a.name}` : a.name}
+              {a.parent ? `↳ ${a.name}` : a.name}
               {st.status === "working" && st.op && <span className="swarm-op">{st.op}</span>}
               {st.status === "working" && st.op === "write" && (
                 <i className="swarm-typing">
