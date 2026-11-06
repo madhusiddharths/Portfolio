@@ -1,33 +1,25 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { Suspense } from "react";
 import { BuildSection } from "@/components/agent/swarm";
-import { SecHead } from "@/components/agent/sec-head";
 import { B } from "@/components/agent/b";
-import { ArrowIcon } from "@/components/icons";
+import { DraftStatus } from "@/components/agent/draft-status";
 
 export const metadata: Metadata = {
-  title: "Field report in progress",
-  description: "This project is shipped — its full write-up is on the way.",
+  title: "In progress",
+  description: "A project whose write-up or deployment is still in progress.",
 };
 
+// Linked as /work/coming-soon/?p=<slug> (write-up pending) or ?p=<slug>&s=live
+// (deployment pending). No project currently needs it; it stays ready.
 export default function ComingSoon() {
   return (
     <BuildSection id="soon" sec="SEC_SOON" className="ag-center">
       <div className="wrap">
-        <SecHead index="madhu@agent:~$ cat report.md  # status: drafting" eyebrow="field report" title="Write-up in progress." as="h1">
-          <B as="p" kind="para" label="p.copy" className="sec-lead">
-            This project is built and shipped — its full case study is being written up with the same depth as the others. In the
-            meantime, the source is on GitHub, and the rest of the index is ready to explore.
-          </B>
-          <B kind="block" label="div.actions" className="center-actions">
-            <Link href="/work/" className="btn btn-red">
-              Back to the index <ArrowIcon width={16} height={16} />
-            </Link>
-            <Link href="/" className="btn btn-line">
-              Home
-            </Link>
-          </B>
-        </SecHead>
+        <B kind="block" label="div.job" className="draft-wrap">
+          <Suspense fallback={null}>
+            <DraftStatus />
+          </Suspense>
+        </B>
       </div>
     </BuildSection>
   );

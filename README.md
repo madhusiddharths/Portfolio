@@ -83,6 +83,6 @@ npm run serve    # preview the exported ./out
 - `public/videos/saturdae_recording.mov` (~39 MB) is the one heavy asset, carried
   over unchanged to preserve content. Re-encoding to a compressed MP4/WebM would
   cut it dramatically.
-- `SymptoScan`, `Hotspot`, and `Image Classifier` route to a "write-up in progress"
-  page (they had no detailed case study in the source); their cards/links are live.
+- A project with `hasCaseStudy: false` routes to the "write-up in progress" page
+  (`/work/coming-soon/?p=<slug>`). Every current project has a full report.
 ```

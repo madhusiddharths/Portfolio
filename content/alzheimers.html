@@ -1,12 +1,4 @@
-<!-- Live Demo Button -->
-    <div class="project-demo-container">
-      <a href="https://alzheimers-classifier-v1.onrender.com" class="project-demo-btn" target="_blank">
-        <span class="btn-text">Try Live Model</span>
-        <span class="btn-icon">🚀</span>
-      </a>
-    </div>
-
-    <section class="content-section">
+<section class="content-section">
       <h2>Overview</h2>
       <p>
         Alzheimer's Progression is an end-to-end deep-learning system that does two things from a single brain MRI slice:
@@ -36,7 +28,7 @@
         visible, so a clinician or patient can see the trajectory rather than read a label off a chart?
       </p>
       <p>
-        We tackle both, and we do it on top of a genuinely difficult dataset. Real medical imaging is brutally imbalanced &mdash;
+        We tackle both, and we do it on a difficult dataset. Real medical imaging is brutally imbalanced &mdash;
         healthy scans vastly outnumber late-stage ones &mdash; and the visual gap between adjacent stages is small enough that
         even the difference between two stages is mostly low-contrast structural drift. The goal was never just a model file;
         it was a defensible system that classifies accurately <em>and</em> generates progression imagery a non-specialist can
@@ -298,7 +290,7 @@
     <section class="content-section">
       <h2>Conclusion</h2>
       <p>
-        This project is where I learned to make generative models and transfer learning work together on a genuinely messy,
+        This project is where I learned to make generative models and transfer learning work together on a messy,
         imbalanced medical dataset &mdash; and to be honest about what the numbers mean. The standout lessons were practical: how a
         two-phase fine-tuning schedule converts a frozen 78% into a fine-tuned 98%, how an encoder&ndash;decoder bottleneck quietly
         eats detail in GAN outputs, and how focusing the discriminator on a region of interest measurably improves realism. The

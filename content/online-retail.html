@@ -1,12 +1,4 @@
 <!-- Live Dashboard Button -->
-<div class="project-demo-container">
-  <a href="https://datastudio.google.com/reporting/ec4c8755-2932-417a-be4d-14d03c93b6a6"
-    class="project-demo-btn" target="_blank">
-    <span class="btn-text">View Live Dashboard</span>
-    <span class="btn-icon">🚀</span>
-  </a>
-</div>
-
 <section class="content-section">
   <h2>Overview</h2>
   <p>
@@ -264,7 +256,7 @@
 </section>
 
 <section class="content-section">
-  <h2>Outcomes and Impact</h2>
+  <h2>Outcomes &amp; Impact</h2>
   <ul>
     <li>Built a <strong>dual-mode analytics pipeline</strong> from one codebase &mdash; an offline, credential-free path
       for reproducibility and a cloud Snowflake&nbsp;&rarr;&nbsp;Polars&nbsp;&rarr;&nbsp;BigQuery path for the real
@@ -287,11 +279,9 @@
 <section class="content-section">
   <h2>Conclusion</h2>
   <p>
-    Online Retail is the project I point to when I want to show that I think about data as a <strong>system, not a
-    notebook</strong> &mdash; one where the cleaning is decoupled and tested, the schema is modelled for analysis, every
-    questionable row is handled on purpose, and the output is a dashboard a stakeholder can actually trust. It pairs the
-    <strong>data engineer's discipline</strong> (a pure, tested transform behind a pluggable Snowflake/BigQuery
-    pipeline) with the <strong>analyst's instinct</strong> for the questions that move a business: where revenue
-    concentrates, who the best customers are, and whether they come back.
+    Online Retail models ~540k transactions into a star schema with Polars, behind a tested transform that loads into
+    Snowflake or BigQuery, and answers three business questions on a live Looker Studio dashboard: where revenue
+    concentrates, who the best customers are (RFM), and whether they come back (cohort retention). Every questionable
+    row is handled on purpose and documented, so the numbers on the dashboard can be defended.
   </p>
 </section>

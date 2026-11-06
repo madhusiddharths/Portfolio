@@ -1,132 +1,116 @@
 <section class="content-section">
         <h2>Overview</h2>
-            <p>Structure And Technical User Rendered Digital Assistant Entity (SATURDAE) is an innovative application
-                designed to simplify the creation of floor plans. With built-in voice command functionality, users can
-                quickly and accurately design layouts using just their voice. SATURDAE also features an intelligent
-                recommendation system that suggests optimal room configurations and furniture placements based on the
-                existing layout, streamlining the design process and enhancing creativity.</p>
-        </section>
+        <p>
+          <strong>SATURDAE</strong> (Structure And Technical User Rendered Digital Assistant Entity) is a floor-plan
+          designer built for speed: place rooms and furniture with short commands and the plan draws itself, while the
+          app refuses anything that would not fit in a real building. It is protected by
+          <strong>Indian Patent Application No. 202341038832 A</strong>.
+        </p>
+        <p>
+          The patented design is driven by voice, with NLTK parsing spoken commands into an object, a position and an
+          orientation. The code in the repository runs the same commands through a numbered menu, which made every
+          placement rule testable without a microphone.
+        </p>
+      </section>
 
-        <section class="content-section">
+      <section class="content-section">
         <h2>Inspiration</h2>
-            <p>While software like Adobe is known for producing highly accurate diagrams, it often comes with a steep
-                learning curve and can be time-consuming to use. SATURDAE was developed with a core focus on speed,
-                simplicity, and accessibility. It enables users to create quick yet precise floor plan sketches within
-                minutes—without the need for extensive training. This empowers users to communicate their ideas
-                professionally and efficiently, even under tight time constraints.</p>
-        </section>
+        <p>
+          Professional drawing tools produce precise diagrams but take hours to learn. Someone who needs to show a
+          layout in a meeting needs a sketch in minutes that is still to scale. SATURDAE trades the full toolbox for
+          a fixed catalogue of standard-sized objects and a grid, so a plan is quick to make and accurate by default.
+        </p>
+      </section>
 
-        <section class="content-section">
-            <div class="furniture-row">
-                <div class="furniture-item">
-                    <img src="/img/saturdae/dbed.png" alt="Double Bed">
-                    <div class="furniture-label">Double Bed</div>
-                </div>
-                <div class="furniture-item">
-                    <img src="/img/saturdae/sofa.png" alt="Sofa">
-                    <div class="furniture-label">Sofa</div>
-                </div>
-                <div class="furniture-item">
-                    <img src="/img/saturdae/door.png" alt="Door">
-                    <div class="furniture-label">Door</div>
-                </div>
-                <div class="furniture-item">
-                    <img src="/img/saturdae/toilet.png" alt="Closet">
-                    <div class="furniture-label">Closet</div>
-                </div>
-                <div class="furniture-item">
-                    <img src="/img/saturdae/table.png" alt="Table">
-                    <div class="furniture-label">Table</div>
-                </div>
-                <div class="furniture-item">
-                    <img src="/img/saturdae/tv.png" alt="Television">
-                    <div class="furniture-label">Television</div>
-                </div>
-                <div class="furniture-item">
-                    <img src="/img/saturdae/sbed.png" alt="Single Bed">
-                    <div class="furniture-label">Single Bed</div>
-                </div>
-                <div class="furniture-item">
-                    <img src="/img/saturdae/window.png" alt="Window">
-                    <div class="furniture-label">Window</div>
-                </div>
-                <div class="furniture-item">
-                    <img src="/img/saturdae/dtable.png" alt="Dining Table">
-                    <div class="furniture-label">Dining Table</div>
-                </div>
-                <div class="furniture-item">
-                    <img src="/img/saturdae/room.png" alt="Room">
-                    <div class="furniture-label">Room</div>
-                </div>
-            </div>
-        </section>
+      <section class="content-section">
+        <div class="furniture-row">
+          <div class="furniture-item">
+            <img src="/img/saturdae/dbed.png" alt="Double bed">
+            <div class="furniture-label">Double Bed</div>
+          </div>
+          <div class="furniture-item">
+            <img src="/img/saturdae/sofa.png" alt="Sofa">
+            <div class="furniture-label">Sofa</div>
+          </div>
+          <div class="furniture-item">
+            <img src="/img/saturdae/door.png" alt="Door">
+            <div class="furniture-label">Door</div>
+          </div>
+          <div class="furniture-item">
+            <img src="/img/saturdae/toilet.png" alt="Closet">
+            <div class="furniture-label">Closet</div>
+          </div>
+          <div class="furniture-item">
+            <img src="/img/saturdae/table.png" alt="Table">
+            <div class="furniture-label">Table</div>
+          </div>
+          <div class="furniture-item">
+            <img src="/img/saturdae/tv.png" alt="Television">
+            <div class="furniture-label">Television</div>
+          </div>
+          <div class="furniture-item">
+            <img src="/img/saturdae/sbed.png" alt="Single bed">
+            <div class="furniture-label">Single Bed</div>
+          </div>
+          <div class="furniture-item">
+            <img src="/img/saturdae/window.png" alt="Window">
+            <div class="furniture-label">Window</div>
+          </div>
+          <div class="furniture-item">
+            <img src="/img/saturdae/dtable.png" alt="Dining table">
+            <div class="furniture-label">Dining Table</div>
+          </div>
+          <div class="furniture-item">
+            <img src="/img/saturdae/room.png" alt="Room">
+            <div class="furniture-label">Room</div>
+          </div>
+        </div>
+      </section>
 
-        <section class="content-section">
-            <h2>Approach</h2>
-            <p>The project is structured into several key modules, each handling a specific part of the system:</p>
-            <ul>
-                <li><strong>Main Module:</strong> Manages user input and controls the overall operation of the application.</li>
-                <li><strong>Voice Module:</strong> Parses voice commands, extracts relevant information, and confirms inputs when necessary.</li>
-                <li><strong>Furniture Module:</strong> Handles the drawing and management of furniture, walls, and room layouts.</li>
-                <li><strong>Check Module:</strong> Detects overlaps in room or furniture placement and keeps track of all current elements in the floor plan.</li>
-                <li><strong>Recommendation System Module:</strong> Suggests new room or furniture placements based on the current layout.</li>
-                <li><strong>Delete Module:</strong> Remove a room space or a particular furniture.</li>
-            </ul>
-        </section>
+      <section class="content-section">
+        <h2>Approach</h2>
+        <p>
+          The plan lives on a <strong>30&times;30 grid</strong>, drawn live with Python's <code>turtle</code>. Behind
+          the drawing sits a <strong>60&times;60 NumPy occupancy grid</strong> at half-foot resolution: every room and
+          object marks the cells it covers, so the app can answer "does this fit?" before anything is drawn.
+        </p>
+        <ul>
+          <li><strong>Placement:</strong> each object is first drawn as a green preview; only on confirmation is it drawn in black and written to the occupancy grid.</li>
+          <li><strong>Collision checks:</strong> a placement is rejected if it overlaps another object, sits outside a room, or lands on a wall.</li>
+          <li><strong>Room suggestions:</strong> when a new room would clash, the app proposes free positions above, below, left or right of the existing rooms.</li>
+          <li><strong>Hallways:</strong> placing a door generates the hallway that connects it.</li>
+          <li><strong>Editing:</strong> any room or object can be deleted, freeing its cells for the next placement.</li>
+        </ul>
+        <p>
+          Each concern is its own module (input loop, drawing, collision checks, suggestions, deletion), so a new object
+          type is a drawing function plus a footprint, with no changes to the collision logic.
+        </p>
+      </section>
 
-        <section class="content-section">
+      <section class="content-section">
+        <figure>
+          <img src="/img/saturdae/room_ss.png" alt="A finished floor plan drawn by SATURDAE" />
+          <figcaption>Figure 1: A finished plan. The reference grid gives exact coordinates for every room and object.</figcaption>
+        </figure>
+      </section>
 
-            <figure style="margin: 2rem 0; text-align: center;">
-                <img src="/img/saturdae/room_ss.png" alt="Sample floor image"
-                     style="max-width:600px; width: 100%; height:auto; border:1px solid #ccc; margin-bottom: 1.5rem;" />
-                <figcaption style="font-style: italic; color: #666; margin-top: 0.5rem;">
-                    Figure 1: Sample floor image.
-                </figcaption>
-            </figure>
-            <p> This image illustrates the final floor diagram once it is fully constructed. As shown, the layout is
-                simple yet precise—accurate down to the last centimeter for standard-sized furniture. The reference
-                grid further enhances usability by helping users pinpoint exact coordinates for placing rooms and
-                furniture with ease.</p>
-        </section>
+      <section class="content-section">
+        <figure>
+          <video src="/videos/saturdae_recording.mov" controls preload="metadata">
+            Your browser does not support the video tag.
+          </video>
+          <figcaption>Video 1: Building a plan end to end.</figcaption>
+        </figure>
+      </section>
 
-        <section class="content-section">
-
-            <h2>Scalability</h2>
-            <p>Since the project is developed in a modular structure, adding new furniture items or integrating
-                additional features is straightforward. For instance, implementing custom drawing tools or incorporating
-                generative AI to personalize room layouts can be done with minimal changes—making the system highly
-                extensible and user-focused.</p>
-        </section>
-
-        <section class="content-section">
-
-            <figure style="margin: 2rem 0; text-align: center;">
-                <video
-                        src="/videos/saturdae_recording.mov"
-                        controls
-                        style="max-width:600px; width: 100%; height: auto; border:1px solid #ccc; margin-bottom: 1.5rem;">
-                    Your browser does not support the video tag.
-                </video>
-                <figcaption style="font-style: italic; color: #666; margin-top: 0.5rem;">
-                    video 1: Working of the project.
-                </figcaption>
-            </figure>
-        </section>
-
-
-        <section class="content-section">
-
-            <h2>Conclusion</h2>
-            <p>
-                This project offered valuable hands-on experience in object-oriented programming and deepened my
-                understanding of key Python libraries such as <strong>NumPy</strong>, <strong>NLTK</strong>, and
-                <strong>Turtle</strong>. It also provided insight into building a complete end-to-end project
-                pipeline—from concept to implementation.
-            </p>
-            <p style="margin-top: 10px; font-weight: bold;">
-                This project has been officially patented under the Government of India.
-                <a href="https://drive.google.com/file/d/1bUD0jIqIhRfADCtrjorQZyNFF2h6PEFS/view?usp=sharing" target="_blank" style="margin-left: 8px; text-decoration: underline; color: #0077cc;">
-                    View Patent
-                </a>
-            </p>
-        </section>
+      <section class="content-section">
+        <h2>Conclusion</h2>
+        <p>
+          SATURDAE shows that a constrained tool can be faster than a powerful one: a fixed catalogue, a grid and a
+          half-foot occupancy model are enough to produce plans that are quick to make and physically valid, with the
+          app suggesting a fix instead of just refusing. The design was patented in India.
+        </p>
+        <p>
+          <a href="https://drive.google.com/file/d/1bUD0jIqIhRfADCtrjorQZyNFF2h6PEFS/view?usp=sharing" target="_blank" rel="noopener noreferrer" class="project-demo-btn"><code>view_patent</code><span>(202341038832 A)</span> ↗</a>
+        </p>
+      </section>

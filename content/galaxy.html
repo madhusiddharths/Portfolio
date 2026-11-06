@@ -1,12 +1,5 @@
 <!-- ===================== GALAXY EXPLORER (big-data 3D) ===================== -->
 
-    <div class="project-demo-container">
-      <a href="https://galaxy-explorer-1061483926543.us-central1.run.app" class="project-demo-btn" target="_blank">
-        <span class="btn-text">Launch Galaxy Explorer</span>
-        <span class="btn-icon">🚀</span>
-      </a>
-    </div>
-
     <section class="content-section">
       <h2>Overview</h2>
       <p>
@@ -348,10 +341,7 @@ WHERE  distance_ly &gt; 0;</code></pre>
         stars yellow, cool stars orange-red.
       </p>
       <div class="project-demo-container">
-        <a href="https://nightsky.streamlit.app" class="project-demo-btn" target="_blank">
-          <span class="btn-text">Launch Night Sky Viewer</span>
-          <span class="btn-icon">🚀</span>
-        </a>
+        <a href="https://nightsky.streamlit.app" class="project-demo-btn" target="_blank" rel="noopener noreferrer"><code>launch</code><span>(night_sky_viewer)</span> ↗</a>
       </div>
       <div class="image-grid grid-2">
         <figure>
@@ -409,11 +399,9 @@ WHERE  distance_ly &gt; 0;</code></pre>
     <section class="content-section">
       <h2>Conclusion</h2>
       <p>
-        Galaxy Explorer is the project I point to when I want to show that I can take a genuinely large scientific
-        dataset and engineer it all the way to a fast, cheap, interactive product. It pairs the data engineer's
-        instincts — shrink the data, structure it around how it will be queried, and make the warehouse pay the big scan
-        only once — with the discipline to keep every number scientifically defensible and the cost of every query
-        visible. From 750 GB of raw astrometry to a 3D galaxy you can fly through in a browser, it's the clearest
-        demonstration of how I think about big data: not as something you scan, but as something you design.
+        Galaxy Explorer turns about 1.8 billion raw Gaia DR3 sources (750+ GB) into a 557M-star catalogue you can fly
+        through in a browser. Most of the work was data design: shrink the data, structure it around how it will be queried,
+        and make the warehouse pay for the big scan only once, while keeping every number scientifically defensible and the
+        cost of each query visible.
       </p>
     </section>

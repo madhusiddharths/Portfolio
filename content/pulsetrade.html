@@ -17,7 +17,7 @@
       </section>
 
       <section class="content-section">
-        <h2>Problem and Goal</h2>
+        <h2>Problem &amp; Goal</h2>
         <p>
           Trading desks and retail investors see thousands of price ticks and news headlines per day. When a stock
           moves unusually, a human analyst has to assemble context from multiple sources — recent price history,
@@ -423,13 +423,11 @@
       <section class="content-section">
         <h2>Conclusion</h2>
         <p>
-          PulseTrade demonstrates that a single, cohesive project can exercise the full modern data and AI stack
-          end-to-end. The same pipeline produces real-time price features, runs language-model investigations,
-          scheduled batch reports, and structured observability &mdash; with the same data flowing through Kafka,
-          Delta Lake, an agentic reasoning layer, and a containerized serving stack. The decisions documented along
+          PulseTrade runs one pipeline through the full data and AI stack: real-time price features, LLM investigations of
+          anomalies, scheduled batch reports and structured observability, with the same data flowing through Kafka,
+          Delta Lake, an agentic reasoning layer and a containerized serving stack. The decisions documented along
           the way (Finnhub over yfinance, batch-windowing inside <code>foreachBatch</code>, explicit Gemini auth,
-          bronze as audit log) reflect what gets you from a tutorial that runs once to a system that runs reliably
-          every five minutes &mdash; and, on the day an entire upstream vanished, one that degraded honestly instead
-          of falling over.
+          bronze as audit log) are what take it from a tutorial that runs once to a system that runs every five
+          minutes &mdash; and, on the day an entire upstream vanished, one that degraded honestly instead of falling over.
         </p>
       </section>

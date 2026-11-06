@@ -409,7 +409,7 @@ export default function Home() {
 
             <div className="work-grid" data-project-grid data-seg="cards">
               {FEATURED.slice(0, 6).map((p, i) => {
-                const href = p.hasCaseStudy ? `/work/${p.slug}/` : "/work/coming-soon/";
+                const href = p.hasCaseStudy ? `/work/${p.slug}/` : `/work/coming-soon/?p=${p.slug}`;
                 const extra = p.tech.length - 5;
                 return (
                   <B as="article" key={p.slug} kind="block" label={`article.${p.slug}`} className={`card ${i === 0 ? "card-lead" : ""}`} data-project={p.slug}>

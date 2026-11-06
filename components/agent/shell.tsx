@@ -126,7 +126,7 @@ function Chrome({
           <span className="chrome-status">
             {building ? (
               <>
-                <span className="chrome-spin" /> swarm building · {pct}%
+                <span className="chrome-spin" /> orchestrating {engine.roster.length} agents · {pct}%
               </>
             ) : (
               <>
@@ -138,8 +138,8 @@ function Chrome({
         </div>
 
         {building ? (
-          <button type="button" className="chrome-pill" onClick={() => engine.skip()}>
-            Skip build <kbd>⏭</kbd>
+          <button type="button" className="chrome-pill" onClick={() => engine.skip()} title="Every agent finishes its work instantly">
+            Skip to output <kbd>⏭</kbd>
           </button>
         ) : (
           <button type="button" className="chrome-pill" onClick={() => engine.replay()}>

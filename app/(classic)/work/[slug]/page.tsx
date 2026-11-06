@@ -17,7 +17,7 @@ import { RailSkills } from "@/components/ide/rail-skills";
 import { Resizers } from "@/components/ide/resizers";
 import { IdePortal } from "@/components/ide/ide-portal";
 import { ReadingProgress } from "@/components/reading-progress";
-import { GithubIcon, ArrowUpRight, ArrowIcon, LockIcon, LiveIcon } from "@/components/icons";
+import { ArrowUpRight, ArrowIcon, LockIcon } from "@/components/icons";
 import { BuildSection } from "@/components/agent/swarm";
 import { B } from "@/components/agent/b";
 import "./fieldnotes.css";
@@ -111,25 +111,54 @@ export default async function CaseStudyPage({
             {project.summary}
           </B>
 
-          <B kind="block" label="div.actions" className="cs-hero-actions">
-            {project.live && (
-              <a href={project.live} target="_blank" rel="noopener noreferrer" className="btn btn-red">
-                <LiveIcon width={16} height={16} /> Live app
+          {/* Results first: the 3–4 numbers a skimmer should leave with. */}
+          {project.results && project.results.length > 0 && (
+            <B as="dl" kind="block" label="dl.results" className="cs-results" aria-label="Key results">
+              {project.results.map((r) => (
+                <div key={r.label}>
+                  <dt>{r.value}</dt>
+                  <dd>{r.label}</dd>
+                </div>
+              ))}
+            </B>
+          )}
+
+          {/* Actions read as tool calls, like the home page: the first one is the primary. */}
+          <B kind="block" label="div.actions" className="cs-hero-actions pg-calls">
+            {project.live &&
+              (project.live.startsWith("/") ? (
+                <Link href={project.live} className="pg-call pg-call-go" title="Deployment in progress">
+                  <code>launch</code>
+                  <span>({project.liveKind ?? "app"})</span>
+                  <span className="cs-call-tag">deploying</span>
+                </Link>
+              ) : (
+                <a href={project.live} target="_blank" rel="noopener noreferrer" className="pg-call pg-call-go">
+                  <code>launch</code>
+                  <span>({project.liveKind ?? "app"})</span>
+                  <ArrowUpRight width={12} height={12} />
+                </a>
+              ))}
+            {project.repo && (
+              <a href={project.repo} target="_blank" rel="noopener noreferrer" className={`pg-call ${project.live ? "" : "pg-call-go"}`}>
+                <code>view_source</code>
+                <span>(github)</span>
+                <ArrowUpRight width={12} height={12} />
               </a>
-            )}
-            {project.repo ? (
-              <a href={project.repo} target="_blank" rel="noopener noreferrer" className={`btn ${project.live ? "btn-line" : "btn-red"}`}>
-                <GithubIcon width={16} height={16} /> View source
-              </a>
-            ) : (
-              <span className="btn btn-line is-static" aria-disabled="true">
-                <LockIcon width={15} height={15} /> Private repository
-              </span>
             )}
             {project.paper && (
-              <a href={project.paper} target="_blank" rel="noopener noreferrer" className="btn btn-line">
-                Read the paper <ArrowUpRight width={14} height={14} />
+              <a href={project.paper} target="_blank" rel="noopener noreferrer" className={`pg-call ${project.live || project.repo ? "" : "pg-call-go"}`}>
+                <code>read_paper</code>
+                <span>({project.paper.includes("ieee") ? "ieee" : "pdf"})</span>
+                <ArrowUpRight width={12} height={12} />
               </a>
+            )}
+            {!project.repo && (
+              <span className="pg-call is-static" aria-disabled="true">
+                <LockIcon width={13} height={13} />
+                <code>source</code>
+                <span>(private)</span>
+              </span>
             )}
           </B>
         </div>

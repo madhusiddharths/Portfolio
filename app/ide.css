@@ -60,13 +60,15 @@ html[data-ide-bottom="off"] .ag-ide {
   }
 }
 @media (min-width: 1280px) {
+  /* The right rail is collapsed unless the reader opened it: a missing
+     attribute (before hydration) counts as closed, so it never flashes open. */
   .ag.ag-ide {
-    --ide-r: var(--rail-w);
-  }
-  html[data-ide-right="off"] .ag-ide {
     --ide-r: 0px;
   }
-  html[data-ide-right="off"] .ag-ide .rail {
+  html[data-ide-right="on"] .ag-ide {
+    --ide-r: var(--rail-w);
+  }
+  html:not([data-ide-right="on"]) .ag-ide .rail {
     display: none;
   }
   .ag-ide .rail {
@@ -1020,7 +1022,7 @@ button.ag-flow-row:hover {
   margin: 0;
   font-size: 1.02rem;
 }
-html[data-ide-left="off"][data-ide-right="off"] .ag-ide .fieldnotes {
+html[data-ide-left="off"]:not([data-ide-right="on"]) .ag-ide .fieldnotes {
   font-size: 1.08rem;
 }
 .ag-ide .fieldnotes h2 {
@@ -1172,7 +1174,7 @@ html.ide-resizing .ide-sash:active::after {
     right: 0;
     width: 1px;
   }
-  html[data-ide-right="off"] .ag-ide .ide-sash-right {
+  html:not([data-ide-right="on"]) .ag-ide .ide-sash-right {
     display: none;
   }
 }
