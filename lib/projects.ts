@@ -14,7 +14,7 @@ export const PROFILE = {
   available: true,
   building: "Tool Router Ladder",
   tagline: "I develop scalable models that drive real-world impact.",
-  bio: "As an AI Engineer, I build AI systems that automate real work end to end. I design agentic workflows where models plan, call tools, and act on their own, connecting LLMs to APIs, data pipelines, and services so a process runs from trigger to result without manual hand-offs. My work spans agent orchestration, fine-tuning, evaluation, and deployment, with a focus on automation reliable enough to trust, and knowing where it still needs a human in the loop.",
+  bio: "I'm an AI engineer who cares less about demos and more about the moment a system has to work on its own. Right now that means teaching a video-QA model to run on an 18 GB laptop, lifting it from 54.7% to 73.5%. Before that, I distilled a 550B model's tool-calling into a 3B student to find exactly where small agents break, used LLMs to map 18,000 untapped sales sites from government compliance data, and published a federated intrusion-detection paper at IEEE. I enjoy taking a manual, multi-step process, turning it into an AI-driven workflow, and measuring honestly where it holds up and where it needs a human in the loop.",
   analystNote:
     "For analyst-focused roles, a tailored Data Analyst resume is available.",
   resume:
