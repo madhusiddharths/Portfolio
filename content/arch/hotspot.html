@@ -1,0 +1,14 @@
+<p>
+        The app is a single-page <strong>Streamlit</strong> application, <strong>migrated from an earlier multi-page Dash build</strong> — a
+        deliberate simplification that collapsed a multi-callback Dash app into one reactive script that's far easier to reason about
+        and deploy. The architecture keeps two concerns strictly apart: <code>data_processing.py</code> owns every dataset and the
+        exposure model, while <code>streamlit_app.py</code> is pure presentation, so the analytics can be tested and reused
+        independently of the UI.
+      </p>
+      <p>
+        Because loading five datasets and merging 112 GeoJSON files on every interaction would make the app crawl, the expensive
+        work is wrapped in <strong>Streamlit's <code>@st.cache_data</code></strong> — the full dashboard bundle is computed once and reused
+        across reruns, and an uploaded timeline is parsed once and cached against its bytes. Every map click, week change, and slider
+        move then re-renders instantly off the cached data. The whole thing is deployed on <strong>Streamlit Community Cloud</strong>
+        with a <code>Procfile</code> fallback for any host, and ships with a <code>pytest</code> smoke-test suite.
+      </p>

@@ -18,7 +18,7 @@
     </section>
 
     <section class="content-section">
-      <h2>Problem and Goal</h2>
+      <h2>Problem &amp; Goal</h2>
       <p>
         Most mental-health software either gates users behind clinician availability or hands them a static chatbot that ignores
         what they actually look and sound like. I set out to build something better: a low-friction, multimodal companion that
@@ -42,30 +42,6 @@
         <li><strong>Voice:</strong> A custom React hook records WebM audio in fixed-duration chunks and uploads them to GCS under per-user prefixes; the backend ingests recent chunks, runs tone analysis and STT, and returns a synthesized voice reply.</li>
         <li><strong>Video:</strong> The browser captures camera + mic, runs facial-emotion detection entirely on-device with face-api.js at ~1 fps, and uploads <em>only</em> the audio track. The per-frame emotion labels are sent alongside as a compact JSON list, which the backend fuses with the voice-tone and transcript signals — full multimodal fusion with no video ever leaving the device.</li>
       </ul>
-    </section>
-
-    <section class="content-section">
-      <h2>System Architecture</h2>
-      <p>
-        The platform is split across three tiers. The <strong>Next.js 15 frontend deploys to Vercel</strong> and now does real work
-        of its own — Clerk auth, the chat/voice/video UI, and on-device facial-emotion inference. The
-        <strong>FastAPI inference backend is containerized with Docker and deployed to a Hugging Face Space</strong> (the
-        <code>Dockerfile</code> + <code>docker-compose</code> still run it locally). Around them sit managed cloud dependencies:
-        MongoDB Atlas, Google Cloud Storage, Google Generative AI, and Google Speech/TTS.
-      </p>
-      <p>
-        The browser talks to the Space <strong>directly</strong> — the backend ships a permissive CORS layer, and the Space URL is
-        inlined into the bundle at build time — so there is no proxy hop between client and inference. Authentication is handled by
-        Clerk on both client and server, with a webhook route under <code>/api/webhooks/clerk</code> that syncs user lifecycle
-        events into MongoDB. All media writes are namespaced under <code>users/&lt;clerk_user_id&gt;/</code> prefixes in GCS for
-        tenant isolation. A deliberate architectural decision — moving facial-emotion detection from the server into the browser —
-        let the backend image drop TensorFlow, OpenCV, and the DeepFace detector models, shrinking it from <strong>~6–8 GB to ~2.5 GB</strong>
-        so it fits a free-tier Space and wakes from idle quickly.
-      </p>
-      <figure>
-        <img src="/img/ai_counceling/architecture.svg" alt="AI-Counselling architecture diagram — browser/Vercel tier, FastAPI inference on Hugging Face Spaces, and managed cloud services" />
-        <figcaption>Figure 1: End-to-end architecture — a Next.js/Vercel browser tier (with in-browser face-api.js emotion detection), a FastAPI inference layer on Hugging Face Spaces, and managed cloud services, fused through a shared multimodal Gemini prompt.</figcaption>
-      </figure>
     </section>
 
     <section class="content-section">
@@ -239,9 +215,9 @@
     <section class="content-section">
       <h2>Conclusion</h2>
       <p>
-        AI-Counselling is the project I'd point to as the clearest demonstration of my ability to ship a serious AI system end-to-end:
-        product thinking around a sensitive problem space, applied ML across audio / vision / language, a real cloud architecture
-        with auth and persistence, and the engineering discipline to handle the messy edges (partial uploads, noisy predictions,
-        safety routing, cache invalidation) that separate a working demo from something that could responsibly be put in front of users.
+        AI-Counselling answers from the DSM-5 through retrieval, reads tone of voice and facial emotion alongside the words,
+        and puts a safety-routing layer in front of the model. Most of the work went into the edges a demo never meets: partial
+        uploads, noisy emotion predictions, safety routing and cache invalidation, all on a cloud backend with real auth and
+        persistence.
       </p>
     </section>

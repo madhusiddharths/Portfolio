@@ -23,7 +23,7 @@
       </section>
 
       <section class="content-section">
-        <h2>Problem and Goal</h2>
+        <h2>Problem &amp; Goal</h2>
         <p>
           Frontier models are good at tool calling, but routing every step of every agent conversation through a
           550B model is slow and expensive. The common answer is distillation: train a small model on the big one's
@@ -40,21 +40,6 @@
           <li><strong>Routing:</strong> whether the student's own token log-probs can tell when to escalate a step to
             the teacher.</li>
         </ul>
-      </section>
-
-      <section class="content-section">
-        <h2>Architecture</h2>
-        <p>
-          The pipeline has eight stages: harvest teacher trajectories, build a loss-masked SFT set, train LoRA
-          students, post-train them, evaluate them teacher-forced and free-running, and finally put the best student
-          behind an escalation router. Every stage writes to an append-only JSONL run log keyed by a config
-          fingerprint, so any cell can be resumed and no number can silently mix two configurations.
-        </p>
-        <figure>
-          <img src="/img/tool-router/architecture.svg" alt="Eight-stage pipeline from teacher harvest to LoRA students, post-training, evaluation and the escalation router" />
-          <figcaption>Figure 1: Distil → train → evaluate → route. Invariants abort any run that would break the
-            experiment's guarantees.</figcaption>
-        </figure>
       </section>
 
       <section class="content-section">

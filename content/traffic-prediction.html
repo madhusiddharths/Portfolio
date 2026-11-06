@@ -20,7 +20,7 @@
     </section>
 
     <section class="content-section">
-      <h2>Problem and Goal</h2>
+      <h2>Problem &amp; Goal</h2>
       <p>
         Finding the quickest route between two points is the easy version of the problem, and it is largely solved — any maps app
         does it. The version that actually shows up in logistics, field service, and last-mile delivery is harder and more
@@ -257,11 +257,9 @@
     <section class="content-section">
       <h2>Conclusion</h2>
       <p>
-        Traffic Prediction &amp; Fleet Routing is the project I point to when I want to show range across the full
-        <strong>data-to-decision stack</strong>: time-series cleaning and feature engineering, applied machine learning, real-world
-        geospatial data, and — the part most ML projects never reach — <strong>operations-research optimization</strong> that turns a
-        prediction into an actionable plan. Rebuilding it from a two-point shortest-path demo into a balanced multi-vehicle
-        routing system taught me the most valuable lesson in it: a good forecast is only half the job, and the harder, more
-        useful half is wiring that forecast into a decision a real operator can run.
+        Traffic Prediction forecasts congestion with a Random Forest, prices it into travel times on a real OSRM road
+        network, and solves a 50-stop, 8-vehicle routing problem with Google OR-Tools. Rebuilding it from a two-point
+        shortest-path demo into balanced multi-vehicle routing made the main lesson clear: a forecast is only half the job,
+        and the useful half is turning it into a plan an operator can run.
       </p>
     </section>

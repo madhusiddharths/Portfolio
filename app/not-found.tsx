@@ -1,26 +1,30 @@
 import Link from "next/link";
 import { ArrowIcon } from "@/components/icons";
+import { AgentFrame } from "@/components/agent/frame";
+import { BuildSection } from "@/components/agent/swarm";
+import { SecHead } from "@/components/agent/sec-head";
+import { B } from "@/components/agent/b";
 
 export default function NotFound() {
   return (
-    <main id="main" className="coming-soon">
-      <div className="u-container">
-        <p className="u-eyebrow">Error — 404</p>
-        <h1 className="coming-soon-title">
-          Off the <span className="hero-mark">grid.</span>
-        </h1>
-        <p className="coming-soon-copy">
-          This page doesn&apos;t exist — or it moved. Let&apos;s get you back to something real.
-        </p>
-        <div className="coming-soon-actions">
-          <Link href="/" className="btn btn-primary" data-cursor="home">
-            Back home <ArrowIcon width={17} height={17} />
-          </Link>
-          <Link href="/work/" className="btn btn-ghost" data-cursor="work">
-            View work
-          </Link>
+    <AgentFrame>
+      <BuildSection id="lost" sec="SEC_404" className="ag-center">
+        <div className="wrap">
+          <SecHead index="madhu@agent:~$ cd ./requested-path  # 404 route not found" eyebrow="error 404" title="Off the grid." as="h1">
+            <B as="p" kind="para" label="p.copy" className="sec-lead">
+              This page doesn&apos;t exist — or it moved. Let&apos;s get you back to something real.
+            </B>
+            <B kind="block" label="div.actions" className="center-actions">
+              <Link href="/" className="btn btn-red">
+                Back home <ArrowIcon width={16} height={16} />
+              </Link>
+              <Link href="/work/" className="btn btn-line">
+                View work
+              </Link>
+            </B>
+          </SecHead>
         </div>
-      </div>
-    </main>
+      </BuildSection>
+    </AgentFrame>
   );
 }

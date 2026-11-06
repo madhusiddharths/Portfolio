@@ -1,12 +1,5 @@
 <!-- ===================== GALAXY EXPLORER (big-data 3D) ===================== -->
 
-    <div class="project-demo-container">
-      <a href="https://galaxy-explorer-1061483926543.us-central1.run.app" class="project-demo-btn" target="_blank">
-        <span class="btn-text">Launch Galaxy Explorer</span>
-        <span class="btn-icon">🚀</span>
-      </a>
-    </div>
-
     <section class="content-section">
       <h2>Overview</h2>
       <p>
@@ -299,44 +292,6 @@ WHERE  distance_ly &gt; 0;</code></pre>
     </section>
 
     <section class="content-section">
-      <h2>Full-Stack System Design</h2>
-      <p class="subsection-title">Backend — cloud-native API</p>
-      <p>
-        The backend is a containerised <strong>FastAPI</strong> service exposing four endpoints —
-        <code>/stars</code>, <code>/density</code>, <code>/hr</code>, <code>/clusters</code> — each mapping to one of the
-        engineered tables. Queries are built with <strong>parameterised <code>ScalarQueryParameter</code>s</strong> (SQL-injection-safe),
-        and the star sampler uses a <strong>density-adaptive <code>LIMIT</code></strong> — more points for wide
-        distance ranges, fewer per sector — to keep payloads bounded. Crucially, the service
-        <strong>degrades gracefully</strong>: if BigQuery or a precomputed table is unavailable, each endpoint falls
-        back to synthetic mock data, so the UI always renders and local development needs no GCP credentials at all.
-      </p>
-      <p class="subsection-title">Frontend — GPU-accelerated rendering</p>
-      <p>
-        The frontend is a <strong>React + React Three Fiber</strong> (Three.js / WebGL) app built with Vite. Tens of
-        thousands of stars are drawn as a single optimised <code>BufferGeometry</code> particle system, holding a smooth
-        <strong>60 FPS</strong>, colour-coded by magnitude, with hover inspection. Two pages sit on the same data layer:
-        <strong>Structure</strong> (the 3D density field plus the live HR diagram) and <strong>Families</strong> (the
-        HDBSCAN clusters in 3D with a clickable catalogue).
-      </p>
-      <div class="image-grid grid-2">
-        <figure>
-          <img src="/img/galaxy/galaxy_load.png" alt="Galaxy Explorer query interface" />
-          <figcaption>Figure 2a: Parameterised query interface — choose a distance range, sky sector and epoch.</figcaption>
-        </figure>
-        <figure>
-          <img src="/img/galaxy/all17kly.png" alt="GPU-rendered 3D star field spanning ~17,000 light-years" />
-          <figcaption>Figure 2b: GPU-rendered 3D star field, the solar neighbourhood out to ~17,000 ly.</figcaption>
-        </figure>
-      </div>
-      <p class="subsection-title">Deployment</p>
-      <p>
-        Production is a <strong>single Docker container on Google Cloud Run</strong>: the built React bundle is served by
-        FastAPI from the same origin as the API, so there is no CORS hop and one stateless service scales horizontally to
-        zero. The same image runs locally with a <code>MOCK_DATA</code> flag for credential-free frontend development.
-      </p>
-    </section>
-
-    <section class="content-section">
       <h2>Engineering Challenges Solved</h2>
       <ul>
         <li><strong>Distributed compute that didn't pay for itself:</strong> the first filtering and partitioning pass
@@ -386,10 +341,7 @@ WHERE  distance_ly &gt; 0;</code></pre>
         stars yellow, cool stars orange-red.
       </p>
       <div class="project-demo-container">
-        <a href="https://nightsky.streamlit.app" class="project-demo-btn" target="_blank">
-          <span class="btn-text">Launch Night Sky Viewer</span>
-          <span class="btn-icon">🚀</span>
-        </a>
+        <a href="https://nightsky.streamlit.app" class="project-demo-btn" target="_blank" rel="noopener noreferrer"><code>launch</code><span>(night_sky_viewer)</span> ↗</a>
       </div>
       <div class="image-grid grid-2">
         <figure>
@@ -447,11 +399,9 @@ WHERE  distance_ly &gt; 0;</code></pre>
     <section class="content-section">
       <h2>Conclusion</h2>
       <p>
-        Galaxy Explorer is the project I point to when I want to show that I can take a genuinely large scientific
-        dataset and engineer it all the way to a fast, cheap, interactive product. It pairs the data engineer's
-        instincts — shrink the data, structure it around how it will be queried, and make the warehouse pay the big scan
-        only once — with the discipline to keep every number scientifically defensible and the cost of every query
-        visible. From 750 GB of raw astrometry to a 3D galaxy you can fly through in a browser, it's the clearest
-        demonstration of how I think about big data: not as something you scan, but as something you design.
+        Galaxy Explorer turns about 1.8 billion raw Gaia DR3 sources (750+ GB) into a 557M-star catalogue you can fly
+        through in a browser. Most of the work was data design: shrink the data, structure it around how it will be queried,
+        and make the warehouse pay for the big scan only once, while keeping every number scientifically defensible and the
+        cost of each query visible.
       </p>
     </section>

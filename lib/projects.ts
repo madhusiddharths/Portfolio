@@ -9,17 +9,18 @@ export const PROFILE = {
   shortName: "Madhu Siddharth",
   monogram: "MS",
   role: "AI Engineer",
-  location: "GMT+0",
+  location: "Chicago",
+  timeZone: "America/Chicago",
   available: true,
-  building: "the LLM project",
+  building: "Tool Router Ladder",
   tagline: "I develop scalable models that drive real-world impact.",
   bio: "As an AI Engineer, I build AI systems that automate real work end to end. I design agentic workflows where models plan, call tools, and act on their own, connecting LLMs to APIs, data pipelines, and services so a process runs from trigger to result without manual hand-offs. My work spans agent orchestration, fine-tuning, evaluation, and deployment, with a focus on automation reliable enough to trust, and knowing where it still needs a human in the loop.",
   analystNote:
     "For analyst-focused roles, a tailored Data Analyst resume is available.",
   resume:
-    "https://docs.google.com/document/d/1lMamT23XtATengJA4aIyfKyjG2JJld9J/edit?usp=share_link&ouid=105411796859966559609&rtpof=true&sd=true",
+    "https://drive.google.com/file/d/1RmsD9kxvlN4g63eMuVDMCHdlZ86RkpAW/view?usp=sharing",
   analystResume:
-    "https://docs.google.com/document/d/1k-H_59dL_5XADCEsP8n0rhiJq-vAlozU/edit?usp=share_link&ouid=105411796859966559609&rtpof=true&sd=true",
+    "https://drive.google.com/file/d/12E7OyHYDyCOqkQ4D6_WTWqCwESjePd_g/view?usp=sharing",
   email: "madhusiddharths1@outlook.com",
   github: "https://github.com/madhusiddharths",
   linkedin: "https://www.linkedin.com/in/madhu-siddharth-suthagar/",
@@ -56,6 +57,7 @@ export const TECH: Record<string, string> = {
   vLLM: `${ICON}/vLLM.png`,
   "OpenAI API": `${ICON}/OpenAI-mono.png`,
   "Claude API": `${ICON}/Claude.png`,
+  Claude: `${ICON}/Claude.png`,
   "Gemini API": `${ICON}/Gemini.png`,
   Ollama: `${ICON}/Ollama-mono.png`,
   "Weights & Biases": `${ICON}/WandB.png`,
@@ -84,6 +86,16 @@ export const TECH: Record<string, string> = {
   LaTeX: `${ICON}/LaTeX.png`,
 };
 
+/* Umbrella skills: a project counts toward one if it lists any member tool. */
+export const SKILL_ALIASES: Record<string, string[]> = {
+  "LLM APIs": ["Claude API", "OpenAI API", "Gemini API"],
+};
+
+/** Does project tech list `tech` use `skill` (directly or via an umbrella)? */
+export function usesSkill(tech: string[], skill: string): boolean {
+  return tech.includes(skill) || (SKILL_ALIASES[skill] ?? []).some((t) => tech.includes(t));
+}
+
 export function techIcon(name: string): string | null {
   const p = TECH[name];
   return p ? p.replace(/ /g, "%20") : null;
@@ -99,7 +111,9 @@ export type Project = {
   thumb: string;
   repo: string | null;
   paper?: string;
-  live?: string; // live/demo URL — renders a "Live app" button on the case study
+  live?: string; // live/demo URL — renders a launch(...) call on the case study; a site path means "deploying"
+  liveKind?: "app" | "model" | "demo" | "dashboard"; // what the live link opens (default "app")
+  results?: { value: string; label: string }[]; // 3–4 headline numbers shown under the report title
   privateRepo?: boolean;
   hasCaseStudy: boolean; // false → routes to /work/coming-soon
   featured?: boolean;
@@ -115,9 +129,15 @@ export const PROJECTS: Project[] = [
     domain: "LLM post-training · Agent evaluation",
     summary:
       "How small can a tool router go? A research build that distils a 550B teacher's tool-calling into Qwen2.5 0.5B–3B LoRA students on τ²-bench retail, then measures where multi-step agent reliability breaks — across 16/40/80-tool catalogs, SFT vs DPO vs GRPO, and a log-prob confidence router that escalates hard steps back to the teacher.",
-    tech: ["PyTorch", "Hugging Face", "vLLM", "LangGraph", "LangChain", "OpenAI API", "Weights & Biases", "Docker", "Python", "LLM Fine-tuning", "Agentic AI"],
+    tech: ["PyTorch", "Hugging Face", "vLLM", "LangGraph", "LangChain", "OpenAI API", "OpenRouter", "Weights & Biases", "Docker", "Python", "LLM Fine-tuning", "Agentic AI"],
     thumb: `${IMG}/tool_router.png`,
     repo: "https://github.com/madhusiddharths/the_llm_project",
+    results: [
+      { value: "73% → 7.7%", label: "step agreement vs task success, 1.5B student" },
+      { value: "48%", label: "task success of the 550B teacher" },
+      { value: "0.797", label: "AUROC of the confidence router" },
+      { value: "GRPO > DPO", label: "step-level GRPO improved every catalog" },
+    ],
     hasCaseStudy: true,
     featured: true,
   },
@@ -131,14 +151,62 @@ export const PROJECTS: Project[] = [
     tech: ["Apache Kafka", "Apache Airflow", "Databricks", "Kubernetes", "FastAPI", "PostgreSQL", "Python", "LangGraph", "MCP", "Gemini API", "Hugging Face", "Agentic AI"],
     thumb: `${IMG}/pulsetrade.png`,
     repo: "https://github.com/madhusiddharths/pulsetrade",
-    // TODO: GKE deploys are ephemeral by design — swap for a persistent live URL when one exists.
-    live: "/work/coming-soon/",
+    live: "/work/coming-soon/?p=pulsetrade&s=live",
+    liveKind: "app",
+    results: [
+      { value: "7", label: "layers, from ingestion to observability" },
+      { value: "87%", label: "of headlines filtered before they reach Kafka" },
+      { value: "5 min", label: "feature windows feeding the anomaly detector" },
+      { value: "4-node", label: "LangGraph agent that writes each brief" },
+    ],
+    hasCaseStudy: true,
+    featured: true,
+  },
+  {
+    slug: "ai-counselling",
+    index: "03",
+    name: "AI-counselling",
+    domain: "Multimodal AI · Wellbeing",
+    summary:
+      "A counselling assistant that grounds its replies in the DSM-5 through retrieval, reads tone of voice and facial emotion alongside the words, and keeps long-term memory, with a safety-routing layer in front of the model.",
+    tech: ["FastAPI", "GCP", "MongoDB", "TypeScript", "Docker", "Node.js", "Python", "Gemini API", "Hugging Face"],
+    thumb: `${IMG}/ai_chatbot.png`,
+    repo: "https://github.com/madhusiddharths/aicounselling",
+    live: "/work/coming-soon/?p=ai-counselling&s=live",
+    liveKind: "app",
+    results: [
+      { value: "6", label: "AI/ML systems behind one conversation" },
+      { value: "~2.5 GB", label: "backend image, down from ~6–8 GB" },
+      { value: "on-device", label: "facial-emotion inference in the browser" },
+      { value: "DSM-5", label: "retrieval grounding every reply" },
+    ],
+    hasCaseStudy: true,
+    featured: true,
+  },
+  {
+    slug: "alzheimers",
+    index: "04",
+    name: "Alzheimer's Progression",
+    domain: "Medical imaging · GANs",
+    summary:
+      "Stages an Alzheimer's MRI slice with a fine-tuned EfficientNetB4 (~98% accuracy), then chains three stage-transition DCGANs to synthesize how that brain is likely to look as the disease advances.",
+    tech: ["PyTorch", "Pandas", "Matplotlib", "OpenCV", "Docker", "MLflow", "Flask", "Python"],
+    thumb: `${IMG}/alzheimers.jpg`,
+    repo: "https://github.com/madhusiddharths/alzheimers_progression",
+    live: "https://alzheimers-classifier-v1.onrender.com",
+    liveKind: "model",
+    results: [
+      { value: "98%", label: "staging accuracy on 2,048 held-out scans" },
+      { value: "0.98", label: "macro-F1 across all four stages" },
+      { value: "~23%", label: "lower FID with region-of-interest guidance" },
+      { value: "86,437", label: "labelled MRI slices" },
+    ],
     hasCaseStudy: true,
     featured: true,
   },
   {
     slug: "galaxy",
-    index: "03",
+    index: "05",
     name: "Galaxy Explorer",
     domain: "3D visualization · 557M+ stars",
     summary:
@@ -146,12 +214,20 @@ export const PROJECTS: Project[] = [
     tech: ["Polars", "Apache Spark", "FastAPI", "Three.js", "GCP", "Docker", "Python", "JavaScript"],
     thumb: `${IMG}/stars.jpg`,
     repo: "https://github.com/madhusiddharths/galaxy_explorer",
+    live: "https://galaxy-explorer-1061483926543.us-central1.run.app",
+    liveKind: "app",
+    results: [
+      { value: "1.8B → 557M", label: "raw sources to validated, served stars" },
+      { value: "750+ GB", label: "raw catalogue reduced to 13 columns" },
+      { value: "60 FPS", label: "3D flythrough in the browser" },
+      { value: "~77 GB", label: "full scan per query, replaced by pruned reads" },
+    ],
     hasCaseStudy: true,
     featured: true,
   },
   {
     slug: "growth-retention",
-    index: "04",
+    index: "06",
     name: "Growth & Retention",
     domain: "Experimentation · 20M+ events",
     summary:
@@ -159,34 +235,13 @@ export const PROJECTS: Project[] = [
     tech: ["Python", "dbt", "FastAPI", "Streamlit", "Docker", "SQL"],
     thumb: `${IMG}/growth_retention.png`,
     repo: "https://github.com/madhusiddharths/growth_retention",
-    hasCaseStudy: true,
-    featured: true,
-  },
-  {
-    slug: "alzheimers",
-    index: "05",
-    name: "Alzheimer's Progression",
-    domain: "Medical imaging · GANs",
-    summary:
-      "This project uses deep learning, image processing, and GANs to predict and model the progression of Alzheimer's disease from MRI scans.",
-    tech: ["PyTorch", "Pandas", "Matplotlib", "OpenCV", "Docker", "Flask", "Python"],
-    thumb: `${IMG}/alzheimers.jpg`,
-    repo: "https://github.com/madhusiddharths/alzheimers_progression",
-    hasCaseStudy: true,
-    featured: true,
-  },
-  {
-    slug: "ai-counselling",
-    index: "06",
-    name: "AI-counselling",
-    domain: "Multimodal AI · Wellbeing",
-    summary:
-      "An AI-powered chatbot that analyzes a person's video, audio, and tone to assess their mental state and provide personalized counseling.",
-    tech: ["FastAPI", "GCP", "MongoDB", "TypeScript", "Docker", "Node.js", "Python", "Gemini API", "Hugging Face"],
-    thumb: `${IMG}/ai_chatbot.png`,
-    repo: "https://github.com/madhusiddharths/aicounselling",
-    // TODO: deployment is building — swap this for the real live URL when ready.
-    live: "/work/coming-soon/",
+    live: "https://gr-frontend-ds4v3uzpta-uc.a.run.app",
+    liveKind: "demo",
+    results: [
+      { value: "6.73% → 10.83%", label: "conversion in the simulated A/B test (p < 0.001)" },
+      { value: "0.80", label: "ROC-AUC, cart-abandonment model" },
+      { value: "20M+", label: "raw events (4.6 GB) through the pipeline" },
+    ],
     hasCaseStudy: true,
     featured: true,
   },
@@ -200,6 +255,12 @@ export const PROJECTS: Project[] = [
     tech: ["R", "OpenAI API"],
     thumb: `${IMG}/crypto.png`,
     repo: "https://github.com/madhusiddharths/crypto_tweet_impact",
+    results: [
+      { value: "~20K", label: "Musk tweets classified by an LLM" },
+      { value: "30+", label: "category tests corrected (Bonferroni, FDR)" },
+      { value: "+4.27%", label: "7-day DOGE return after negative tweets (p = 0.0097)" },
+      { value: "almost none", label: "raw-significant effects survive correction" },
+    ],
     hasCaseStudy: true,
     featured: true,
   },
@@ -209,12 +270,18 @@ export const PROJECTS: Project[] = [
     name: "Federated IoT Security",
     domain: "Federated learning · Privacy",
     summary:
-      "A hybrid Federated Learning framework integrating Transformers and XGBoost with LoRA adapters for efficient, privacy-preserving IoT intrusion detection.",
+      "First-author IEEE paper: four organisations train one IoT intrusion detector without sharing traffic. A Transformer + XGBoost hybrid shares only its LoRA adapters, reaching 97.98% accuracy with 89.5% less data per round.",
     tech: ["PyTorch", "Pandas", "LaTeX", "Python"],
     thumb: `${IMG}/fed_iot.png`,
     repo: null,
     privateRepo: true,
     paper: "https://ieeexplore.ieee.org/document/11395795",
+    results: [
+      { value: "97.98%", label: "accuracy on 2.4M test flows" },
+      { value: "89.5%", label: "less data sent per round than FedAvg" },
+      { value: "4", label: "simulated organisations, no raw traffic shared" },
+      { value: "IEEE", label: "ICAIC 2026, first author" },
+    ],
     hasCaseStudy: true,
   },
   {
@@ -227,36 +294,39 @@ export const PROJECTS: Project[] = [
     tech: ["Python", "Polars", "Snowflake", "GCP", "SQL"],
     thumb: `${IMG}/online_retail.png`,
     repo: "https://github.com/madhusiddharths/Online_retail",
-    hasCaseStudy: true,
-  },
-  {
-    slug: "vision-transformer",
-    index: "10",
-    name: "Vision Transformer",
-    domain: "Deep learning · Transformers",
-    summary:
-      "A from-scratch PyTorch implementation of the Vision Transformer (ViT) — patch embedding, [CLS] token, pre-norm encoder — trained on CIFAR-10 to 72.9% test accuracy, plus a hybrid CNN-Transformer variant and the full ViT-Base/Large/Huge config family.",
-    tech: ["PyTorch", "Python", "Matplotlib", "LaTeX"],
-    thumb: `${IMG}/vit.jpg`,
-    repo: null,
-    privateRepo: true,
+    live: "https://datastudio.google.com/reporting/ec4c8755-2932-417a-be4d-14d03c93b6a6",
+    liveKind: "dashboard",
+    results: [
+      { value: "£10.23M", label: "gross revenue across ~540k transactions" },
+      { value: "4.6%", label: "return rate, reported alongside net" },
+      { value: "~£1.5M", label: "revenue kept by bucketing guest orders" },
+      { value: "4,334", label: "customers segmented with RFM" },
+    ],
     hasCaseStudy: true,
   },
   {
     slug: "image-retrieval",
-    index: "11",
+    index: "10",
     name: "Image Retrieval",
     domain: "Vector search · Computer vision",
     summary:
-      "AI-based image retrieval using ResNet-50 feature extraction and FAISS vector indexing for fast similarity search.",
+      "Upload a photo, get the most similar images back: a fine-tuned ResNet-50 (96.95% validation accuracy) produces 128-d embeddings that FAISS searches by cosine similarity, served as a live Streamlit app.",
     tech: ["PyTorch", "Pandas", "Streamlit", "Docker", "Python"],
     thumb: `${IMG}/image_retrieval.png`,
     repo: "https://github.com/madhusiddharths/image_retrieval/tree/main",
+    live: "https://imageretrievalproject.streamlit.app",
+    liveKind: "model",
+    results: [
+      { value: "96.95%", label: "validation accuracy after fine-tuning" },
+      { value: "73.68%", label: "from-scratch CNN baseline" },
+      { value: "128-d", label: "embeddings, exact cosine search in FAISS" },
+      { value: "101", label: "Caltech-101 classes, 8,677 images" },
+    ],
     hasCaseStudy: true,
   },
   {
     slug: "traffic-prediction",
-    index: "12",
+    index: "11",
     name: "Traffic Prediction",
     domain: "Fleet routing · 50-stop VRP",
     summary:
@@ -264,35 +334,34 @@ export const PROJECTS: Project[] = [
     tech: ["Python", "scikit-learn", "Pandas", "NumPy", "Matplotlib"],
     thumb: `${IMG}/sf.jpg`,
     repo: "https://github.com/madhusiddharths/Traffic-Prediction",
+    results: [
+      { value: "R² ≈ 0.87", label: "Random Forest traffic forecast" },
+      { value: "50 / 8", label: "stops and vehicles routed with OR-Tools" },
+      { value: "315,359", label: "CalTrans sensor rows modeled" },
+      { value: "10 s", label: "solve budget for a balanced fleet" },
+    ],
     hasCaseStudy: true,
   },
   {
     slug: "saturdae",
-    index: "13",
+    index: "12",
     name: "SATURDAE",
-    domain: "Voice UI · Spatial design",
+    domain: "Spatial design · Patented",
     summary:
-      "A voice-controlled floor planning app that lets users design and edit layouts, intelligently suggesting room and furniture arrangements for improved designs.",
+      "A patented floor-plan designer: place rooms and furniture with short commands, and a half-foot occupancy grid rejects overlaps, suggests free room positions and draws the hallways.",
     tech: ["Python", "NumPy", "PyCharm"],
     thumb: `${IMG}/floor.jpg`,
     repo: "https://github.com/madhusiddharths/SATURDAE",
+    results: [
+      { value: "Patent", label: "Indian application 202341038832 A" },
+      { value: "0.5 ft", label: "occupancy-grid resolution for collision checks" },
+      { value: "30×30", label: "planning grid, drawn live" },
+    ],
     hasCaseStudy: true,
   },
   {
-    slug: "symptoscan",
-    index: "14",
-    name: "SymptoScan",
-    domain: "Classification · Health",
-    summary:
-      "SymptoScan is designed to classify four closely related illnesses—flu, COVID-19, the common cold, and allergies—using a meta-classifier approach.",
-    tech: ["Pandas", "NumPy", "Kaggle", "Plotly", "scikit-learn", "Python"],
-    thumb: `${IMG}/symptoscan.jpeg.png.webp`,
-    repo: "https://github.com/madhusiddharths/SymptoScan",
-    hasCaseStudy: false,
-  },
-  {
     slug: "hotspot",
-    index: "15",
+    index: "13",
     name: "Hotspot",
     domain: "Geospatial health · Exposure modeling",
     summary:
@@ -300,22 +369,19 @@ export const PROJECTS: Project[] = [
     tech: ["Python", "Streamlit", "Plotly", "Pandas", "GeoPandas"],
     thumb: `${IMG}/hotspot.png`,
     repo: "https://github.com/madhusiddharths/hotspot",
+    live: "https://madhusiddharths-hotspot-streamlit-app-ndfk0y.streamlit.app",
+    liveKind: "dashboard",
+    results: [
+      { value: "56", label: "Chicago ZIP codes mapped weekly" },
+      { value: "131,896", label: "lab-tested cases, 2024 season" },
+      { value: "5", label: "public datasets fused" },
+      { value: "on-device", label: "personal exposure estimate" },
+    ],
     hasCaseStudy: true,
-  },
-  {
-    slug: "image-classifier",
-    index: "16",
-    name: "Image Classifier",
-    domain: "Transfer learning · CV",
-    summary:
-      "A human-versus-horse classifier built using transfer learning, leveraging a VGG19 model pretrained on ImageNet for improved accuracy.",
-    tech: ["TensorFlow", "OpenCV", "Streamlit", "Keras", "NumPy", "Python"],
-    thumb: `${IMG}/ImageNet.webp`,
-    repo: "https://github.com/madhusiddharths/VGG19-Trannsfer-learning",
-    hasCaseStudy: false,
   },
 ];
 
+// Array order is display order: AI engineering first, then data science, then analytics.
 export const FEATURED = PROJECTS.filter((p) => p.featured);
 export const CASE_STUDY_SLUGS = PROJECTS.filter((p) => p.hasCaseStudy).map((p) => p.slug);
 export function getProject(slug: string) {
@@ -323,22 +389,22 @@ export function getProject(slug: string) {
 }
 
 /* ---- headline metrics (count-up) — every figure is real, drawn from the work */
-export const METRICS = [
-  { value: 557, suffix: "M+", label: "Gaia DR3 stars rendered" },
-  { value: 20, suffix: "M+", label: "e-commerce events processed" },
-  { value: 20, prefix: "~", suffix: "K", label: "tweets classified & studied" },
-  { value: 14, suffix: "", label: "in-depth case studies" },
+export const METRICS: { value: number; label: string; prefix?: string; suffix?: string; decimals?: number }[] = [
+  { value: 550, suffix: "B → 3B", label: "teacher distilled into tool-calling agents" },
+  { value: 73.5, decimals: 1, suffix: "%", label: "video QA accuracy, up from 54.7%" },
+  { value: 26, suffix: "K+", label: "sites enriched with LLMs" },
+  { value: 1.8, decimals: 1, suffix: "B+", label: "Gaia DR3 sources processed" },
 ];
 
 /* ---- capability matrix (skills) — same items as before, re-categorized ---- */
 export const SKILLS: { group: string; items: string[] }[] = [
   {
     group: "Languages & Query",
-    items: ["Python", "R", "C", "C++", "Java", "SQL", "PostgreSQL", "JavaScript", "HTML", "CSS"],
+    items: ["Python", "R", "SQL", "PostgreSQL", "JavaScript"],
   },
   {
     group: "AI Engineering & Agents",
-    items: ["Agentic AI", "LangGraph", "LangChain", "MCP", "Claude API", "OpenAI API", "Gemini API", "Ollama", "Hugging Face", "vLLM", "Weights & Biases", "LLM Fine-tuning"],
+    items: ["Agentic AI", "LangGraph", "LangChain", "MCP", "LLM APIs", "OpenRouter", "Ollama", "Hugging Face", "vLLM", "Weights & Biases", "MLflow", "LLM Fine-tuning"],
   },
   {
     group: "ML / Data Science",

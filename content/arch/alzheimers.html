@@ -1,0 +1,12 @@
+<p>
+        The pipeline is two models working in sequence. An incoming MRI is first resized and converted to RGB, then passed to
+        the <strong>EfficientNetB4 classifier</strong>, which predicts the current stage. That prediction acts as a
+        <strong>router</strong>: the scan is fed into the generator trained for its specific stage transition, and the generators are
+        <strong>chained</strong> &mdash; the output of one becomes the input of the next (Non→Very&nbsp;Mild→Mild→Moderate) &mdash; until the
+        brain reaches the final stage. The result returned to the user is the predicted current stage <em>plus</em> a sequence of
+        synthesized scans illustrating the road ahead.
+      </p>
+      <figure>
+        <img src="/img/alzheimers/architecture.png" alt="End-to-end architecture: classifier routes into a chain of stage-transition GANs" />
+        <figcaption>Figure 3 — End-to-end architecture. The classifier predicts the stage, which selects an entry point into the chained stage-transition GANs that generate the remaining progression.</figcaption>
+      </figure>

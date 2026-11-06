@@ -1,12 +1,4 @@
 <!-- Live Dashboard Button -->
-<div class="project-demo-container">
-  <a href="https://datastudio.google.com/reporting/ec4c8755-2932-417a-be4d-14d03c93b6a6"
-    class="project-demo-btn" target="_blank">
-    <span class="btn-text">View Live Dashboard</span>
-    <span class="btn-icon">🚀</span>
-  </a>
-</div>
-
 <section class="content-section">
   <h2>Overview</h2>
   <p>
@@ -49,29 +41,6 @@
       more.</li>
     <li><strong>Do customers come back?</strong> Monthly cohort retention over the following year.</li>
   </ul>
-</section>
-
-<section class="content-section">
-  <h2>Architecture &mdash; A Dual-Mode Pipeline</h2>
-  <p>
-    The orchestrator (<code>run_pipeline.py</code>) exposes a simple CLI &mdash; <code>--source {csv|snowflake}</code>
-    and <code>--sink {local|bigquery}</code> &mdash; so the source and destination are pluggable while the
-    transformation in between never changes. This is the key design decision: the cleaning logic is a
-    <strong>pure function</strong> over Polars DataFrames, completely decoupled from where the bytes come from or go.
-  </p>
-  <div class="code-container">
-    <pre><code># Offline: no credentials, fully reproducible
-python run_pipeline.py                                   # CSV -> star schema -> data/*.parquet
-python analysis.py                                       # -> insights.md + looker_exports/*.csv
-
-# Cloud: the production stack
-python run_pipeline.py --source snowflake --sink bigquery</code></pre>
-  </div>
-  <p>
-    Because the offline path needs no cloud account, the whole project is <strong>reproducible on a laptop</strong> and
-    the test suite runs without secrets &mdash; while the cloud path demonstrates the real
-    Snowflake&nbsp;&rarr;&nbsp;Polars&nbsp;&rarr;&nbsp;BigQuery&nbsp;&rarr;&nbsp;Looker architecture.
-  </p>
 </section>
 
 <section class="content-section">
@@ -287,7 +256,7 @@ python run_pipeline.py --source snowflake --sink bigquery</code></pre>
 </section>
 
 <section class="content-section">
-  <h2>Outcomes and Impact</h2>
+  <h2>Outcomes &amp; Impact</h2>
   <ul>
     <li>Built a <strong>dual-mode analytics pipeline</strong> from one codebase &mdash; an offline, credential-free path
       for reproducibility and a cloud Snowflake&nbsp;&rarr;&nbsp;Polars&nbsp;&rarr;&nbsp;BigQuery path for the real
@@ -310,11 +279,9 @@ python run_pipeline.py --source snowflake --sink bigquery</code></pre>
 <section class="content-section">
   <h2>Conclusion</h2>
   <p>
-    Online Retail is the project I point to when I want to show that I think about data as a <strong>system, not a
-    notebook</strong> &mdash; one where the cleaning is decoupled and tested, the schema is modelled for analysis, every
-    questionable row is handled on purpose, and the output is a dashboard a stakeholder can actually trust. It pairs the
-    <strong>data engineer's discipline</strong> (a pure, tested transform behind a pluggable Snowflake/BigQuery
-    pipeline) with the <strong>analyst's instinct</strong> for the questions that move a business: where revenue
-    concentrates, who the best customers are, and whether they come back.
+    Online Retail models ~540k transactions into a star schema with Polars, behind a tested transform that loads into
+    Snowflake or BigQuery, and answers three business questions on a live Looker Studio dashboard: where revenue
+    concentrates, who the best customers are (RFM), and whether they come back (cohort retention). Every questionable
+    row is handled on purpose and documented, so the numbers on the dashboard can be defended.
   </p>
 </section>

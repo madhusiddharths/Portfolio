@@ -20,7 +20,7 @@
     </section>
 
     <section class="content-section">
-      <h2>Problem and Goal</h2>
+      <h2>Problem &amp; Goal</h2>
       <p>
         High-profile social-media activity is widely believed to move crypto markets, and Musk's tweets — especially about
         the meme-origin coin Dogecoin — are the canonical example. But "everyone knows it moves the price" is an empirical
@@ -50,30 +50,6 @@
         power is low, so rigorous correction is essential to avoid false discoveries — and the analysis says so explicitly
         rather than overselling the contrarian effect it found.
       </p>
-    </section>
-
-    <section class="content-section">
-      <h2>Analytical Architecture &amp; Methodology</h2>
-      <p>
-        The pipeline runs end-to-end inside a single Quarto notebook (<code>analysis/data_analysis.qmd</code>), with two
-        data sources feeding a join keyed on date: ~20k LLM-classified tweets on one side, and daily OHLCV price series on
-        the other. Price data is fetched from Yahoo Finance via <code>quantmod</code> and <strong>auto-regenerates if the
-        committed CSVs are ever missing</strong>, so the report renders from a clean checkout without manual data wrangling.
-      </p>
-      <figure>
-        <img src="/img/crypto_tweet_impact/architecture.png" alt="Crypto tweet-impact analysis pipeline diagram" />
-        <figcaption>Figure 1: End-to-end pipeline — LLM-classified tweets and Yahoo Finance prices joined by date, run through a multi-horizon event study against a random baseline, corrected with Bonferroni/FDR plus a power analysis, and rendered to a Quarto report, Shiny dashboard, and LaTeX PDFs.</figcaption>
-      </figure>
-      <p>The seven stages, in order:</p>
-      <ul>
-        <li><strong>Ingest:</strong> load tweets + prices; auto-fetch DOGE/BTC daily series from Yahoo Finance if absent.</li>
-        <li><strong>Clean &amp; filter:</strong> keep relevant, non-meme, valid-sentiment tweets per coin; de-duplicate; bucket sentiment into low/medium/high.</li>
-        <li><strong>Feature-engineer:</strong> compute percentage returns at 1-, 3-, 7-, and 30-day horizons.</li>
-        <li><strong>Event study:</strong> compute tweet-event returns and a <strong>seeded random baseline</strong> control group, so "before/after a tweet" is benchmarked against "a random day" rather than against nothing.</li>
-        <li><strong>Test:</strong> Welch t-tests and Mann-Whitney U vs. baseline; one-sample t-tests for negative-sentiment events; correlation and multiple regression of returns on sentiment and volume.</li>
-        <li><strong>Correct &amp; quantify:</strong> Bonferroni + Benjamini–Hochberg FDR adjustment across all category tests; Cohen's <em>d</em> with confidence intervals; power and minimum-detectable-effect analysis with <code>pwr</code>.</li>
-        <li><strong>Report:</strong> narrative interpretation, summary tables (<code>kableExtra</code>), and visualizations (<code>ggplot2</code>).</li>
-      </ul>
     </section>
 
     <section class="content-section">
@@ -231,12 +207,10 @@
     <section class="content-section">
       <h2>Conclusion</h2>
       <p>
-        This project is the clearest demonstration of how I approach data science: take a popular, intuitive claim, design
-        an honest test for it, and let the statistics — not the narrative — decide the verdict. It pairs a real
-        LLM-in-the-loop data pipeline with a disciplined inferential framework (event study, non-parametric and parametric
-        testing, effect sizes, multiple-testing correction, and power analysis), packages the result as a reproducible
-        Quarto report and an interactive Shiny dashboard, and is candid about exactly what its sample can and cannot support.
-        The conclusion that "most apparent tweet effects don't survive correction" is less exciting than a viral headline —
-        and far more defensible, which is the entire point.
+        Most apparent tweet effects on Bitcoin and Dogecoin do not survive multiple-testing correction. Reaching that verdict
+        took an LLM-in-the-loop pipeline to classify ~20,000 tweets, an event study with parametric and non-parametric tests,
+        effect sizes, Bonferroni and FDR correction, and a power analysis, packaged as a reproducible Quarto report and a
+        Shiny dashboard. The report states plainly what its sample can and cannot support: a smaller claim than a viral
+        headline, and one that holds up.
       </p>
     </section>
