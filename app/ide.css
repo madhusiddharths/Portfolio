@@ -1000,16 +1000,28 @@ button.ag-flow-row:hover {
 .ag-ide .cs-hero-actions {
   margin-top: 1.6rem;
 }
+/* One centred reading column shared by the hero, the report and the next
+   card. It fills whatever space the panels leave (gutters on both sides, up
+   to 80rem), so closing a side panel gives the text that room — with both
+   closed it runs end to end. No width transition: the panels already move,
+   and a transitioned max-width can stall at its start value. */
+.ag-ide .ag-main .wrap {
+  max-width: 80rem;
+  margin-inline: auto;
+  padding-inline: clamp(1.5rem, 4vw, 3.5rem);
+}
 .ag-ide .cs-layout {
   display: block;
-  max-width: 76rem;
   padding-top: clamp(2rem, 4vw, 3rem);
   padding-bottom: clamp(2rem, 4vw, 3rem);
 }
 .ag-ide .fieldnotes {
-  max-width: 72ch;
-  margin: 0 auto 0 0;
+  max-width: none;
+  margin: 0;
   font-size: 1.02rem;
+}
+html[data-ide-left="off"][data-ide-right="off"] .ag-ide .fieldnotes {
+  font-size: 1.08rem;
 }
 .ag-ide .fieldnotes h2 {
   font-weight: 600;

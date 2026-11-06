@@ -128,6 +128,7 @@ export class SwarmEngine {
   private buildIO: IntersectionObserver | null = null;
   private spyIO: IntersectionObserver | null = null;
   private mo: MutationObserver | null = null;
+  private onScroll: (() => void) | null = null;
   scrollTo: (target: string | number) => void = (t) => {
     if (typeof t === "number") window.scrollTo({ top: t, behavior: "smooth" });
     else document.querySelector(t)?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -254,6 +255,20 @@ export class SwarmEngine {
     });
     this.mo.observe(root, { childList: true, subtree: true });
 
+    // report agents only work on what is visible — a scroll may hand them new work
+    if (this.rosterName === "report") {
+      let t: ReturnType<typeof setTimeout> | null = null;
+      this.onScroll = () => {
+        if (t) return;
+        t = setTimeout(() => {
+          t = null;
+          this.wakeAll();
+        }, 180);
+      };
+      window.addEventListener("scroll", this.onScroll, { passive: true });
+      window.addEventListener("resize", this.onScroll);
+    }
+
     if (this.state.log.length > 0) {
       // re-attached (React strict mode / fast refresh): the session is already open
       if (enabled) this.startWorkers(this.gen);
@@ -269,6 +284,11 @@ export class SwarmEngine {
 
   detach() {
     this.gen++;
+    if (this.onScroll) {
+      window.removeEventListener("scroll", this.onScroll);
+      window.removeEventListener("resize", this.onScroll);
+      this.onScroll = null;
+    }
     this.buildIO?.disconnect();
     this.spyIO?.disconnect();
     this.mo?.disconnect();
@@ -436,18 +456,22 @@ export class SwarmEngine {
     const q = this.queues[op];
     if (q.length === 0) return undefined;
     const onScreen = q.some((j) => this.visible.has(j.section));
-    // a report is one long section — so there, build what is in the viewport first
-    const vh = window.innerHeight;
-    const near = (j: Job) => {
+    // A report is one long section, read inside IDE chrome: agents only take
+    // work that is actually visible — between the browser bar and the bottom
+    // panel — and wait for the reader to scroll to the rest.
+    const report = this.rosterName === "report";
+    const band = report ? this.visibleBand() : null;
+    const inBand = (j: Job) => {
+      if (!band) return true;
       const r = (j.el ?? j.seg ?? j.section).getBoundingClientRect();
-      return r.bottom > -120 && r.top < vh + 240;
+      return r.bottom > band.top + 8 && r.top < band.bottom - 16;
     };
-    const nearOnly = this.rosterName === "report" && q.some(near);
+    if (report && !q.some(inBand)) return undefined;
     let best = -1;
     for (let i = 0; i < q.length; i++) {
       const j = q[i];
       if (onScreen && !this.visible.has(j.section)) continue;
-      if (nearOnly && !near(j)) continue;
+      if (!inBand(j)) continue;
       if (best < 0) {
         best = i;
         continue;
@@ -459,6 +483,19 @@ export class SwarmEngine {
     const job = q.splice(Math.max(0, best), 1)[0];
     this.syncQueue(op);
     return job;
+  }
+
+  /** the part of the viewport the reader can see: below the chrome, above the bottom panel */
+  private visibleBand() {
+    const top = (document.querySelector<HTMLElement>(".chrome")?.getBoundingClientRect().bottom ?? 0) | 0;
+    let bottom = window.innerHeight;
+    for (const sel of [".ide-bottom", ".ide-status"]) {
+      const el = document.querySelector<HTMLElement>(sel);
+      if (!el) continue;
+      const r = el.getBoundingClientRect();
+      if (r.height > 0 && r.top < bottom) bottom = r.top;
+    }
+    return { top, bottom };
   }
 
   private wait(op: Op, ms: number) {
@@ -475,7 +512,8 @@ export class SwarmEngine {
         if (this.state.agents[id].status !== "idle") this.setAgent(id, { status: "idle", op: null, target: "" });
         await this.wait(op, 1500 + Math.random() * 900);
         if (gen !== this.gen) return;
-        if (this.queues[op].length === 0) {
+        // nothing left — or, on a report, nothing *visible* left: either way the cursor leaves
+        if (this.queues[op].length === 0 || this.rosterName === "report") {
           // Idle: drift a little, then fade so nothing hovers over the reading.
           // Sub-agents leave as soon as their call is done.
           const linger = parentOf(id) ? 500 : 2400;
@@ -518,7 +556,16 @@ export class SwarmEngine {
     el.style.removeProperty("translate");
   }
 
-  private async fly(id: AgentId, x: number, y: number, gen: number) {
+  /** on a report, keep a cursor target inside the visible band (root coordinates) */
+  private clampY(y: number) {
+    if (this.rosterName !== "report" || !this.root) return y;
+    const band = this.visibleBand();
+    const o = this.root.getBoundingClientRect().top;
+    return clamp(y, band.top - o + 6, band.bottom - o - 26);
+  }
+
+  private async fly(id: AgentId, x: number, rawY: number, gen: number) {
+    const y = this.clampY(rawY);
     const cur = this.cursors[id];
     if (cur.o.get() < 1) {
       // reappear near the target instead of streaking across the page;
@@ -537,7 +584,8 @@ export class SwarmEngine {
     return gen === this.gen;
   }
 
-  private async drag(id: AgentId, x: number, y: number, ms: number, ease: typeof EASE | "linear" = EASE) {
+  private async drag(id: AgentId, x: number, rawY: number, ms: number, ease: typeof EASE | "linear" = EASE) {
+    const y = this.clampY(rawY);
     const cur = this.cursors[id];
     await Promise.all([animate(cur.x, x, { duration: ms / 1000, ease }), animate(cur.y, y, { duration: ms / 1000, ease })]);
   }

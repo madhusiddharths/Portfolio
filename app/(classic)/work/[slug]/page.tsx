@@ -15,6 +15,7 @@ import { ArchPanel } from "@/components/ide/arch-panel";
 import { StatusBar } from "@/components/ide/statusbar";
 import { RailSkills } from "@/components/ide/rail-skills";
 import { Resizers } from "@/components/ide/resizers";
+import { IdePortal } from "@/components/ide/ide-portal";
 import { ReadingProgress } from "@/components/reading-progress";
 import { GithubIcon, ArrowUpRight, ArrowIcon, LockIcon, LiveIcon } from "@/components/icons";
 import { BuildSection } from "@/components/agent/swarm";
@@ -80,10 +81,12 @@ export default async function CaseStudyPage({
     <div className="case-study">
       <ReadingProgress />
       <IdeRoot order={order} />
-      <Explorer slug={slug} groups={data.groups} others={others} />
-      {pipe && <ArchPanel slug={slug} pipe={pipe} toc={data.toc} arch={data.arch} />}
-      <StatusBar index={project.index} slug={slug} labels={labels} nodeAt={pipe ? pipe.nodes.map((n) => n.at) : []} />
-      <Resizers />
+      <IdePortal>
+        <Explorer slug={slug} groups={data.groups} others={others} />
+        {pipe && <ArchPanel slug={slug} pipe={pipe} toc={data.toc} arch={data.arch} />}
+        <StatusBar index={project.index} slug={slug} labels={labels} nodeAt={pipe ? pipe.nodes.map((n) => n.at) : []} />
+        <Resizers />
+      </IdePortal>
       <RailSkills domain={project.domain} repo={project.repo ?? null} skills={skills} />
 
       {/* ---- hero ---- */}
