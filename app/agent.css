@@ -548,9 +548,9 @@ html:has(.ag) {
   }
 }
 .obs-spawned {
-  margin-left: 6px;
+  margin-left: 3px;
   font-style: normal;
-  font-size: 0.85em;
+  font-weight: 700;
   color: var(--c);
   opacity: 0.75;
 }
@@ -1278,6 +1278,37 @@ html:has(.ag) {
 }
 .build-on .ag [data-build="frame"]:not([data-state])::after {
   border: 1px dotted rgba(77, 225, 255, 0.16);
+}
+
+/* Landing page: until a Planner has planned it, a node is not there at all —
+   only the page background shows (a solid cover would hide the grid behind it
+   and read as a box). Its empty box appears as the Planner's sweep passes over
+   it, with a brief flash in the Planner's colour; then the Builders take over.
+   Layout is untouched: visibility keeps the space. */
+.build-on .ag-home [data-build]:not([data-state]):not([data-planned]) {
+  visibility: hidden;
+}
+/* a planned node inside a not-yet-planned one (e.g. inside the playground frame) still shows */
+.build-on .ag-home [data-build]:is([data-planned], [data-state]) {
+  visibility: visible;
+}
+.build-on .ag-home [data-build][data-planned]:not([data-state]) {
+  animation: bn-planned 0.6s var(--ease) both;
+}
+@keyframes bn-planned {
+  from {
+    outline: 1px solid var(--agent, var(--wire));
+    outline-offset: 1px;
+  }
+  to {
+    outline: 1px solid transparent;
+    outline-offset: 6px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .build-on .ag-home [data-build][data-planned]:not([data-state]) {
+    animation: none;
+  }
 }
 
 /* done */

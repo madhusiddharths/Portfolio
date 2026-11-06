@@ -1117,7 +1117,16 @@ export class SwarmEngine {
     seg.style.setProperty("--agent", this.def(id).color);
     seg.dataset.planning = "1";
     const ms = Math.round(clamp(380 + nodes.length * 45, 480, 950));
+    // each node's empty box appears as the sweep reaches it (top → bottom)
+    const reveal = (n: HTMLElement) => (n.dataset.planned = "1");
+    const timers = nodes.map((n) => {
+      const y = this.rel(n).y;
+      const at = clamp((y - top) / Math.max(1, bot - top), 0, 1);
+      return setTimeout(() => reveal(n), at * ms * 0.9);
+    });
     await this.drag(id, b.x + Math.max(40, b.w * 0.82), bot - 10, ms);
+    timers.forEach(clearTimeout);
+    nodes.forEach(reveal); // anything below the fold is planned too
     delete seg.dataset.planning;
     if (gen !== this.gen) return;
 
@@ -1488,7 +1497,7 @@ export class SwarmEngine {
   private clearMarks(n: HTMLElement) {
     n.getAnimations().forEach((a) => a.cancel());
     this.clearPose(n);
-    ["raw", "mode", "defect", "review", "reviewNote", "fixing"].forEach((k) => delete n.dataset[k]);
+    ["raw", "mode", "defect", "review", "reviewNote", "fixing", "planned"].forEach((k) => delete n.dataset[k]);
   }
 
   skip() {

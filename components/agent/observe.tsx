@@ -234,7 +234,11 @@ function AgentRow({ a }: { a: AgentDef }) {
     <div className="obs-row" role="row" data-status={st.status} style={{ ["--c" as string]: a.color }}>
       <span className="obs-agent" role="cell" data-sub={a.parent ? "true" : undefined}>
         <i /> {a.parent ? `↳ ${a.name}` : a.name}
-        {a.spawned && <em className="obs-spawned">spawned</em>}
+        {a.spawned && (
+          <em className="obs-spawned" title="spawned to split a backlog">
+            +
+          </em>
+        )}
       </span>
       <span className="obs-task" role="cell">
         {st.status === "idle" ? (
