@@ -9,17 +9,18 @@ export const PROFILE = {
   shortName: "Madhu Siddharth",
   monogram: "MS",
   role: "AI Engineer",
-  location: "GMT+0",
+  location: "Chicago",
+  timeZone: "America/Chicago",
   available: true,
-  building: "the LLM project",
+  building: "Tool Router Ladder",
   tagline: "I develop scalable models that drive real-world impact.",
   bio: "As an AI Engineer, I design and build AI systems that automate real work end to end. I build agentic workflows where models plan, call tools, and act on their own, connecting LLMs to APIs, data pipelines, and services so a process runs from trigger to result without a human stitching the steps together. My work spans agent orchestration, tool integration, model fine-tuning, evaluation, and production deployment, with a focus on making automation reliable enough to trust. I enjoy taking a manual, multi-step process, turning it into an AI-driven workflow, and measuring honestly where it holds up and where it needs a human in the loop.",
   analystNote:
     "For analyst-focused roles, a tailored Data Analyst resume is available.",
   resume:
-    "https://docs.google.com/document/d/1lMamT23XtATengJA4aIyfKyjG2JJld9J/edit?usp=share_link&ouid=105411796859966559609&rtpof=true&sd=true",
+    "https://drive.google.com/file/d/1RmsD9kxvlN4g63eMuVDMCHdlZ86RkpAW/view?usp=sharing",
   analystResume:
-    "https://docs.google.com/document/d/1k-H_59dL_5XADCEsP8n0rhiJq-vAlozU/edit?usp=share_link&ouid=105411796859966559609&rtpof=true&sd=true",
+    "https://drive.google.com/file/d/12E7OyHYDyCOqkQ4D6_WTWqCwESjePd_g/view?usp=sharing",
   email: "madhusiddharths1@outlook.com",
   github: "https://github.com/madhusiddharths",
   linkedin: "https://www.linkedin.com/in/madhu-siddharth-suthagar/",
@@ -56,6 +57,7 @@ export const TECH: Record<string, string> = {
   vLLM: `${ICON}/vLLM.png`,
   "OpenAI API": `${ICON}/OpenAI-mono.png`,
   "Claude API": `${ICON}/Claude.png`,
+  Claude: `${ICON}/Claude.png`,
   "Gemini API": `${ICON}/Gemini.png`,
   Ollama: `${ICON}/Ollama-mono.png`,
   "Weights & Biases": `${ICON}/WandB.png`,
@@ -83,6 +85,16 @@ export const TECH: Record<string, string> = {
   Kaggle: `${ICON}/Kaggle.png`,
   LaTeX: `${ICON}/LaTeX.png`,
 };
+
+/* Umbrella skills: a project counts toward one if it lists any member tool. */
+export const SKILL_ALIASES: Record<string, string[]> = {
+  "LLM APIs": ["Claude API", "OpenAI API", "Gemini API"],
+};
+
+/** Does project tech list `tech` use `skill` (directly or via an umbrella)? */
+export function usesSkill(tech: string[], skill: string): boolean {
+  return tech.includes(skill) || (SKILL_ALIASES[skill] ?? []).some((t) => tech.includes(t));
+}
 
 export function techIcon(name: string): string | null {
   const p = TECH[name];
@@ -115,7 +127,7 @@ export const PROJECTS: Project[] = [
     domain: "LLM post-training · Agent evaluation",
     summary:
       "How small can a tool router go? A research build that distils a 550B teacher's tool-calling into Qwen2.5 0.5B–3B LoRA students on τ²-bench retail, then measures where multi-step agent reliability breaks — across 16/40/80-tool catalogs, SFT vs DPO vs GRPO, and a log-prob confidence router that escalates hard steps back to the teacher.",
-    tech: ["PyTorch", "Hugging Face", "vLLM", "LangGraph", "LangChain", "OpenAI API", "Weights & Biases", "Docker", "Python", "LLM Fine-tuning", "Agentic AI"],
+    tech: ["PyTorch", "Hugging Face", "vLLM", "LangGraph", "LangChain", "OpenAI API", "OpenRouter", "Weights & Biases", "Docker", "Python", "LLM Fine-tuning", "Agentic AI"],
     thumb: `${IMG}/tool_router.png`,
     repo: "https://github.com/madhusiddharths/the_llm_project",
     hasCaseStudy: true,
@@ -137,8 +149,36 @@ export const PROJECTS: Project[] = [
     featured: true,
   },
   {
-    slug: "galaxy",
+    slug: "ai-counselling",
     index: "03",
+    name: "AI-counselling",
+    domain: "Multimodal AI · Wellbeing",
+    summary:
+      "An AI-powered chatbot that analyzes a person's video, audio, and tone to assess their mental state and provide personalized counseling.",
+    tech: ["FastAPI", "GCP", "MongoDB", "TypeScript", "Docker", "Node.js", "Python", "Gemini API", "Hugging Face"],
+    thumb: `${IMG}/ai_chatbot.png`,
+    repo: "https://github.com/madhusiddharths/aicounselling",
+    // TODO: deployment is building — swap this for the real live URL when ready.
+    live: "/work/coming-soon/",
+    hasCaseStudy: true,
+    featured: true,
+  },
+  {
+    slug: "alzheimers",
+    index: "04",
+    name: "Alzheimer's Progression",
+    domain: "Medical imaging · GANs",
+    summary:
+      "This project uses deep learning, image processing, and GANs to predict and model the progression of Alzheimer's disease from MRI scans.",
+    tech: ["PyTorch", "Pandas", "Matplotlib", "OpenCV", "Docker", "MLflow", "Flask", "Python"],
+    thumb: `${IMG}/alzheimers.jpg`,
+    repo: "https://github.com/madhusiddharths/alzheimers_progression",
+    hasCaseStudy: true,
+    featured: true,
+  },
+  {
+    slug: "galaxy",
+    index: "05",
     name: "Galaxy Explorer",
     domain: "3D visualization · 557M+ stars",
     summary:
@@ -151,7 +191,7 @@ export const PROJECTS: Project[] = [
   },
   {
     slug: "growth-retention",
-    index: "04",
+    index: "06",
     name: "Growth & Retention",
     domain: "Experimentation · 20M+ events",
     summary:
@@ -159,34 +199,6 @@ export const PROJECTS: Project[] = [
     tech: ["Python", "dbt", "FastAPI", "Streamlit", "Docker", "SQL"],
     thumb: `${IMG}/growth_retention.png`,
     repo: "https://github.com/madhusiddharths/growth_retention",
-    hasCaseStudy: true,
-    featured: true,
-  },
-  {
-    slug: "alzheimers",
-    index: "05",
-    name: "Alzheimer's Progression",
-    domain: "Medical imaging · GANs",
-    summary:
-      "This project uses deep learning, image processing, and GANs to predict and model the progression of Alzheimer's disease from MRI scans.",
-    tech: ["PyTorch", "Pandas", "Matplotlib", "OpenCV", "Docker", "Flask", "Python"],
-    thumb: `${IMG}/alzheimers.jpg`,
-    repo: "https://github.com/madhusiddharths/alzheimers_progression",
-    hasCaseStudy: true,
-    featured: true,
-  },
-  {
-    slug: "ai-counselling",
-    index: "06",
-    name: "AI-counselling",
-    domain: "Multimodal AI · Wellbeing",
-    summary:
-      "An AI-powered chatbot that analyzes a person's video, audio, and tone to assess their mental state and provide personalized counseling.",
-    tech: ["FastAPI", "GCP", "MongoDB", "TypeScript", "Docker", "Node.js", "Python", "Gemini API", "Hugging Face"],
-    thumb: `${IMG}/ai_chatbot.png`,
-    repo: "https://github.com/madhusiddharths/aicounselling",
-    // TODO: deployment is building — swap this for the real live URL when ready.
-    live: "/work/coming-soon/",
     hasCaseStudy: true,
     featured: true,
   },
@@ -316,6 +328,7 @@ export const PROJECTS: Project[] = [
   },
 ];
 
+// Array order is display order: AI engineering first, then data science, then analytics.
 export const FEATURED = PROJECTS.filter((p) => p.featured);
 export const CASE_STUDY_SLUGS = PROJECTS.filter((p) => p.hasCaseStudy).map((p) => p.slug);
 export function getProject(slug: string) {
@@ -323,22 +336,22 @@ export function getProject(slug: string) {
 }
 
 /* ---- headline metrics (count-up) — every figure is real, drawn from the work */
-export const METRICS = [
-  { value: 557, suffix: "M+", label: "Gaia DR3 stars rendered" },
-  { value: 20, suffix: "M+", label: "e-commerce events processed" },
-  { value: 20, prefix: "~", suffix: "K", label: "tweets classified & studied" },
-  { value: 14, suffix: "", label: "in-depth case studies" },
+export const METRICS: { value: number; label: string; prefix?: string; suffix?: string; decimals?: number }[] = [
+  { value: 550, suffix: "B → 3B", label: "teacher distilled into tool-calling agents" },
+  { value: 73.5, decimals: 1, suffix: "%", label: "video QA accuracy, up from 54.7%" },
+  { value: 26, suffix: "K+", label: "sites enriched with LLMs" },
+  { value: 1.8, decimals: 1, suffix: "B+", label: "Gaia DR3 sources processed" },
 ];
 
 /* ---- capability matrix (skills) — same items as before, re-categorized ---- */
 export const SKILLS: { group: string; items: string[] }[] = [
   {
     group: "Languages & Query",
-    items: ["Python", "R", "C", "C++", "Java", "SQL", "PostgreSQL", "JavaScript", "HTML", "CSS"],
+    items: ["Python", "R", "SQL", "PostgreSQL", "JavaScript"],
   },
   {
     group: "AI Engineering & Agents",
-    items: ["Agentic AI", "LangGraph", "LangChain", "MCP", "Claude API", "OpenAI API", "Gemini API", "Ollama", "Hugging Face", "vLLM", "Weights & Biases", "LLM Fine-tuning"],
+    items: ["Agentic AI", "LangGraph", "LangChain", "MCP", "LLM APIs", "OpenRouter", "Ollama", "Hugging Face", "vLLM", "Weights & Biases", "MLflow", "LLM Fine-tuning"],
   },
   {
     group: "ML / Data Science",

@@ -4,7 +4,7 @@
    one tool call with a confidence score, which the console logs and executes.
    ========================================================================== */
 
-import { PROJECTS, PROFILE, SKILLS, TECH } from "@/lib/projects";
+import { PROJECTS, PROFILE, SKILLS, TECH, usesSkill } from "@/lib/projects";
 
 export type Route =
   | { tool: "scroll"; args: { section: string }; conf: number; say: string }
@@ -61,7 +61,7 @@ export function route(raw: string): Route {
       return q.includes(tl) || (q.length >= 3 && tl.split(/[\s-]/).some((part) => part.length >= 3 && q.includes(part)));
     });
   if (tech) {
-    const slugs = PROJECTS.filter((p) => p.tech.includes(tech)).map((p) => p.slug);
+    const slugs = PROJECTS.filter((p) => usesSkill(p.tech, tech)).map((p) => p.slug);
     return {
       tool: "match_projects",
       args: { slugs, skill: tech },

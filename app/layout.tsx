@@ -9,7 +9,7 @@ import { display, serif, plex, jbmono } from "./fonts";
 export const metadata: Metadata = {
   metadataBase: new URL("https://madhusiddharth.dev"),
   title: {
-    default: "Madhu Siddharth Suthagar — AI Engineer",
+    default: "Madhu Siddharth Suthagar",
     template: "%s · Madhu Siddharth Suthagar",
   },
   description:

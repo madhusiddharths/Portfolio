@@ -1249,7 +1249,7 @@ html:has(.ag) {
   box-shadow: none !important;
   text-shadow: none !important;
 }
-.build-on .ag [data-build][data-raw] :is(img, svg, .pg-check, .live-dot, .hero-role i) {
+.build-on .ag [data-build][data-raw] :is(img, svg, .live-dot, .hero-role i) {
   opacity: 0 !important;
 }
 .build-on .ag [data-build][data-state="raw"]::after {
@@ -1844,15 +1844,6 @@ html:has(.ag) {
   height: 14px;
   object-fit: contain;
 }
-.pg-check {
-  flex: none;
-  width: 11px;
-  height: 11px;
-  border-radius: 3px;
-  background: var(--wire)
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.5 8.5l3 3 6-7' fill='none' stroke='%2308080a' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
-    center / 9px no-repeat;
-}
 .pg-usage {
   grid-column: 1 / -1;
   display: grid;
@@ -2420,9 +2411,22 @@ a.card-repo:hover {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
-  align-items: start;
+  align-items: stretch;
+}
+/* Each column stacks two panels; the last one stretches so all three
+   columns end on the same line, with its footer pinned to the bottom. */
+.reg-col {
+  display: flex;
+  flex-direction: column;
+  gap: inherit;
+  min-width: 0;
+}
+.reg-col > .reg:last-child {
+  flex: 1 1 auto;
 }
 .reg {
+  display: flex;
+  flex-direction: column;
   --cover: #0d0d13;
   padding: 0.9rem 0.9rem 0.7rem;
   border: 1px solid var(--line-2);
@@ -2521,6 +2525,20 @@ a.reg-row:hover {
 }
 .reg-row-h span:last-child {
   text-align: right;
+}
+.reg-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: auto;
+  padding: 8px 6px 2px;
+  border-top: 1px solid var(--line);
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--faint);
+}
+.reg-list {
+  margin-bottom: 8px;
 }
 
 /* ---------------------------------------------------------------------------
@@ -2970,6 +2988,13 @@ a.j-s:hover {
   .cred-grid,
   .reg-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  /* columns dissolve; panels flow as grid items in their `order` (AI first) */
+  .reg-grid {
+    align-items: start;
+  }
+  .reg-col {
+    display: contents;
   }
 }
 @media (max-width: 760px) {

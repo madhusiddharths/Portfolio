@@ -432,6 +432,24 @@ html:has(.ag-skin) body {
   border-color: #ff5a4d;
   color: #0a0a0a;
 }
+/* Phone: résumé full width, LinkedIn + GitHub side by side — two short rows. */
+@media (max-width: 760px) {
+  .ag-skin .pg-call {
+    flex: 1 1 calc(50% - 3px);
+    justify-content: center;
+    min-width: 0;
+  }
+  .ag-skin .pg-call:not(.pg-call-go) {
+    padding: 0 6px;
+    font-size: 11.5px;
+  }
+  .ag-skin .pg-call:not(.pg-call-go) svg {
+    display: none;
+  }
+  .ag-skin .pg-call-go {
+    flex-basis: 100%;
+  }
+}
 
 /* run config: one key/value table, rows separated by hairlines */
 .ag-skin .pg-config {
@@ -464,10 +482,6 @@ html:has(.ag-skin) body {
 .ag-skin .pg-tools a {
   border-radius: var(--r);
   font-size: 12px;
-}
-.ag-skin .pg-check {
-  border-radius: 2px;
-  background-color: var(--ink);
 }
 .ag-skin .pg-usage {
   gap: 0;
@@ -833,6 +847,11 @@ html:has(.ag-skin) body {
 .ag-skin .reg-list {
   padding: 0 6px;
 }
+.ag-skin .reg-foot {
+  margin-top: auto;
+  padding: 8px 12px 2px;
+  font-size: 11px;
+}
 .ag-skin .reg-row {
   padding: 5px 6px;
   border-radius: var(--r);
@@ -945,4 +964,31 @@ html:has(.ag-skin) body {
   outline: 1px solid var(--ink);
   outline-offset: 2px;
   border-radius: var(--r);
+}
+
+/* Footer credit: reads as the same quiet text, but "hit replay to watch" is the
+   replay button. A dotted underline is the only hint (no hover on phones). */
+.credit-replay {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  text-decoration: underline dotted;
+  text-decoration-color: var(--faint);
+  text-underline-offset: 3px;
+  transition:
+    color 0.15s,
+    text-decoration-color 0.15s;
+}
+.credit-replay:hover,
+.credit-replay:focus-visible {
+  color: var(--ink);
+  text-decoration-style: solid;
+  text-decoration-color: currentColor;
+}
+.credit-replay:focus-visible {
+  outline: 1px solid var(--ink);
+  outline-offset: 2px;
 }

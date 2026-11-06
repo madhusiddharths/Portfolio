@@ -1,6 +1,6 @@
 import Link from "next/link";
 import "./console.css";
-import { PROFILE, METRICS, FEATURED, PROJECTS, SKILLS, CERTS, techIcon } from "@/lib/projects";
+import { PROFILE, METRICS, FEATURED, PROJECTS, SKILLS, CERTS, techIcon, usesSkill } from "@/lib/projects";
 import { AgentShell } from "@/components/agent/shell";
 import { BuildSection, SwarmCount } from "@/components/agent/swarm";
 import { B } from "@/components/agent/b";
@@ -22,7 +22,17 @@ import { ArrowIcon, ArrowUpRight, GithubIcon, LinkedinIcon, DiscordIcon, MailIco
 const SENTENCES = PROFILE.bio.split(/(?<=\.)\s+/);
 const QUOTE = SENTENCES[SENTENCES.length - 1];
 const BIO = SENTENCES.slice(0, -1);
-const TOOLS = ["LangGraph", "MCP", "Claude API", "vLLM", "PyTorch", "Apache Kafka", "Apache Spark", "Docker"];
+// name shown → skill it filters the work index by
+const TOOLS: { name: string; skill: string }[] = [
+  { name: "LangGraph", skill: "LangGraph" },
+  { name: "MCP", skill: "MCP" },
+  { name: "Claude", skill: "LLM APIs" },
+  { name: "vLLM", skill: "vLLM" },
+  { name: "PyTorch", skill: "PyTorch" },
+  { name: "Hugging Face", skill: "Hugging Face" },
+  { name: "FastAPI", skill: "FastAPI" },
+  { name: "Docker", skill: "Docker" },
+];
 const FOCUS = ["agent_orchestration", "tool_integration", "fine_tuning", "evaluation", "deployment"];
 
 /* Experience + education — facts from the résumé knowledge base, verbatim numbers. */
@@ -68,8 +78,80 @@ const CERT_DATE: Record<string, string> = {
   "AWS Certified Cloud Practitioner": "Jun 2025",
   "Google Data Analytics Professional Certificate": "May 2022",
 };
-const calls = (tech: string) => PROJECTS.filter((p) => p.tech.includes(tech)).length;
+const calls = (skill: string) => PROJECTS.filter((p) => usesSkill(p.tech, skill)).length;
 const MAX_CALLS = Math.max(...SKILLS.flatMap((g) => g.items.map(calls)), 1);
+const nsOf = (group: string) => group.toLowerCase().replace(/&/g, "").replace(/[^a-z]+/g, "_").replace(/^_|_$/g, "");
+type RegGroup = { ns: string; title: string; items: string[]; order: number };
+const REG = Object.fromEntries(SKILLS.map((g) => [nsOf(g.group), { ns: nsOf(g.group), title: g.group, items: g.items }])) as Record<
+  string,
+  Omit<RegGroup, "order">
+>;
+// The registry-wide leaderboard fills the middle column under the AI panel.
+const TOP_CALLS = Array.from(new Set(SKILLS.flatMap((g) => g.items)))
+  .sort((a, b) => calls(b) - calls(a))
+  .slice(0, 6);
+// Three balanced columns, AI in the middle. `order` sets the stacking when
+// the columns collapse on narrow screens (AI first).
+const REG_COLUMNS: RegGroup[][] = [
+  [
+    { ...REG.languages_query, order: 1 },
+    { ...REG.data_cloud_infra, order: 3 },
+  ],
+  [
+    { ...REG.ai_engineering_agents, order: 0 },
+    { ns: "top_calls", title: "Most called", items: TOP_CALLS, order: 5 },
+  ],
+  [
+    { ...REG.ml_data_science, order: 2 },
+    { ...REG.serving_bi, order: 4 },
+  ],
+];
+
+function RegPanel({ ns, title, items, order }: RegGroup) {
+  const total = items.reduce((sum, t) => sum + calls(t), 0);
+  const used = items.filter((t) => calls(t) > 0).length;
+  return (
+    <B kind="block" label={`ns.${ns}`} className="reg" style={{ order }}>
+      <header className="reg-head">
+        <span className="reg-ns">
+          <b>ns</b> {ns}
+        </span>
+        <span className="reg-count">{items.length} tools</span>
+      </header>
+      <p className="reg-title">{title}</p>
+      <ul className="reg-list">
+        <li className="reg-row reg-row-h" aria-hidden="true">
+          <span />
+          <span>tool</span>
+          <span>calls</span>
+        </li>
+        {items.map((item, i) => {
+          const icon = techIcon(item);
+          const n = calls(item);
+          return (
+            <li key={item} style={{ ["--i" as string]: i }}>
+              <Link href={`/work/?skill=${encodeURIComponent(item)}`} className="reg-row" data-zero={n === 0 ? "true" : undefined}>
+                {icon ? <img src={icon} alt="" loading="lazy" width={15} height={15} /> : <i className="reg-dot" />}
+                <span className="reg-name">{item}</span>
+                <span className="reg-calls">
+                  <span className="reg-bar" style={{ ["--w" as string]: n / MAX_CALLS }} />
+                  {n}
+                </span>
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+      <footer className="reg-foot">
+        <span>
+          {used}/{items.length} in use
+        </span>
+        <span>Σ {total} calls</span>
+      </footer>
+    </B>
+  );
+}
+
 const SOCIAL = [
   { label: "GitHub", href: PROFILE.github, Icon: GithubIcon },
   { label: "LinkedIn", href: PROFILE.linkedin, Icon: LinkedinIcon },
@@ -130,22 +212,23 @@ export default function Home() {
                       <i aria-hidden="true" /> {PROFILE.role} · agentic workflows · end-to-end automation
                     </B>
                     <B as="p" kind="type" label="p.tagline" className="hero-tagline">
-                      I develop <mark>scalable models</mark> that drive real-world impact.
+                      I ship <mark>agents that do the work</mark>, then measure exactly where they break.
                     </B>
                     <B kind="block" label="tool_calls" className="pg-calls" data-ops="create,write,style,resize,place">
                       <span className="pg-calls-h">tool_calls · 3</span>
-                      <a href={`mailto:${PROFILE.email}`} className="pg-call pg-call-go">
-                        <code>contact</code>
-                        <span>(to=&quot;madhu&quot;)</span>
-                        <ArrowIcon width={14} height={14} />
-                      </a>
-                      <a href="#work" className="pg-call">
-                        <code>open_work</code>
-                        <span>(featured=6)</span>
-                      </a>
-                      <a href={PROFILE.resume} target="_blank" rel="noopener noreferrer" className="pg-call">
+                      <a href={PROFILE.resume} target="_blank" rel="noopener noreferrer" className="pg-call pg-call-go">
                         <code>get_resume</code>
                         <span>()</span>
+                        <ArrowUpRight width={12} height={12} />
+                      </a>
+                      <a href={PROFILE.linkedin} target="_blank" rel="noopener noreferrer" className="pg-call">
+                        <code>connect</code>
+                        <span>(linkedin)</span>
+                        <ArrowUpRight width={12} height={12} />
+                      </a>
+                      <a href={PROFILE.github} target="_blank" rel="noopener noreferrer" className="pg-call">
+                        <code>view_source</code>
+                        <span>(github)</span>
                         <ArrowUpRight width={12} height={12} />
                       </a>
                     </B>
@@ -168,14 +251,13 @@ export default function Home() {
                       tools <b>{TOOLS.length}</b>
                     </span>
                     <ul>
-                      {TOOLS.map((t, i) => {
-                        const icon = techIcon(t);
+                      {TOOLS.map(({ name, skill }, i) => {
+                        const icon = techIcon(name);
                         return (
-                          <li key={t} style={{ ["--i" as string]: i }}>
-                            <Link href={`/work/?skill=${encodeURIComponent(t)}`} title={`Projects using ${t}`}>
-                              <span className="pg-check" aria-hidden="true" />
+                          <li key={name} style={{ ["--i" as string]: i }}>
+                            <Link href={`/work/?skill=${encodeURIComponent(skill)}`} title={`Projects using ${name}`}>
                               {icon && <img src={icon} alt="" width={14} height={14} loading="lazy" />}
-                              {t}
+                              {name}
                             </Link>
                           </li>
                         );
@@ -194,7 +276,7 @@ export default function Home() {
               {METRICS.map((m, i) => (
                 <B key={m.label} kind="block" label="eval.metric" className="metric" data-ops={i % 2 ? "create,write,style,place" : "create,write,style"}>
                   <dt>
-                    <SwarmCount value={m.value} prefix={m.prefix} suffix={m.suffix} />
+                    <SwarmCount value={m.value} prefix={m.prefix} suffix={m.suffix} decimals={m.decimals} />
                   </dt>
                   <dd>{m.label}</dd>
                 </B>
@@ -392,43 +474,13 @@ export default function Home() {
               </B>
             </SecHead>
             <div className="reg-grid" data-seg="registry">
-              {SKILLS.map((g) => {
-                const ns = g.group.toLowerCase().replace(/&/g, "").replace(/[^a-z]+/g, "_").replace(/^_|_$/g, "");
-                return (
-                  <B key={g.group} kind="block" label={`ns.${ns}`} className="reg">
-                    <header className="reg-head">
-                      <span className="reg-ns">
-                        <b>ns</b> {ns}
-                      </span>
-                      <span className="reg-count">{g.items.length} tools</span>
-                    </header>
-                    <p className="reg-title">{g.group}</p>
-                    <ul className="reg-list">
-                      <li className="reg-row reg-row-h" aria-hidden="true">
-                        <span />
-                        <span>tool</span>
-                        <span>calls</span>
-                      </li>
-                      {g.items.map((item, i) => {
-                        const icon = techIcon(item);
-                        const n = calls(item);
-                        return (
-                          <li key={item} style={{ ["--i" as string]: i }}>
-                            <Link href={`/work/?skill=${encodeURIComponent(item)}`} className="reg-row" data-zero={n === 0 ? "true" : undefined}>
-                              {icon ? <img src={icon} alt="" loading="lazy" width={15} height={15} /> : <i className="reg-dot" />}
-                              <span className="reg-name">{item}</span>
-                              <span className="reg-calls">
-                                <span className="reg-bar" style={{ ["--w" as string]: n / MAX_CALLS }} />
-                                {n}
-                              </span>
-                            </Link>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </B>
-                );
-              })}
+              {REG_COLUMNS.map((col, ci) => (
+                <div key={ci} className="reg-col">
+                  {col.map((g) => (
+                    <RegPanel key={g.ns} {...g} />
+                  ))}
+                </div>
+              ))}
             </div>
           </div>
         </BuildSection>
@@ -466,12 +518,12 @@ export default function Home() {
         {/* ── CONTACT ──────────────────────────────────────────────────── */}
         <BuildSection id="contact" sec="SEC_CONTACT" className="contact">
           <div className="wrap">
-            <SecHead n="05" sec="SEC_CONTACT" eyebrow="Next steps?" title="Don't be a Stranger!" />
+            <SecHead n="05" sec="SEC_CONTACT" eyebrow="Next steps?" title="Your turn to prompt." />
             <div className="contact-grid" data-seg="request">
               <div>
                 <B as="p" kind="para" label="p.copy" className="contact-copy">
-                  Feel free to drop me an email if you believe we&apos;d make a great team and would like to collaborate. Let&apos;s
-                  make our work together not only productive but also enjoyable!
+                  Hiring for agentic AI, LLM post-training or applied ML? Send the request. Email, LinkedIn or GitHub all reach
+                  me, and every one gets a reply.
                 </B>
                 <B kind="block" label="div.actions" className="contact-actions" data-ops="create,write,style">
                   <a href={`mailto:${PROFILE.email}`} className="btn btn-red">
@@ -496,7 +548,7 @@ export default function Home() {
                     {"  "}<span className="j-k">&quot;to&quot;</span>: <a href={`mailto:${PROFILE.email}`} className="j-s">&quot;{PROFILE.email}&quot;</a>,{"\n"}
                     {"  "}<span className="j-k">&quot;role&quot;</span>: <span className="j-s">&quot;{PROFILE.role}&quot;</span>,{"\n"}
                     {"  "}<span className="j-k">&quot;status&quot;</span>: <span className="j-s">&quot;open_to_opportunities&quot;</span>,{"\n"}
-                    {"  "}<span className="j-k">&quot;timezone&quot;</span>: <span className="j-s">&quot;{PROFILE.location}&quot;</span>,{"\n"}
+                    {"  "}<span className="j-k">&quot;timezone&quot;</span>: <span className="j-s">&quot;{PROFILE.timeZone}&quot;</span>,{"\n"}
                     {"  "}<span className="j-k">&quot;channels&quot;</span>: [
                     {SOCIAL.map((x, i) => (
                       <span key={x.label}>

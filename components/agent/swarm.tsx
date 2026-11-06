@@ -115,7 +115,7 @@ export function BuildSection({
 }
 
 /** Counts up once its build node is done (or on view when the build is off). */
-export function SwarmCount({ value, prefix = "", suffix = "" }: { value: number; prefix?: string; suffix?: string }) {
+export function SwarmCount({ value, prefix = "", suffix = "", decimals = 0 }: { value: number; prefix?: string; suffix?: string; decimals?: number }) {
   const ref = useRef<HTMLSpanElement>(null);
   const [n, setN] = useState(value);
 
@@ -128,7 +128,7 @@ export function SwarmCount({ value, prefix = "", suffix = "" }: { value: number;
       const t0 = performance.now();
       const step = (now: number) => {
         const t = Math.min(1, (now - t0) / 1400);
-        setN(Math.round((1 - Math.pow(2, -10 * t)) * value));
+        setN((1 - Math.pow(2, -10 * t)) * value);
         if (t < 1) raf = requestAnimationFrame(step);
       };
       raf = requestAnimationFrame(step);
@@ -149,7 +149,7 @@ export function SwarmCount({ value, prefix = "", suffix = "" }: { value: number;
   return (
     <span ref={ref} aria-label={`${prefix}${value}${suffix}`}>
       {prefix}
-      {n}
+      {n.toFixed(decimals)}
       {suffix}
     </span>
   );

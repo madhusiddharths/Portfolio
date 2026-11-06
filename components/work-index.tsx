@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import type { Project } from "@/lib/projects";
+import { usesSkill } from "@/lib/projects";
 import { ArrowUpRight, LockIcon, GithubIcon } from "./icons";
 import { B } from "./agent/b";
 
@@ -30,7 +31,7 @@ function WorkIndexContent({ projects }: { projects: Project[] }) {
   const needle = q.trim().toLowerCase();
   const displayedProjects = projects.filter(
     (p) =>
-      (!skillFilter || p.tech.includes(skillFilter)) &&
+      (!skillFilter || usesSkill(p.tech, skillFilter)) &&
       (!needle || [p.name, p.domain, ...p.tech].some((t) => t.toLowerCase().includes(needle))),
   );
   const reports = displayedProjects.filter((p) => p.hasCaseStudy).length;
