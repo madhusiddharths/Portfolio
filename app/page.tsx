@@ -74,8 +74,8 @@ const CKPTS = [
 ];
 const CERT_DATE: Record<string, string> = {
   "IBM Machine Learning Specialist — Advanced": "Aug 2025",
-  "IBM Data Science Professional Certificate": "Apr 2023",
   "AWS Certified Cloud Practitioner": "Jun 2025",
+  "IBM Data Science Professional Certificate": "Apr 2023",
   "Google Data Analytics Professional Certificate": "May 2022",
 };
 const calls = (skill: string) => PROJECTS.filter((p) => usesSkill(p.tech, skill)).length;
