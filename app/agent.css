@@ -3097,3 +3097,10 @@ a.j-s:hover {
   border-color: var(--line-2);
   box-shadow: 0 0 0 1px var(--line-2);
 }
+
+/* A frame can be sized / aligned before its text is written (the work index
+   runs layout in parallel with the coders): until a Coder starts on it, the
+   selection box keeps the cover so no unwritten text shows through. */
+.build-on .ag [data-build]:is([data-state="filled"], [data-state="resizing"], [data-state="placing"]):not([data-mode])::after {
+  background-color: var(--cover);
+}

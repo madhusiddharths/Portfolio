@@ -3,15 +3,9 @@
 import { useEffect, useRef, useState, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
-import {
-  motion,
-  useMotionValue,
-  useSpring,
-  AnimatePresence,
-  useReducedMotion,
-} from "motion/react";
+import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import type { Project } from "@/lib/projects";
-import { ArrowUpRight, LockIcon } from "./icons";
+import { ArrowUpRight, LockIcon, GithubIcon } from "./icons";
 import { B } from "./agent/b";
 
 function rowHref(p: Project) {
@@ -32,18 +26,18 @@ function WorkIndexContent({ projects }: { projects: Project[] }) {
   const router = useRouter();
   const skillFilter = searchParams.get("skill");
 
-  const displayedProjects = skillFilter
-    ? projects.filter((p) => p.tech.includes(skillFilter))
-    : projects;
+  const [q, setQ] = useState("");
+  const needle = q.trim().toLowerCase();
+  const displayedProjects = projects.filter(
+    (p) =>
+      (!skillFilter || p.tech.includes(skillFilter)) &&
+      (!needle || [p.name, p.domain, ...p.tech].some((t) => t.toLowerCase().includes(needle))),
+  );
+  const reports = displayedProjects.filter((p) => p.hasCaseStudy).length;
 
-  const [active, setActive] = useState<Project | null>(null); // desktop hover
   const [peek, setPeek] = useState<Project | null>(null); // touch press-and-hold preview
   const reduce = useReducedMotion();
 
-  const mx = useMotionValue(0);
-  const my = useMotionValue(0);
-  const px = useSpring(mx, { stiffness: 350, damping: 30, mass: 0.5 });
-  const py = useSpring(my, { stiffness: 350, damping: 30, mass: 0.5 });
 
   // Long-press bookkeeping (touch only).
   const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -57,11 +51,6 @@ function WorkIndexContent({ projects }: { projects: Project[] }) {
       clearTimeout(holdTimer.current);
       holdTimer.current = null;
     }
-  }
-
-  function onMove(e: React.MouseEvent) {
-    mx.set(e.clientX + 28);
-    my.set(e.clientY - 40);
   }
 
   function onTouchStart(e: React.TouchEvent, p: Project) {
@@ -104,91 +93,120 @@ function WorkIndexContent({ projects }: { projects: Project[] }) {
     }
   }
 
-  const showPreview = active && !reduce;
-
   return (
-    <div className="work-index" onMouseMove={onMove} onMouseLeave={() => setActive(null)}>
-      {skillFilter && displayedProjects.length > 0 && (
-        <div className="work-filter">
-          <p className="u-mono">
-            <span className="work-filter-cmd">$ grep --skill</span> <strong>{skillFilter}</strong>{" "}
-            <span className="work-filter-count">→ {displayedProjects.length} match{displayedProjects.length === 1 ? "" : "es"}</span>
-          </p>
-          <button onClick={() => router.push(window.location.pathname)} className="btn btn-line">Clear filter</button>
-        </div>
-      )}
+    <div className="work-index">
+      {/* toolbar — a grep over the registry, plus the ?skill= filter from the rest of the site */}
+      <div className="reg-toolbar">
+        <label className="reg-search">
+          <span aria-hidden="true">grep</span>
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="name, domain or tech — e.g. kafka, llm, vision"
+            aria-label="Filter projects"
+            spellCheck={false}
+            autoComplete="off"
+          />
+          {q && (
+            <button type="button" onClick={() => setQ("")} aria-label="Clear search">
+              ×
+            </button>
+          )}
+        </label>
+        {skillFilter && (
+          <span className="reg-chip">
+            skill=<b>{skillFilter}</b>
+            <button type="button" onClick={() => router.push(window.location.pathname)} aria-label={`Clear the ${skillFilter} filter`}>
+              ×
+            </button>
+          </span>
+        )}
+        <span className="reg-count-line">
+          {displayedProjects.length}/{projects.length} projects · {reports} reports
+        </span>
+      </div>
 
-      {displayedProjects.length === 0 && skillFilter ? (
-        <div style={{ padding: '4rem 1rem', textAlign: 'center', border: '1px dashed var(--edge)', borderRadius: '8px' }}>
-          <h3 style={{ marginBottom: '1rem', fontSize: '1.25rem' }}>Not in a case study yet</h3>
-          <p className="page-hero-lead" style={{ margin: '0 auto 2rem', maxWidth: '600px' }}>
-            I use <strong style={{ color: 'var(--accent)' }}>{skillFilter}</strong> in coursework and side projects, but it doesn't feature in these case studies yet.
+      {displayedProjects.length === 0 ? (
+        <div className="reg-empty">
+          <p className="reg-empty-cmd">
+            $ grep {skillFilter ? `--skill ${skillFilter} ` : ""}
+            {needle ? `"${needle}" ` : ""}work/ <span>→ 0 matches</span>
           </p>
-          <button onClick={() => router.push(window.location.pathname)} className="btn btn-red">View All Projects</button>
+          <p>
+            {skillFilter ? (
+              <>
+                <strong>{skillFilter}</strong> is in my stack, but none of these case studies use it yet.
+              </>
+            ) : (
+              "Nothing in the registry matches that — try a tech like kafka, pytorch or langgraph."
+            )}
+          </p>
+          <button
+            type="button"
+            className="btn btn-line"
+            onClick={() => {
+              setQ("");
+              if (skillFilter) router.push(window.location.pathname);
+            }}
+          >
+            Show all projects
+          </button>
         </div>
       ) : (
         <ol className="work-list">
-          {displayedProjects.map((p) => (
-            <B as="li" kind="block" label={`row.${p.slug}`} key={p.slug}>
-              <Link
-                href={rowHref(p)}
-                className="work-row"
-                data-cursor={p.hasCaseStudy ? "read" : "soon"}
-                onMouseEnter={() => setActive(p)}
-                onFocus={() => setActive(p)}
-                onTouchStart={(e) => onTouchStart(e, p)}
-                onTouchMove={onTouchMove}
-                onTouchEnd={onTouchEnd}
-                onTouchCancel={onTouchCancel}
-                onClick={onRowClick}
-                onContextMenu={(e) => {
-                  if (mobilePeekActive()) e.preventDefault(); // suppress long-press callout on phones only
-                }}
-                aria-label={`${p.name} — ${p.domain}`}
-              >
-                <span className="work-row-rail" aria-hidden="true" />
-                <span className="work-row-index u-mono">{p.index}</span>
-
-                <span className="work-row-body">
-                  <span className="work-row-headline">
+          <li className="work-row work-row-h" aria-hidden="true">
+            <span>#</span>
+            <span>project</span>
+            <span>stack</span>
+            <span>status</span>
+            <span>source</span>
+          </li>
+          {displayedProjects.map((p) => {
+            const more = p.tech.length - 3;
+            return (
+              <B as="li" kind="block" label={`row.${p.slug}`} key={p.slug}>
+                <Link
+                  href={rowHref(p)}
+                  className="work-row"
+                  data-cursor={p.hasCaseStudy ? "read" : "soon"}
+                  onTouchStart={(e) => onTouchStart(e, p)}
+                  onTouchMove={onTouchMove}
+                  onTouchEnd={onTouchEnd}
+                  onTouchCancel={onTouchCancel}
+                  onClick={onRowClick}
+                  onContextMenu={(e) => {
+                    if (mobilePeekActive()) e.preventDefault(); // suppress long-press callout on phones only
+                  }}
+                  aria-label={`${p.name} — ${p.domain}`}
+                >
+                  <span className="work-row-index">{p.index}</span>
+                  <span className="work-row-body">
                     <span className="work-row-name">{p.name}</span>
-                    {p.privateRepo && (
-                      <span className="work-tag work-tag-lock u-mono">
-                        <LockIcon width={11} height={11} /> private
-                      </span>
-                    )}
-                    {!p.hasCaseStudy && <span className="work-tag work-tag-soon u-mono">soon</span>}
+                    <span className="work-row-domain">{p.domain}</span>
                   </span>
-                  <span className="work-row-domain">{p.domain}</span>
-                </span>
-
-                <span className="work-row-tech u-mono">{p.tech.slice(0, 3).join(" / ")}</span>
-                <span className="work-row-go" aria-hidden="true">
-                  <ArrowUpRight width={18} height={18} />
-                </span>
-              </Link>
-            </B>
-          ))}
+                  <span className="work-row-tech">
+                    {p.tech.slice(0, 3).map((t) => (
+                      <i key={t}>{t}</i>
+                    ))}
+                    {more > 0 && <i className="more">+{more}</i>}
+                  </span>
+                  <span className="work-row-status" data-status={p.hasCaseStudy ? "report" : "soon"}>
+                    <b aria-hidden="true" /> {p.hasCaseStudy ? "field report" : "drafting"}
+                  </span>
+                  <span className="work-row-src">
+                    {p.repo && !p.privateRepo ? (
+                      <GithubIcon width={14} height={14} aria-label="Public repository" />
+                    ) : (
+                      <LockIcon width={13} height={13} aria-label="Private repository" />
+                    )}
+                    <ArrowUpRight width={15} height={15} className="work-row-go" aria-hidden="true" />
+                  </span>
+                </Link>
+              </B>
+            );
+          })}
         </ol>
       )}
-
-      <AnimatePresence>
-        {showPreview && (
-          <motion.div
-            className="work-preview"
-            style={{ x: px, y: py }}
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.92 }}
-            transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-          >
-            <img src={active!.thumb} alt="" />
-            <span className="work-preview-meta u-mono">
-              {active!.index} — {active!.hasCaseStudy ? "view case study" : "coming soon"}
-            </span>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Mobile: press-and-hold a row to peek a quick card (cover, blurb, tech).
           It stays pinned — you can keep scrolling the page — until you lift your

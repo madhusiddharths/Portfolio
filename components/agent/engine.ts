@@ -31,8 +31,11 @@ export const AGENTS = [
   { id: "coder6", name: "Coder·6", op: "write", role: "writes markup", color: "#4fb8a8" },
   { id: "stylist", name: "Stylist·1", op: "style", role: "styles + places media", color: "#ff6bd6" },
   { id: "stylist2", name: "Stylist·2", op: "style", role: "styles + places media", color: "#ff8f9f" },
+  { id: "stylist3", name: "Stylist·3", op: "style", role: "styles + places media", color: "#e58cff" },
   { id: "sizer", name: "Sizer", op: "resize", role: "stylist sub-agent", color: "#a78bff", parent: "stylist" },
   { id: "aligner", name: "Aligner", op: "place", role: "stylist sub-agent", color: "#5dffc4", parent: "stylist" },
+  { id: "sizer2", name: "Sizer·2", op: "resize", role: "stylist sub-agent", color: "#c4b0ff", parent: "stylist2" },
+  { id: "aligner2", name: "Aligner·2", op: "place", role: "stylist sub-agent", color: "#9dffd9", parent: "stylist2" },
   { id: "critic", name: "Critic·1", op: "review", role: "reviews + fixes", color: "#ffb547" },
   { id: "critic2", name: "Critic·2", op: "review", role: "reviews + fixes", color: "#ffd56b" },
 ] as const;
@@ -43,11 +46,15 @@ export type AgentId = (typeof AGENTS)[number]["id"];
  * Who is on shift. The landing page is a design job (planners, stylists and
  * their sub-agents, critics); a field report is mostly text, so it gets a
  * planner for the figures, six coders writing in parallel, one stylist for
- * media and one critic.
+ * media and one critic. The other pages (the work index) are rows of short
+ * labels, so they get a styling crew: three stylists and two Sizer / Aligner
+ * pairs, so the last rows are fixed side by side rather than one after another.
  */
 export const ROSTERS = {
   home: ["planner", "planner2", "coder", "coder2", "coder3", "stylist", "stylist2", "sizer", "aligner", "critic", "critic2"],
   report: ["planner", "coder", "coder2", "coder3", "coder4", "coder5", "coder6", "stylist", "critic"],
+  // the work index, coming-soon, 404: short labels, lots of layout — a styling crew
+  page: ["planner", "planner2", "coder", "coder2", "coder3", "stylist", "stylist2", "stylist3", "sizer", "sizer2", "aligner", "aligner2", "critic"],
 } as const satisfies Record<string, readonly AgentId[]>;
 export type RosterName = keyof typeof ROSTERS;
 export type RosterAgent = (typeof AGENTS)[number];
@@ -344,7 +351,18 @@ export class SwarmEngine {
       if (kind === "frame") return ["create"];
       return staffed(hasText && kind !== "media" ? ["create", "write", "style"] : ["create", "style"]);
     }
-    return staffed(this.basePlan(el));
+    const ops = staffed(this.basePlan(el));
+    if (this.rosterName === "page" && ops.includes("resize")) {
+      // On the index most rows land right the first time: only about a third are
+      // framed off-size / off-grid. The rest skip the Planner, Sizer and Aligner.
+      if (Math.random() > 0.35) return ops.filter((o) => o !== "create" && o !== "resize" && o !== "place");
+      // The ones that need fixing get sized and aligned straight after framing,
+      // while the coders and stylists work on other rows — layout runs in
+      // parallel with colour instead of queueing up behind it, so the Critic
+      // can follow the last stylist almost immediately.
+      return ["create", "resize", "place", ...ops.filter((o) => o !== "create" && o !== "resize" && o !== "place")];
+    }
+    return ops;
   }
 
   private basePlan(el: HTMLElement): Op[] {
@@ -632,7 +650,8 @@ export class SwarmEngine {
         const ty = b.y + Math.min(b.h * 0.55, 22);
         if (!(await this.fly(id, tx, ty, gen))) return;
         const text = (el.textContent ?? "").trim().length;
-        const ms = Math.round(kind === "type" ? clamp(text * 22, 500, 1300) : clamp(text * 3.2, 800, 1600));
+        // index rows are short labels — they type in faster than prose
+        const ms = this.rosterName === "page" ? Math.round(clamp(text * 6, 450, 850)) : Math.round(kind === "type" ? clamp(text * 22, 500, 1300) : clamp(text * 3.2, 800, 1600));
         el.style.setProperty("--dur", `${ms}ms`);
         el.style.setProperty("--steps", String(clamp(Math.round(text / 1.4), 8, 48)));
         // text lands unstyled when a Stylist pass follows

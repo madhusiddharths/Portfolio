@@ -16,10 +16,10 @@ export default function WorkPage() {
     <div className="work-page">
       <BuildSection id="index" sec="SEC_INDEX" className="page-top">
         <div className="wrap">
-          <SecHead index={`//00.00 WORK_INDEX (${PROJECTS.length} ENTRIES)`} eyebrow="Project ledger" title="Selected work, end to end." as="h1">
+          <SecHead index={`madhu@agent:~$ ls work/  # ${PROJECTS.length} entries`} eyebrow="project registry" title="Selected work, end to end." as="h1">
             <B as="p" kind="para" label="p.lead" className="sec-lead">
-              From real-time streaming platforms to medical-imaging models — every entry is a complete system. Hover a row for a
-              preview, open one for the full field report, or ask the swarm for a tech.
+              From real-time streaming platforms to medical-imaging models — every entry is a complete system. Grep the registry, or
+              open one for its field report.
             </B>
           </SecHead>
         </div>

@@ -14,7 +14,7 @@ export default function ComingSoon() {
   return (
     <BuildSection id="soon" sec="SEC_SOON" className="ag-center">
       <div className="wrap">
-        <SecHead index="//00.00 FIELD_REPORT · STATUS: DRAFTING" eyebrow="Field report" title="Write-up in progress." as="h1">
+        <SecHead index="madhu@agent:~$ cat report.md  # status: drafting" eyebrow="field report" title="Write-up in progress." as="h1">
           <B as="p" kind="para" label="p.copy" className="sec-lead">
             This project is built and shipped — its full case study is being written up with the same depth as the others. In the
             meantime, the source is on GitHub, and the rest of the index is ready to explore.

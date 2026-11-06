@@ -16,11 +16,11 @@ import { AGENTS, type AgentId, type RosterAgent, type Speaker } from "./engine";
    The layout is computed from the roster on shift: empty lanes drop out and
    a lane with more than three agents wraps onto extra rows. */
 type Lane = "plan" | "code" | "style" | "subs" | "review";
-const LANE_DEFS: { key: Lane; label: string; report?: string }[] = [
+const LANE_DEFS: { key: Lane; label: string; report?: string; page?: string }[] = [
   { key: "plan", label: "planners · frame blocks", report: "planner · frames figures + code" },
   { key: "code", label: "coders · write markup", report: "coders · write the report in parallel" },
-  { key: "style", label: "stylists · style + place media", report: "stylist · places media" },
-  { key: "subs", label: "stylist sub-agents · spawned per call" },
+  { key: "style", label: "stylists · style + place media", report: "stylist · places media", page: "stylists · style each row" },
+  { key: "subs", label: "stylist sub-agents · spawned per call", page: "sizer + aligner · only rows that need it" },
   { key: "review", label: "critics · review finished segments", report: "critic · reviews each section" },
 ];
 const LANE_OF: Record<string, Lane> = { create: "plan", write: "code", style: "style", resize: "subs", place: "subs", review: "review" };
@@ -32,21 +32,24 @@ const ROW_H = 34;
 type LaneBox = { key: Lane; label: string; y: number; h: number };
 type Layout = { lanes: LaneBox[]; pos: Record<string, { x: number; y: number }>; edges: { from: Lane; to: Lane; d: string }[]; h: number };
 
-function layoutFor(roster: RosterAgent[], report: boolean): Layout {
+function layoutFor(roster: RosterAgent[], mode: string): Layout {
   const lanes: LaneBox[] = [];
   const pos: Layout["pos"] = {};
   let y = 30;
   for (const def of LANE_DEFS) {
     const inLane = roster.filter((a) => LANE_OF[a.op] === def.key);
     if (!inLane.length) continue;
-    const rows = Math.ceil(inLane.length / PER_ROW);
+    // four agents read better as two pairs (e.g. Sizer | Aligner × 2) than 3 + 1
+    const per = inLane.length === 4 ? 2 : PER_ROW;
+    const rows = Math.ceil(inLane.length / per);
     const h = 38 + (rows - 1) * ROW_H;
     inLane.forEach((a, i) => {
-      const row = Math.floor(i / PER_ROW);
-      const inRow = Math.min(PER_ROW, inLane.length - row * PER_ROW);
-      pos[a.id] = { x: 160 + ((i % PER_ROW) - (inRow - 1) / 2) * 100, y: y + row * ROW_H };
+      const row = Math.floor(i / per);
+      const inRow = Math.min(per, inLane.length - row * per);
+      pos[a.id] = { x: 160 + ((i % per) - (inRow - 1) / 2) * 100, y: y + row * ROW_H };
     });
-    lanes.push({ key: def.key, label: report ? def.report ?? def.label : def.label, y, h });
+    const label = (mode === "report" ? def.report : mode === "page" ? def.page : undefined) ?? def.label;
+    lanes.push({ key: def.key, label, y, h });
     y += h + 24;
   }
   const at = Object.fromEntries(lanes.map((l) => [l.key, l])) as Record<Lane, LaneBox | undefined>;
@@ -112,7 +115,7 @@ export function ObsWindow() {
 
 function GraphTab() {
   const engine = useSwarm();
-  const { lanes, pos: POS, edges, h: VB_H } = useMemo(() => layoutFor(engine.roster, engine.rosterName === "report"), [engine]);
+  const { lanes, pos: POS, edges, h: VB_H } = useMemo(() => layoutFor(engine.roster, engine.rosterName), [engine]);
   const agents = useSwarmState((s) => s.agents);
   const pulses = useSwarmState((s) => s.pulses);
   const hot = new Set(pulses.slice(-4).map((p) => `${laneOf(p.from)}>${laneOf(p.to)}`));

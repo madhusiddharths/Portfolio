@@ -4,6 +4,8 @@ import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { AgentShell, type Tab } from "./shell";
 import { getProject } from "@/lib/projects";
+import "@/app/console.css";
+import "@/app/pages.css";
 
 /**
  * Agent shell for the inner pages (/work, field reports, coming-soon, 404).
@@ -46,9 +48,9 @@ export function AgentFrame({ children }: { children: ReactNode }) {
       current={current}
       path={parts.join("/")}
       task={task}
-      className={project ? "ag-skin ag-ide" : undefined}
+      className={project ? "ag-skin ag-ide" : "ag-skin ag-page"}
       railTabs={!!project}
-      roster={project ? "report" : "home"}
+      roster={project ? "report" : "page"}
     >
       {children}
     </AgentShell>

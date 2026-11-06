@@ -10,7 +10,7 @@ export default function NotFound() {
     <AgentFrame>
       <BuildSection id="lost" sec="SEC_404" className="ag-center">
         <div className="wrap">
-          <SecHead index="//404 ROUTE_NOT_FOUND" eyebrow="Error — 404" title="Off the grid." as="h1">
+          <SecHead index="madhu@agent:~$ cd ./requested-path  # 404 route not found" eyebrow="error 404" title="Off the grid." as="h1">
             <B as="p" kind="para" label="p.copy" className="sec-lead">
               This page doesn&apos;t exist — or it moved. Let&apos;s get you back to something real.
             </B>

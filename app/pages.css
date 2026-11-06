@@ -1,0 +1,296 @@
+/* =============================================================================
+   PAGES — the work index, coming-soon and 404 in the console skin
+   (.ag-skin.ag-page). The index reads as a project registry: a grep toolbar,
+   a header row, and one ruled row per project.
+   ========================================================================== */
+
+html:has(.ag-page) body::before {
+  display: none;
+}
+
+/* ---- page heads ----------------------------------------------------------- */
+.ag.ag-page .page-top {
+  padding-top: clamp(2rem, 4vw, 3rem);
+  padding-bottom: clamp(1.25rem, 2.5vw, 2rem);
+}
+.ag.ag-page .page-top .sec-title,
+.ag.ag-page .ag-center .sec-title {
+  font-family: var(--sans);
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+  font-size: clamp(2.2rem, 4.6vw, 3.4rem);
+  color: var(--ink-hi);
+}
+.ag.ag-page .ag-center {
+  min-height: calc(100dvh - var(--chrome-h) - 2rem);
+}
+.ag.ag-page .center-actions {
+  margin-top: 1.6rem;
+}
+
+/* ---- toolbar ---------------------------------------------------------------- */
+.ag.ag-page .reg-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-bottom: 14px;
+  font-family: var(--mono);
+}
+.ag.ag-page .reg-search {
+  flex: 1 1 22rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 36px;
+  padding: 0 6px 0 12px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r);
+  background: var(--bg-1);
+  transition: border-color 0.15s;
+}
+.ag.ag-page .reg-search:focus-within {
+  border-color: var(--muted);
+}
+.ag.ag-page .reg-search > span {
+  font-size: 12px;
+  color: var(--red-ink);
+}
+.ag.ag-page .reg-search input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--ink);
+  font: 400 13px/1 var(--mono);
+}
+.ag.ag-page .reg-search input::placeholder {
+  color: var(--faint);
+}
+.ag.ag-page .reg-search button,
+.ag.ag-page .reg-chip button {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 0;
+  border-radius: var(--r);
+  background: transparent;
+  color: var(--faint);
+  font: 400 15px/1 var(--mono);
+  cursor: pointer;
+}
+.ag.ag-page .reg-search button:hover,
+.ag.ag-page .reg-chip button:hover {
+  background: var(--panel-2);
+  color: var(--ink);
+}
+.ag.ag-page .reg-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 36px;
+  padding: 0 4px 0 10px;
+  border: 1px solid var(--wire-line);
+  border-radius: var(--r);
+  font-size: 12px;
+  color: var(--muted);
+}
+.ag.ag-page .reg-chip b {
+  font-weight: 500;
+  color: var(--wire);
+}
+.ag.ag-page .reg-count-line {
+  margin-left: auto;
+  font-size: 11.5px;
+  color: var(--faint);
+}
+
+/* ---- registry rows ---------------------------------------------------------- */
+.ag.ag-page .work-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r);
+  background: var(--bg-1);
+}
+.ag.ag-page .work-list > li {
+  --cover: var(--bg-1);
+}
+.ag.ag-page .work-list > li + li {
+  border-top: 1px solid var(--line);
+}
+.ag.ag-page .work-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 2.6rem minmax(0, 1fr) minmax(0, 17rem) 8rem 3.6rem;
+  align-items: center;
+  gap: 18px;
+  padding: 14px 16px;
+  border: 0;
+  background: transparent;
+  transition: background 0.15s;
+}
+.ag.ag-page a.work-row:hover,
+.ag.ag-page a.work-row:focus-visible {
+  padding-left: 16px;
+  background: var(--panel);
+}
+.ag.ag-page a.work-row::before {
+  content: "";
+  position: absolute;
+  left: -1px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--red);
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.ag.ag-page a.work-row:hover::before,
+.ag.ag-page a.work-row:focus-visible::before {
+  opacity: 1;
+}
+.ag.ag-page .work-row-h {
+  padding-top: 9px;
+  padding-bottom: 9px;
+  background: var(--panel);
+  font: 400 11px/1 var(--mono);
+  color: var(--faint);
+  border-radius: var(--r) var(--r) 0 0;
+}
+.ag.ag-page .work-row-index {
+  font: 400 12px/1 var(--mono);
+  color: var(--faint);
+}
+.ag.ag-page a.work-row:hover .work-row-index {
+  color: var(--red-ink);
+}
+.ag.ag-page .work-row-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.ag.ag-page .work-row-name {
+  font: 600 1.12rem/1.2 var(--sans);
+  letter-spacing: -0.015em;
+  color: var(--ink-hi);
+}
+.ag.ag-page a.work-row:hover .work-row-name {
+  color: #fff;
+}
+.ag.ag-page .work-row-domain {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 400 12px/1.3 var(--mono);
+  letter-spacing: 0;
+  color: var(--muted);
+}
+.ag.ag-page .work-row-tech {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  font: 400 11px/1 var(--mono);
+  color: var(--muted);
+}
+.ag.ag-page .work-row-tech i {
+  padding: 4px 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  font-style: normal;
+  white-space: nowrap;
+}
+.ag.ag-page .work-row-tech i.more {
+  border-style: dashed;
+  color: var(--faint);
+}
+.ag.ag-page .work-row-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font: 400 11.5px/1 var(--mono);
+  color: var(--ok);
+  white-space: nowrap;
+}
+.ag.ag-page .work-row-status b {
+  width: 6px;
+  height: 6px;
+  background: currentColor;
+}
+.ag.ag-page .work-row-status[data-status="soon"] {
+  color: var(--faint);
+}
+.ag.ag-page .work-row-status[data-status="soon"] b {
+  background: transparent;
+  border: 1px solid currentColor;
+}
+.ag.ag-page .work-row-src {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  color: var(--faint);
+}
+.ag.ag-page .work-row-go {
+  transition:
+    transform 0.2s var(--ease),
+    color 0.15s;
+}
+.ag.ag-page a.work-row:hover .work-row-go {
+  color: var(--ink-hi);
+  transform: translate(2px, -2px);
+}
+
+/* empty state */
+.ag.ag-page .reg-empty {
+  padding: 2.5rem 1.5rem;
+  border: 1px dashed var(--line-2);
+  border-radius: var(--r);
+  text-align: left;
+}
+.ag.ag-page .reg-empty p {
+  margin: 0 0 1rem;
+  color: var(--muted);
+}
+.ag.ag-page .reg-empty-cmd {
+  font: 400 13px/1.5 var(--mono);
+  color: var(--ink) !important;
+}
+.ag.ag-page .reg-empty-cmd span {
+  color: var(--faint);
+}
+.ag.ag-page .reg-empty strong {
+  color: var(--ink);
+}
+
+@media (max-width: 1100px) {
+  .ag.ag-page .work-row {
+    grid-template-columns: 2.2rem minmax(0, 1fr) 7rem 3.2rem;
+  }
+  .ag.ag-page .work-row-tech,
+  .ag.ag-page .work-row-h span:nth-child(3) {
+    display: none;
+  }
+}
+@media (max-width: 680px) {
+  .ag.ag-page .work-row {
+    grid-template-columns: 2rem minmax(0, 1fr) 2rem;
+    gap: 12px;
+  }
+  .ag.ag-page .work-row-status,
+  .ag.ag-page .work-row-h span:nth-child(4),
+  .ag.ag-page .work-row-src svg:first-child {
+    display: none;
+  }
+  .ag.ag-page .reg-count-line {
+    margin-left: 0;
+  }
+}
