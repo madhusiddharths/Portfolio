@@ -5,13 +5,9 @@ import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import type { Project } from "@/lib/projects";
-import { usesSkill } from "@/lib/projects";
+import { projectHref, usesSkill } from "@/lib/projects";
 import { ArrowUpRight, LockIcon, GithubIcon } from "./icons";
 import { B } from "./agent/b";
-
-function rowHref(p: Project) {
-  return p.hasCaseStudy ? `/work/${p.slug}/` : `/work/coming-soon/?p=${p.slug}`;
-}
 
 // Touch press-and-hold → preview tuning.
 const HOLD_MS = 250; // how long to hold before the peek appears
@@ -167,7 +163,7 @@ function WorkIndexContent({ projects }: { projects: Project[] }) {
             return (
               <B as="li" kind="block" label={`row.${p.slug}`} key={p.slug}>
                 <Link
-                  href={rowHref(p)}
+                  href={projectHref(p)}
                   className="work-row"
                   data-cursor={p.hasCaseStudy ? "read" : "soon"}
                   onTouchStart={(e) => onTouchStart(e, p)}

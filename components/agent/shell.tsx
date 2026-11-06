@@ -10,7 +10,7 @@ import type { RosterName } from "./engine";
 import { ObsWindow } from "./observe";
 import { MiniMap } from "./minimap";
 import { route } from "@/lib/intent-router";
-import { PROFILE, PROJECTS } from "@/lib/projects";
+import { PROFILE, PROJECTS, skillHref } from "@/lib/projects";
 
 /** A route in the navigator. `href` starting with "#" scrolls to a section on this page. */
 export type Tab = { id: string; label: string; href: string; path?: string };
@@ -364,7 +364,7 @@ function NavWindow({ tabs, current, onDone, railTabs }: { tabs: Tab[]; current?:
         const grid = document.querySelector<HTMLElement>("[data-project-grid]");
         const featured = PROJECTS.filter((p) => p.featured && r.args.slugs.includes(p.slug));
         if ((!grid || !featured.length) && r.args.skill && r.args.slugs.length) {
-          router.push(`/work/?skill=${encodeURIComponent(r.args.skill)}`);
+          router.push(skillHref(r.args.skill));
           break;
         }
         if (grid && featured.length) {

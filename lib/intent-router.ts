@@ -4,7 +4,7 @@
    one tool call with a confidence score, which the console logs and executes.
    ========================================================================== */
 
-import { PROJECTS, PROFILE, SKILLS, TECH, usesSkill } from "@/lib/projects";
+import { PROJECTS, PROFILE, SKILLS, TECH, projectHref, usesSkill } from "@/lib/projects";
 
 export type Route =
   | { tool: "scroll"; args: { section: string }; conf: number; say: string }
@@ -16,8 +16,6 @@ export type Route =
 const ALL_TECH = Array.from(new Set([...Object.keys(TECH), ...SKILLS.flatMap((g) => g.items)]));
 
 const has = (q: string, ...words: string[]) => words.some((w) => new RegExp(`\\b${w}`, "i").test(q));
-
-export const SUGGESTIONS = ["agentic projects", "kafka", "pytorch", "résumé", "contact", "replay build"];
 
 export function route(raw: string): Route {
   const q = raw.trim().toLowerCase();
@@ -48,7 +46,7 @@ export function route(raw: string): Route {
   if (proj)
     return {
       tool: "open",
-      args: { href: proj.hasCaseStudy ? `/work/${proj.slug}/` : `/work/coming-soon/?p=${proj.slug}`, external: false },
+      args: { href: projectHref(proj), external: false },
       conf: 0.93,
       say: `opening ${proj.name}`,
     };
