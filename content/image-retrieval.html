@@ -1,96 +1,101 @@
-<div class="project-demo-container">
-        <a href="https://imageretrievalproject.streamlit.app" class="project-demo-btn" target="_blank">
-          <span class="btn-text">Try Live Model</span>
-          <span class="btn-icon">🚀</span>
-        </a>
-      </div>
-
-      <section class="content-section">
+<section class="content-section">
         <h2>Overview</h2>
-        <p>This project implements an AI-based image retrieval system that enables fast and accurate similarity searches
-          using deep learning and vector indexing. Images are first processed through a ResNet-50 convolutional neural
-          network, which extracts high-dimensional feature embeddings representing their visual content. These
-          embeddings
-          are then indexed using FAISS (Facebook AI Similarity Search), a powerful library optimized for efficient
-          similarity search in large datasets. By combining deep feature extraction with vector-based retrieval, the
-          system can quickly identify and return images that are visually similar to a query image, making it suitable
-          for applications such as content-based image search, duplicate detection, and visual recommendation systems.
+        <p>
+          Upload a photo and get back the most visually similar images from Caltech-101, ranked in milliseconds. A
+          fine-tuned <strong>ResNet-50</strong> turns every image into a <strong>128-dimensional embedding</strong>,
+          <strong>FAISS</strong> searches those embeddings by cosine similarity, and a <strong>Streamlit</strong> app
+          serves the whole thing as a live tool.
+        </p>
+        <p>
+          It was built over eight weeks in a Build Fellowship, one stage per week: environment, pretrained features,
+          data-quality checks, a from-scratch baseline, transfer learning, evaluation, the deployed app and a final
+          presentation. Each stage had to beat or justify the one before it.
         </p>
       </section>
 
       <section class="content-section">
         <h2>Dataset</h2>
         <p>
-          The Caltech101 dataset is a widely used benchmark in computer vision that contains over 9,000 images across
-          101
-          object categories plus one background class. Each category includes between 40 and 800 images, featuring a
-          variety of objects such as animals, vehicles, instruments, and household items. The images are of medium
-          resolution and primarily centered objects, making the dataset ideal for tasks like image classification,
-          object recognition, and feature extraction.
+          <strong>Caltech-101</strong>: 8,677 images across 101 object categories (animals, vehicles, instruments,
+          household objects), with 40 to 800 images per class and a held-out validation split of 1,736 images. The
+          uneven class sizes matter: a model can look accurate overall while failing the small classes, so evaluation
+          reports per-class precision and recall, not just accuracy.
+        </p>
+        <p>
+          Before training, a data-quality pass flagged images that would poison the embeddings: blurred, too dark,
+          overexposed, heavily compressed, or with dead pixels.
         </p>
       </section>
 
       <section class="content-section">
         <h2>Data Preprocessing</h2>
         <p>
-          All images from the <strong>Caltech101 dataset</strong> undergo a structured preprocessing pipeline
-          to ensure consistency and robustness during training. Each image is resized to a fixed input dimension
-          (224×224) and
-          converted to RGB format. During training, extensive data augmentation is applied—including random cropping,
-          horizontal flipping, rotation, color jittering, affine transformations, and random erasing—to increase data
-          diversity and reduce overfitting. The validation images are only resized and normalized using ImageNet mean
-          and
-          standard deviation values, matching the input expectations of ResNet-50.
+          Every image is converted to RGB, resized to 224&times;224 and normalised with ImageNet statistics, matching
+          what ResNet-50 was pretrained on. Training images are augmented with random crops, flips, rotation, colour
+          jitter, affine transforms and random erasing; validation images are only resized and normalised, so the
+          validation score measures the model, not the augmentation.
         </p>
       </section>
 
       <section class="content-section">
         <h2>Performance</h2>
         <p>
-          The model is trained using the AdamW optimizer with cosine annealing learning rate
-          scheduling and progressive layer unfreezing to ensure stable convergence. After 30 epochs of training, the
-          ResNet-50 transfer learning model achieved an impressive <strong>96.95% validation accuracy</strong>,
-          demonstrating
-          strong generalization across diverse object categories. The trained model not only performs accurate
-          classification
-          but also provides normalized embeddings suitable for efficient image similarity search using FAISS, enabling
-          high-speed retrieval of visually similar images from large datasets.
+          A small CNN trained from scratch set the baseline at <strong>73.68%</strong> validation accuracy. Swapping in
+          ResNet-50 with ImageNet weights, a new embedding head (2048 &rarr; 512 &rarr; 128 with batch-norm, ReLU and
+          0.5 dropout) and a 101-class classifier on top, then fine-tuning the last residual block, reached
+          <strong>96.95%</strong> validation accuracy after 30 epochs with AdamW, cosine learning-rate annealing and
+          label smoothing.
+        </p>
+        <p>
+          The classifier is there to shape the embedding space: training it to separate 101 classes pushes images of
+          the same object close together, which is exactly what retrieval needs. Retrieval quality was then measured
+          directly with top-K precision and mean reciprocal rank.
         </p>
       </section>
 
       <section class="content-section">
         <h2>FAISS Vector Indexing</h2>
         <p>
-          The system uses <strong>FAISS</strong> (Facebook AI Similarity Search) for fast, large-scale image retrieval.
-          After extracting normalized feature embeddings from the trained ResNet-50 model, these vectors are stored
-          in a FAISS index. When a query image is given, its embedding is compared to all indexed vectors using
-          <strong>cosine similarity</strong>, efficiently returning the top matches. This enables real-time
-          retrieval of visually similar images, even across large datasets.
+          Embeddings are L2-normalised and stored in a FAISS <code>IndexFlatIP</code>. On unit vectors an inner
+          product is cosine similarity, so an exact search returns the true nearest neighbours with no approximation
+          error. At this scale (thousands of vectors) exact search answers in milliseconds, so an approximate index
+          would add complexity without a speed benefit.
+        </p>
+        <p>
+          The index and image metadata are precomputed by a command-line script, and the app loads the model once
+          (cached) and lets the user pick how many matches to return, from 1 to 10.
         </p>
       </section>
 
       <section class="content-section">
         <div class="image-grid grid-2">
           <figure>
-            <img src="/img/image_retrieval_img/img_1.png" alt="Opening page" />
-            <figcaption>Figure 1a: Opening page.</figcaption>
+            <img src="/img/image_retrieval_img/img_1.png" alt="Upload screen of the image retrieval app" />
+            <figcaption>Figure 1a: Upload screen.</figcaption>
           </figure>
           <figure>
-            <img src="/img/image_retrieval_img/img_2.png" alt="Image retrieval" />
-            <figcaption>Figure 1b: Image retrieval.</figcaption>
+            <img src="/img/image_retrieval_img/img_2.png" alt="Top matches returned for a query image" />
+            <figcaption>Figure 1b: Top matches for a query image.</figcaption>
           </figure>
         </div>
       </section>
 
       <section class="content-section">
+        <h2>Deployment</h2>
+        <p>
+          The app runs on Streamlit Cloud. The trained weights (about 94 MB) live in Git LFS, which free hosts do not
+          always fetch, so the app checks at startup whether the weights file is real or just an LFS pointer and pulls
+          it if needed. That one check is the difference between a demo that works on a laptop and one that works for a
+          visitor.
+        </p>
+      </section>
+
+      <section class="content-section">
         <h2>Conclusion</h2>
         <p>
-          This project enhanced my understanding of <strong>transfer learning</strong>,
-          <strong>feature extraction</strong>, and <strong>image similarity retrieval</strong>.
-          Using a pre-trained <strong>ResNet-50</strong> with <strong>FAISS</strong> indexing,
-          I learned how to build an efficient and scalable AI system for visual search.
-          The process improved my skills in model fine-tuning, data preprocessing, and performance evaluation,
-          resulting in a strong <strong>96.95% validation accuracy</strong>.
-          Overall, this work provided valuable experience in applying deep learning to real-world computer vision tasks.
+          A from-scratch CNN reached 73.68%; transfer learning with a purpose-built embedding head reached 96.95%, and
+          the same embeddings power exact cosine search in FAISS behind a deployed app. The useful lesson was to train
+          for the embedding space retrieval needs, then measure retrieval itself rather than trusting classification
+          accuracy as a stand-in.
         </p>
       </section>

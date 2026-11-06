@@ -10,7 +10,7 @@ import { ArrowUpRight, LockIcon, GithubIcon } from "./icons";
 import { B } from "./agent/b";
 
 function rowHref(p: Project) {
-  return p.hasCaseStudy ? `/work/${p.slug}/` : "/work/coming-soon/";
+  return p.hasCaseStudy ? `/work/${p.slug}/` : `/work/coming-soon/?p=${p.slug}`;
 }
 
 // Touch press-and-hold → preview tuning.

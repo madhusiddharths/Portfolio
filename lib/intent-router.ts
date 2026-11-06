@@ -48,7 +48,7 @@ export function route(raw: string): Route {
   if (proj)
     return {
       tool: "open",
-      args: { href: proj.hasCaseStudy ? `/work/${proj.slug}/` : "/work/coming-soon/", external: false },
+      args: { href: proj.hasCaseStudy ? `/work/${proj.slug}/` : `/work/coming-soon/?p=${proj.slug}`, external: false },
       conf: 0.93,
       say: `opening ${proj.name}`,
     };

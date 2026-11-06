@@ -19,7 +19,8 @@ type State = {
   revealAll: boolean;
 };
 
-const KEY = "ide-panels";
+// v2: the right rail now starts collapsed; a new key drops older saved "open" states.
+const KEY = "ide-panels-v2";
 const SIZE_KEY = "ide-sizes";
 
 /** panel sizes in px — left/right are widths, bottom is a height */
@@ -40,7 +41,7 @@ function applySize(p: Panel) {
   document.documentElement.style.setProperty(SIZE_VAR[p], `${Math.round(sizes[p])}px`);
 }
 let state: State = {
-  panels: { left: true, right: true, bottom: true },
+  panels: { left: true, right: false, bottom: true },
   active: "",
   order: [],
   revealAll: false,

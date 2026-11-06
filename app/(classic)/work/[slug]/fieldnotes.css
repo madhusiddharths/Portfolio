@@ -448,35 +448,49 @@
   margin: 1.8rem 0;
 }
 
-/* demo + paper buttons (kept from content, restyled) */
+/* in-body launch link (e.g. Galaxy's Night Sky viewer): a tool call, like the hero */
 .fieldnotes .project-demo-container {
   margin: 0 0 2rem;
 }
-.fieldnotes .project-demo-btn,
-.fieldnotes .paper-btn {
+.fieldnotes .project-demo-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.6rem;
-  padding: 0.8rem 1.3rem;
-  border-radius: 0.7rem;
-  background: var(--ink);
-  color: var(--canvas);
-  font-size: 0.92rem;
-  font-weight: 500;
+  gap: 0;
+  height: 34px;
+  padding: 0 11px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r, 2px);
+  font: 400 12.5px/1 var(--mono);
+  color: var(--muted);
   text-decoration: none;
-  border: 1px solid transparent;
-  transition: background-color 0.35s var(--ease-out), transform 0.35s var(--ease-out);
+  transition:
+    border-color 0.15s,
+    background 0.15s,
+    color 0.15s;
 }
-.fieldnotes .project-demo-btn:hover,
-.fieldnotes .paper-btn:hover {
-  background: var(--accent);
-  color: #fff;
-  transform: translateY(-2px);
+.fieldnotes .project-demo-btn code {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-weight: 500;
+  color: var(--ink);
 }
-.fieldnotes .paper-btn {
-  background: transparent;
-  color: var(--accent);
-  border-color: var(--accent-line);
+.fieldnotes .project-demo-btn span {
+  margin-right: 8px;
+}
+.fieldnotes .project-demo-btn:hover {
+  border-color: var(--ink);
+  background: var(--panel-2);
+  color: var(--ink);
+}
+/* publication line (Federated IoT) */
+.fieldnotes .fn-pub {
+  margin: 0 0 2rem;
+  padding-left: 12px;
+  border-left: 2px solid var(--red, #ff4133);
+  font: 400 12.5px/1.6 var(--mono);
+  color: var(--muted);
 }
 
 /* tech stack / categories */

@@ -279,7 +279,7 @@ export const PIPELINES: Record<string, Pipeline> = {
   /* ------------------------------------------------------------------ */
   "federated-iot": {
     summary:
-      "Each IoT client trains a dual-model pipeline on its own traffic: a tabular Transformer with LoRA adapters and an XGBoost specialist run in parallel, and an MLP fusion head learns how to weight their probability vectors. Only the small LoRA and fusion parameters travel to the server for federated averaging, which keeps communication low while the hybrid handles both subtle and volumetric attacks.",
+      "Each IoT client trains a dual-model pipeline on its own traffic: a tabular Transformer with LoRA adapters and an XGBoost specialist run in parallel, and an MLP fusion head learns how to weight their probability vectors. Only the LoRA adapter weights travel to the server for federated averaging, which keeps communication low while the hybrid handles both subtle and volumetric attacks.",
     stages: ["data", "client models", "fuse", "federate", "evaluate"],
     nodes: [
       { id: "data", label: "IoT traffic", tech: "per-client partitions", kind: "source", col: 0, row: 1, at: "dataset-preparation" },
@@ -335,7 +335,7 @@ export const PIPELINES: Record<string, Pipeline> = {
   /* ------------------------------------------------------------------ */
   "image-retrieval": {
     summary:
-      "Caltech101 images are resized, augmented and normalised, then fed to a ResNet-50 whose backbone is unfrozen progressively. Its classifier is replaced by an embedding head (2048 → 512 → 128 with batch-norm, ReLU and dropout) that serves both a 101-class classifier and retrieval: normalised 128-d embeddings are indexed in FAISS, so a query image returns its nearest neighbours in milliseconds.",
+      "Caltech101 images are resized, augmented and normalised, then fed to a ResNet-50 fine-tuned in its last residual block. Its classifier is replaced by an embedding head (2048 → 512 → 128 with batch-norm, ReLU and dropout) that serves both a 101-class classifier and retrieval: normalised 128-d embeddings are indexed in FAISS, so a query image returns its nearest neighbours in milliseconds.",
     stages: ["data", "prepare", "encode", "embed", "index", "query"],
     nodes: [
       { id: "ds", label: "Caltech101", tech: "9k images · 101 classes", kind: "source", col: 0, row: 1, at: "dataset" },
@@ -386,31 +386,6 @@ export const PIPELINES: Record<string, Pipeline> = {
   },
 
   /* ------------------------------------------------------------------ */
-  "vision-transformer": {
-    summary:
-      "A from-scratch Vision Transformer in PyTorch. An image (B, C, H, W) is cut into patches by a single Conv2d whose kernel and stride equal the patch size, giving (B, N, D) tokens; a learnable [CLS] token is prepended and positional embeddings added; L encoder blocks of multi-head self-attention and MLPs process the sequence; the final [CLS] vector is projected to class logits. A config file defines the model family, and a hybrid variant swaps the patch stem for a CNN.",
-    stages: ["input", "tokenise", "encode", "classify", "compare"],
-    nodes: [
-      { id: "img", label: "Image batch", tech: "CIFAR-10 · (B, C, H, W)", kind: "source", col: 0, row: 1, at: "background-why-transformers-for-vision" },
-      { id: "patch", label: "Patch embedding", tech: "Conv2d · k = s = P", kind: "transform", col: 1, row: 1, at: "patches-as-tokens" },
-      { id: "cls", label: "[CLS] + positions", tech: "(B, N+1, D)", kind: "transform", col: 2, row: 1, at: "patches-as-tokens" },
-      { id: "enc", label: "Encoder × L", tech: "MHSA · MLP · LayerNorm", kind: "model", col: 3, row: 1, at: "the-transformer-encoder" },
-      { id: "cfg", label: "Model configs", tech: "tiny · small · base", kind: "ops", col: 3, row: 0, at: "a-config-driven-model-family" },
-      { id: "hybrid", label: "Hybrid CNN stem", tech: "conv features → tokens", kind: "model", col: 1, row: 2.3, at: "going-beyond-the-paper-a-hybrid-cnn-transformer" },
-      { id: "head", label: "Classification head", tech: "[CLS] → logits", kind: "model", col: 4, row: 1, at: "training-setup" },
-      { id: "res", label: "Results", tech: "ViT vs CNN baselines", kind: "eval", col: 5, row: 1, at: "results" },
-    ],
-    edges: [
-      { from: "img", to: "patch", data: "pixels" },
-      { from: "img", to: "hybrid", data: "pixels" },
-      { from: "patch", to: "cls", data: "(B, N, D)" },
-      { from: "hybrid", to: "cls", data: "(B, N, D)" },
-      { from: "cls", to: "enc", data: "token sequence" },
-      { from: "cfg", to: "enc", data: "depth · heads · dim" },
-      { from: "enc", to: "head", data: "final [CLS]" },
-      { from: "head", to: "res", data: "test accuracy" },
-    ],
-  },
 
   /* ------------------------------------------------------------------ */
   "traffic-prediction": {
@@ -444,17 +419,17 @@ export const PIPELINES: Record<string, Pipeline> = {
   /* ------------------------------------------------------------------ */
   saturdae: {
     summary:
-      "A modular Python application. The main module runs the input loop; the voice module parses spoken commands (NLTK) and confirms them; the furniture module draws rooms, walls and objects with turtle; the check module keeps a NumPy occupancy grid to block overlaps; the recommendation module proposes room and furniture positions; and the delete module removes items. Each placement is previewed before it is committed to the plan.",
+      "A modular Python application. The main module runs the input loop; the voice module parses spoken commands (NLTK) in the patented design, while the repository code takes the same commands from a menu; the furniture module draws rooms, walls and objects with turtle; the check module keeps a NumPy occupancy grid to block overlaps; the recommendation module proposes room and furniture positions; and the delete module removes items. Each placement is previewed before it is committed to the plan.",
     stages: ["input", "parse", "validate", "draw", "suggest"],
     nodes: [
-      { id: "voice", label: "Voice input", tech: "speech commands", kind: "source", col: 0, row: 1, at: "overview" },
+      { id: "voice", label: "Command input", tech: "voice (patent) · menu (code)", kind: "source", col: 0, row: 1, at: "overview" },
       { id: "main", label: "Main module", tech: "input loop", kind: "agent", col: 1, row: 1, at: "approach" },
       { id: "nlp", label: "Voice module", tech: "NLTK parsing", kind: "transform", col: 2, row: 0, at: "approach" },
       { id: "check", label: "Check module", tech: "NumPy occupancy grid", kind: "eval", col: 2, row: 2, at: "approach" },
       { id: "draw", label: "Furniture module", tech: "turtle rendering", kind: "ui", col: 3, row: 1, at: "approach" },
       { id: "rec", label: "Recommendations", tech: "rooms · halls", kind: "model", col: 4, row: 0, at: "approach" },
       { id: "del", label: "Delete module", tech: "remove items", kind: "ops", col: 4, row: 2, at: "approach" },
-      { id: "ext", label: "Extensions", tech: "new items · generative AI", kind: "ops", col: 5, row: 1, at: "scalability" },
+      { id: "ext", label: "Extensions", tech: "new object = drawing + footprint", kind: "ops", col: 5, row: 1, at: "approach" },
     ],
     edges: [
       { from: "voice", to: "main", data: "utterance" },

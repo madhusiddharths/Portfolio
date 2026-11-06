@@ -3129,3 +3129,54 @@ a.j-s:hover {
 .build-on .ag [data-build]:is([data-state="filled"], [data-state="resizing"], [data-state="placing"]):not([data-mode])::after {
   background-color: var(--cover);
 }
+
+/* ---------------------------------------------------------------------------
+   STREAM — Coders write prose like a model generates it: words and short
+   bursts appear behind a caret. The text is in place from the start (layout
+   never moves); the unwritten tail is painted transparent via a highlight.
+   --------------------------------------------------------------------------- */
+::highlight(agent-stream) {
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  text-decoration-color: transparent;
+  text-shadow: none;
+}
+.build-on .ag [data-build][data-mode="stream"][data-state="building"] {
+  animation: none;
+}
+/* no wipe cover: just the agent's outline around the node being written */
+.build-on .ag [data-build][data-mode="stream"][data-state="building"]::after {
+  background: none;
+  clip-path: none;
+  border: 1px solid color-mix(in srgb, var(--agent) 45%, transparent);
+}
+.build-on .ag [data-build][data-mode="stream"][data-state="building"]::before {
+  content: none;
+}
+.build-on .ag [data-build="list"][data-mode="stream"][data-state="building"] > *,
+.build-on .ag [data-build="list"][data-mode="stream"][data-state="building"] li {
+  animation: none;
+}
+.stream-caret {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 60;
+  width: 0.5em;
+  min-width: 6px;
+  pointer-events: none;
+  background: var(--agent, #4de1ff);
+  box-shadow: 0 0 10px -2px var(--agent, #4de1ff);
+  opacity: 0.9;
+  animation: stream-blink 0.9s steps(1, end) infinite;
+}
+@keyframes stream-blink {
+  50% {
+    opacity: 0.25;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .stream-caret {
+    display: none;
+  }
+}

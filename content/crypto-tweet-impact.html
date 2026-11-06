@@ -20,7 +20,7 @@
     </section>
 
     <section class="content-section">
-      <h2>Problem and Goal</h2>
+      <h2>Problem &amp; Goal</h2>
       <p>
         High-profile social-media activity is widely believed to move crypto markets, and Musk's tweets — especially about
         the meme-origin coin Dogecoin — are the canonical example. But "everyone knows it moves the price" is an empirical
@@ -207,12 +207,10 @@
     <section class="content-section">
       <h2>Conclusion</h2>
       <p>
-        This project is the clearest demonstration of how I approach data science: take a popular, intuitive claim, design
-        an honest test for it, and let the statistics — not the narrative — decide the verdict. It pairs a real
-        LLM-in-the-loop data pipeline with a disciplined inferential framework (event study, non-parametric and parametric
-        testing, effect sizes, multiple-testing correction, and power analysis), packages the result as a reproducible
-        Quarto report and an interactive Shiny dashboard, and is candid about exactly what its sample can and cannot support.
-        The conclusion that "most apparent tweet effects don't survive correction" is less exciting than a viral headline —
-        and far more defensible, which is the entire point.
+        Most apparent tweet effects on Bitcoin and Dogecoin do not survive multiple-testing correction. Reaching that verdict
+        took an LLM-in-the-loop pipeline to classify ~20,000 tweets, an event study with parametric and non-parametric tests,
+        effect sizes, Bonferroni and FDR correction, and a power analysis, packaged as a reproducible Quarto report and a
+        Shiny dashboard. The report states plainly what its sample can and cannot support: a smaller claim than a viral
+        headline, and one that holds up.
       </p>
     </section>
