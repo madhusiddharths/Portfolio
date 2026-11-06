@@ -60,16 +60,30 @@ export function RunUsage() {
 }
 
 /** Footer credit with the real build time. */
+// "an 11-agent", "an 8-agent", "a 12-agent": the article follows how the number sounds.
+const article = (n: number) => (n === 11 || n === 18 || String(n).startsWith("8") ? "an" : "a");
+
 export function BuildCredit() {
   const engine = useSwarm();
   const n = engine.roster.length;
   const elapsed = useSwarmState((s) => s.elapsed);
   const enabled = useSwarmState((s) => s.enabled);
+  // Replay is a no-op under reduced motion, so the phrase stays plain text there.
+  const [canReplay, setCanReplay] = useState(false);
+  useEffect(() => setCanReplay(!matchMedia("(prefers-reduced-motion: reduce)").matches), []);
+  if (enabled && elapsed !== null) {
+    return <span>{`assembled live by ${article(n)} ${n}-agent swarm in ${(elapsed / 1000).toFixed(1)}s`}</span>;
+  }
   return (
     <span>
-      {enabled && elapsed !== null
-        ? `assembled live by a ${n}-agent swarm in ${(elapsed / 1000).toFixed(1)}s`
-        : `assembled by a ${n}-agent swarm · hit replay to watch`}
+      {`assembled by ${article(n)} ${n}-agent swarm · `}
+      {canReplay ? (
+        <button type="button" className="credit-replay" onClick={() => engine.replay()} title="Rebuild the page from a blank canvas">
+          hit replay to watch
+        </button>
+      ) : (
+        "hit replay to watch"
+      )}
     </span>
   );
 }
