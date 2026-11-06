@@ -100,6 +100,45 @@ const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 const rand = (a: number, b: number) => a + Math.random() * (b - a);
 const sign = () => (Math.random() < 0.5 ? -1 : 1);
+
+/* ---------------------------------------------------------------------------
+   Token streaming for the Coders. Text is never rewritten: the part not yet
+   "generated" is painted transparent through the CSS Custom Highlight API,
+   so layout, React-owned text and screen readers are untouched. Browsers
+   without the API keep the wipe reveal.
+   --------------------------------------------------------------------------- */
+const STREAM_HL = "agent-stream";
+type Boundary = { node: Text; off: number };
+let streamHL: Highlight | null = null;
+function streamHighlight(): Highlight | null {
+  if (streamHL) return streamHL;
+  if (typeof CSS === "undefined" || !("highlights" in CSS) || typeof Highlight === "undefined") return null;
+  streamHL = new Highlight();
+  CSS.highlights.set(STREAM_HL, streamHL);
+  return streamHL;
+}
+/** end of every word (with its trailing space) inside el, in document order */
+function wordBoundaries(el: HTMLElement): Boundary[] {
+  const out: Boundary[] = [];
+  const walk = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, {
+    acceptNode: (n) => (n.parentElement?.closest("svg, style, script") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT),
+  });
+  for (let n = walk.nextNode() as Text | null; n; n = walk.nextNode() as Text | null) {
+    const re = /\S+\s*/g;
+    for (let m = re.exec(n.data); m; m = re.exec(n.data)) out.push({ node: n, off: m.index + m[0].length });
+  }
+  return out;
+}
+/** group words like a model streams tokens: mostly one or two, now and then a burst */
+function chunkEnds(words: number): number[] {
+  const ends: number[] = [];
+  for (let i = 0; i < words; ) {
+    const r = Math.random();
+    i = Math.min(words, i + (r < 0.45 ? 1 : r < 0.75 ? 2 : r < 0.9 ? 3 : 4 + Math.floor(Math.random() * 3)));
+    ends.push(i);
+  }
+  return ends;
+}
 const stamp = () => new Date().toLocaleTimeString("en-GB", { hour12: false });
 const hex = () => Math.floor(Math.random() * 0xfffffff).toString(16).padStart(7, "0");
 /** One curve for the CSS wipe, the WAAPI resize/nudge and the cursor drag. */
@@ -125,6 +164,8 @@ export class SwarmEngine {
   private poses = new WeakMap<HTMLElement, Pose>();
   private defects = new WeakMap<HTMLElement, Defect>();
   private gen = 0;
+  /** text nodes a Coder is streaming right now: the hidden range and its caret */
+  private streams = new Map<HTMLElement, { range: Range; caret: HTMLElement }>();
   /** nodes still in flight per segment, and segments not yet reviewed per section */
   private remaining = new Map<HTMLElement, number>();
   private openSegs = new Map<HTMLElement, Set<HTMLElement>>();
@@ -656,17 +697,19 @@ export class SwarmEngine {
         el.style.setProperty("--steps", String(clamp(Math.round(text / 1.4), 8, 48)));
         // text lands unstyled when a Stylist pass follows
         if (ops.includes("style")) el.dataset.raw = "1";
-        el.dataset.mode = "write";
+        // prose, headings and lists stream in word by word; other nodes keep the wipe
+        const words = kind === "type" || kind === "para" || kind === "list" ? this.streamStart(el, id) : null;
+        el.dataset.mode = words ? "stream" : "write";
         el.dataset.state = "building";
         this.setAgent(id, { status: "working" });
         await Promise.all([
-          sleep(ms),
+          words ? this.streamRun(el, words, ms, gen) : sleep(ms),
           kind === "type"
             ? this.drag(id, b.x + b.w, ty, ms, "linear")
             : this.drag(id, tx + rand(0, Math.min(60, b.w * 0.3)), b.y + b.h - 8, ms, "linear"),
         ]);
         if (gen !== this.gen) return;
-        detail = `${text} chars`;
+        detail = words ? `${words.length} words streamed` : `${text} chars`;
         if (ops.includes("style")) el.dataset.state = "raw";
         break;
       }
@@ -853,6 +896,81 @@ export class SwarmEngine {
     return agents;
   }
 
+  /* ---- token streaming ---------------------------------------------------- */
+  /** hide el's text and place a caret; null when streaming isn't possible here */
+  private streamStart(el: HTMLElement, id: AgentId): Boundary[] | null {
+    const hl = streamHighlight();
+    if (!hl || this.streams.has(el)) return null;
+    const words = wordBoundaries(el);
+    if (words.length < 2) return null;
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    hl.add(range);
+    const caret = document.createElement("span");
+    caret.className = "stream-caret";
+    caret.setAttribute("aria-hidden", "true");
+    caret.style.setProperty("--agent", AGENT[id].color);
+    document.body.appendChild(caret);
+    this.streams.set(el, { range, caret });
+    this.placeCaret(caret, el, null);
+    return words;
+  }
+
+  /** reveal words in token-like chunks across `ms`, the same budget the wipe used */
+  private async streamRun(el: HTMLElement, words: Boundary[], ms: number, gen: number) {
+    const s = this.streams.get(el);
+    if (!s) return sleep(ms);
+    const ends = chunkEnds(words.length);
+    const weights = ends.map(() => rand(0.55, 1.45));
+    const total = weights.reduce((a, b) => a + b, 0);
+    const budget = ms * 0.94;
+    const t0 = performance.now();
+    let acc = 0;
+    for (let k = 0; k < ends.length; k++) {
+      acc += weights[k];
+      const wait = t0 + (budget * acc) / total - performance.now();
+      if (wait > 0) await sleep(wait);
+      if (gen !== this.gen || !el.isConnected || this.streams.get(el) !== s) return this.streamEnd(el);
+      const b = words[ends[k] - 1];
+      try {
+        s.range.setStart(b.node, Math.min(b.off, b.node.length));
+      } catch {
+        break; // the text changed under us (live React text): just finish
+      }
+      this.placeCaret(s.caret, el, b);
+    }
+    const rest = t0 + ms - performance.now();
+    if (rest > 0) await sleep(rest);
+    this.streamEnd(el);
+  }
+
+  private placeCaret(caret: HTMLElement, el: HTMLElement, b: Boundary | null) {
+    const r = document.createRange();
+    if (b) r.setStart(b.node, Math.min(b.off, b.node.length));
+    else r.setStart(el, 0);
+    r.collapse(true);
+    let rect: DOMRect | undefined = r.getClientRects()[0];
+    if (!rect || (!rect.height && !rect.width)) {
+      const box = el.getBoundingClientRect();
+      rect = new DOMRect(box.left, box.top, 0, 0);
+    }
+    const h = rect.height || parseFloat(getComputedStyle(el).fontSize) * 1.2 || 16;
+    caret.style.transform = `translate(${rect.left + window.scrollX}px, ${rect.top + window.scrollY}px)`;
+    caret.style.height = `${h}px`;
+  }
+
+  private streamEnd(el: HTMLElement) {
+    const s = this.streams.get(el);
+    if (!s) return;
+    streamHL?.delete(s.range);
+    s.caret.remove();
+    this.streams.delete(el);
+  }
+
+  private clearStreams() {
+    [...this.streams.keys()].forEach((el) => this.streamEnd(el));
+  }
+
   private clearMarks(n: HTMLElement) {
     n.getAnimations().forEach((a) => a.cancel());
     this.clearPose(n);
@@ -861,6 +979,7 @@ export class SwarmEngine {
 
   skip() {
     this.gen++;
+    this.clearStreams();
     try {
       localStorage.setItem("swarm-skip", "1");
     } catch {}
@@ -880,6 +999,7 @@ export class SwarmEngine {
 
   replay() {
     this.gen++;
+    this.clearStreams();
     this.wakeAll();
     try {
       localStorage.removeItem("swarm-skip");

@@ -128,7 +128,8 @@ export function SwarmCount({ value, prefix = "", suffix = "", decimals = 0 }: { 
       const t0 = performance.now();
       const step = (now: number) => {
         const t = Math.min(1, (now - t0) / 1400);
-        setN((1 - Math.pow(2, -10 * t)) * value);
+        // the ease never quite reaches 1, so land on the exact value at the end
+        setN(t >= 1 ? value : (1 - Math.pow(2, -10 * t)) * value);
         if (t < 1) raf = requestAnimationFrame(step);
       };
       raf = requestAnimationFrame(step);
