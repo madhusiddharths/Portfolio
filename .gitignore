@@ -17,3 +17,6 @@ next-env.d.ts
 
 # graphify knowledge graph (generated locally)
 graphify-out/
+
+# local archive of retired assets (logo options etc.)
+archives/
