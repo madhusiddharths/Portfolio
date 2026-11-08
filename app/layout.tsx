@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   description:
     "Madhu Siddharth is an AI engineer building agentic AI workflows that automate work end to end — agents, tool integration, model fine-tuning, evaluation, and production deployment.",
   authors: [{ name: "Madhu Siddharth Suthagar" }],
-  icons: { icon: "/img/letter_m.png", apple: "/img/letter_m.png" },
+  icons: { icon: "/img/logo.svg", apple: "/img/logo-180.png" },
   openGraph: {
     title: "Madhu Siddharth Suthagar — AI Engineer",
     description: "Agentic AI workflows, end-to-end automation, and production AI systems.",
