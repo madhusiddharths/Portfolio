@@ -9,11 +9,14 @@ import { Swarm, useSwarm, useSwarmState } from "./swarm";
 import type { RosterName } from "./engine";
 import { ObsWindow } from "./observe";
 import { MiniMap } from "./minimap";
+import { ide } from "@/components/ide/store";
 import { route } from "@/lib/intent-router";
 import { PROFILE, PROJECTS, skillHref } from "@/lib/projects";
 
 /** A route in the navigator. `href` starting with "#" scrolls to a section on this page. */
 export type Tab = { id: string; label: string; href: string; path?: string };
+
+const RAIL_KEY = "swarm-rail";
 
 export const TABS: Tab[] = [
   { id: "home", label: "home", href: "#home", path: "" },
@@ -52,8 +55,21 @@ export function AgentShell({
   task?: string;
 }) {
   const [open, setOpen] = useState(false);
+  // desktop: the rail can be tucked away to the right. The choice lives on
+  // <html data-swarm-rail> (set before paint by the boot script) and in localStorage.
+  const hide = (h: boolean) => {
+    if (h) document.documentElement.dataset.swarmRail = "hidden";
+    else delete document.documentElement.dataset.swarmRail;
+    try {
+      if (h) localStorage.setItem(RAIL_KEY, "hidden");
+      else localStorage.removeItem(RAIL_KEY);
+    } catch {}
+  };
+  const ideMode = !!className?.includes("ag-ide"); // field reports keep their own right-panel toggle
+  const onCollapse = () => (ideMode ? ide.toggle("right", false) : hide(true));
+  const cls = className ? `ag ${className}` : "ag";
   return (
-    <Swarm className={className ? `ag ${className}` : "ag"} task={task} roster={roster}>
+    <Swarm className={cls} task={task} roster={roster}>
       <div className="ag-ambient" aria-hidden="true" />
       <Chrome tabs={tabs} current={current} fixedPath={path} onRail={() => setOpen((o) => !o)} railOpen={open} />
       <div className="ag-body">
@@ -64,11 +80,32 @@ export function AgentShell({
           <button type="button" className="rail-close" onClick={() => setOpen(false)} aria-label="Close panel">
             ✕
           </button>
-          <ObsWindow />
+          <ObsWindow onCollapse={onCollapse} />
           <NavWindow tabs={tabs} current={current} onDone={() => setOpen(false)} railTabs={railTabs} />
         </aside>
+        {!ideMode && <RailPeek onOpen={() => hide(false)} />}
       </div>
     </Swarm>
+  );
+}
+
+/** The collapsed rail's edge tab: docked where the rail was, click to slide it back. */
+function RailPeek({ onOpen }: { onOpen: () => void }) {
+  const done = useSwarmState((s) => s.done);
+  const total = useSwarmState((s) => s.total);
+  const enabled = useSwarmState((s) => s.enabled);
+  return (
+    <button type="button" className="rail-peek" onClick={onOpen} aria-label="Show the agent panel" title="Show the agent panel">
+      <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true">
+        <rect x="1.5" y="2.5" width="13" height="11" rx="2" />
+        <path d="M10.5 2.5v11M7.5 6l-2 2 2 2" />
+      </svg>
+      <span className="rail-peek-label">agents</span>
+      <span className="rail-peek-count">
+        {enabled ? done : total}/{total}
+      </span>
+      <span className="live-dot" />
+    </button>
   );
 }
 

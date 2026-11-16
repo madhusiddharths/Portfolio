@@ -75,7 +75,8 @@ const PEOPLE: Record<string, { label: string; color: string }> = {
 /** who said a log line — agents resolve through the engine, so spawned (and retired) ones work too */
 const who = (engine: SwarmEngine, s: Speaker) => PEOPLE[s] ?? { label: engine.def(s).name, color: engine.def(s).color };
 
-export function ObsWindow() {
+/** `onCollapse` tucks the whole rail away to the right (desktop only). */
+export function ObsWindow({ onCollapse }: { onCollapse: () => void }) {
   const [tab, setTab] = useState<"graph" | "logs">("graph");
   const done = useSwarmState((s) => s.done);
   const total = useSwarmState((s) => s.total);
@@ -97,6 +98,12 @@ export function ObsWindow() {
         <span className="win-meta">
           <span className="live-dot" /> {enabled ? done : total}/{total}
         </span>
+        <button type="button" className="win-collapse" onClick={onCollapse} aria-label="Hide panel" title="Hide panel">
+          <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true">
+            <rect x="1.5" y="2.5" width="13" height="11" rx="2" />
+            <path d="M10.5 2.5v11M4.5 6l2 2-2 2" />
+          </svg>
+        </button>
         <span className="win-progress" style={{ transform: `scaleX(${pct})` }} />
       </div>
       <div className="win-body" data-lenis-prevent>

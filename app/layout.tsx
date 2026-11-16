@@ -32,7 +32,7 @@ export const metadata: Metadata = {
 //    device) the class is dropped and the finished page shows — content is
 //    never held hostage by the animation. If the engine then arrives late
 //    (a cold dev compile), it re-arms the build itself (engine.attach).
-const bootScript = `(function(){var d=document.documentElement;try{d.setAttribute("data-theme","dark");var m=document.querySelector('meta[name="theme-color"]');if(!m){m=document.createElement("meta");m.setAttribute("name","theme-color");document.head.appendChild(m);}m.setAttribute("content","#07070a");var r=matchMedia("(prefers-reduced-motion: reduce)").matches;if(!r){d.classList.add("reveal-on");}if(!r&&localStorage.getItem("swarm-skip")!=="1"){d.classList.add("build-on");setTimeout(function(){if(!window.__swarmReady){d.classList.remove("build-on");window.__swarmLate=true;}},5000);}}catch(e){d.classList.remove("build-on");}})();`;
+const bootScript = `(function(){var d=document.documentElement;try{d.setAttribute("data-theme","dark");var m=document.querySelector('meta[name="theme-color"]');if(!m){m=document.createElement("meta");m.setAttribute("name","theme-color");document.head.appendChild(m);}m.setAttribute("content","#07070a");if(localStorage.getItem("swarm-rail")==="hidden"){d.setAttribute("data-swarm-rail","hidden");}var r=matchMedia("(prefers-reduced-motion: reduce)").matches;if(!r){d.classList.add("reveal-on");}if(!r&&localStorage.getItem("swarm-skip")!=="1"){d.classList.add("build-on");setTimeout(function(){if(!window.__swarmReady){d.classList.remove("build-on");window.__swarmLate=true;}},5000);}}catch(e){d.classList.remove("build-on");}})();`;
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
