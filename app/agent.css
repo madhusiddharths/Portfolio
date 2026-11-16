@@ -376,14 +376,14 @@ html:has(.ag) {
   html[data-swarm-rail="hidden"] .ag:not(.ag-ide) .ag-main {
     margin-right: 0;
   }
-  html[data-swarm-rail="hidden"] .ag:not(.ag-ide) .rail {
+  :is(html[data-swarm-rail="hidden"] .ag:not(.ag-ide), html:not([data-ide-right="on"]) .ag-ide) .rail {
     transform: translateX(calc(100% + 10px));
     visibility: hidden;
     transition:
       transform 0.5s var(--ease),
       visibility 0s 0.5s;
   }
-  html[data-swarm-rail="hidden"] .ag:not(.ag-ide) .rail-peek {
+  :is(html[data-swarm-rail="hidden"] .ag:not(.ag-ide), html:not([data-ide-right="on"]) .ag-ide) .rail-peek {
     display: flex;
     animation: rail-peek-in 0.5s 0.25s var(--ease) both;
   }

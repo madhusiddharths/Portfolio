@@ -68,9 +68,6 @@ html[data-ide-bottom="off"] .ag-ide {
   html[data-ide-right="on"] .ag-ide {
     --ide-r: var(--rail-w);
   }
-  html:not([data-ide-right="on"]) .ag-ide .rail {
-    display: none;
-  }
   .ag-ide .rail {
     bottom: var(--ide-s);
   }

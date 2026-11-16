@@ -55,18 +55,20 @@ export function AgentShell({
   task?: string;
 }) {
   const [open, setOpen] = useState(false);
-  // desktop: the rail can be tucked away to the right. The choice lives on
-  // <html data-swarm-rail> (set before paint by the boot script) and in localStorage.
-  const hide = (h: boolean) => {
-    if (h) document.documentElement.dataset.swarmRail = "hidden";
-    else delete document.documentElement.dataset.swarmRail;
+  const ideMode = !!className?.includes("ag-ide");
+  // desktop: the rail can be tucked away to the right, leaving an edge tab.
+  // Field reports keep the choice in the IDE store (shared with the status-bar
+  // button and ⌘⌥B); other pages on <html data-swarm-rail> (set before paint
+  // by the boot script) and in localStorage.
+  const showRail = (show: boolean) => {
+    if (ideMode) return ide.toggle("right", show);
+    if (show) delete document.documentElement.dataset.swarmRail;
+    else document.documentElement.dataset.swarmRail = "hidden";
     try {
-      if (h) localStorage.setItem(RAIL_KEY, "hidden");
-      else localStorage.removeItem(RAIL_KEY);
+      if (show) localStorage.removeItem(RAIL_KEY);
+      else localStorage.setItem(RAIL_KEY, "hidden");
     } catch {}
   };
-  const ideMode = !!className?.includes("ag-ide"); // field reports keep their own right-panel toggle
-  const onCollapse = () => (ideMode ? ide.toggle("right", false) : hide(true));
   const cls = className ? `ag ${className}` : "ag";
   return (
     <Swarm className={cls} task={task} roster={roster}>
@@ -80,10 +82,10 @@ export function AgentShell({
           <button type="button" className="rail-close" onClick={() => setOpen(false)} aria-label="Close panel">
             ✕
           </button>
-          <ObsWindow onCollapse={onCollapse} />
+          <ObsWindow onCollapse={() => showRail(false)} />
           <NavWindow tabs={tabs} current={current} onDone={() => setOpen(false)} railTabs={railTabs} />
         </aside>
-        {!ideMode && <RailPeek onOpen={() => hide(false)} />}
+        <RailPeek onOpen={() => showRail(true)} />
       </div>
     </Swarm>
   );
