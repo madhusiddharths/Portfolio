@@ -75,117 +75,10 @@
   padding-top: clamp(3rem, 6vw, 5rem);
   padding-bottom: clamp(3rem, 6vw, 5rem);
 }
-.cs-rail-left {
-  grid-area: toc;
-}
 .fieldnotes {
   grid-area: article;
   min-width: 0;
   max-width: 72ch;
-}
-.cs-rail-right {
-  grid-area: meta;
-}
-
-/* ---- TOC ------------------------------------------------------------------- */
-.cs-toc {
-  position: sticky;
-  top: 6rem;
-}
-.cs-toc-title {
-  color: var(--faint);
-  margin: 0 0 1rem;
-}
-.cs-toc ol {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-  border-left: 1px solid var(--line);
-}
-.cs-toc a {
-  display: flex;
-  gap: 0.6rem;
-  padding: 0.4rem 0 0.4rem 0.9rem;
-  margin-left: -1px;
-  border-left: 1px solid transparent;
-  color: var(--faint);
-  font-size: 0.8rem;
-  line-height: 1.4;
-  transition: color 0.25s var(--ease-out), border-color 0.25s var(--ease-out);
-}
-.cs-toc-index {
-  font-size: 0.62rem;
-  padding-top: 0.12rem;
-}
-.cs-toc a:hover {
-  color: var(--ink);
-}
-.cs-toc li.is-active a {
-  color: var(--accent);
-  border-left-color: var(--accent);
-}
-.cs-toc li.is-active .cs-toc-index {
-  color: var(--accent);
-}
-
-/* ---- metadata rail --------------------------------------------------------- */
-.cs-meta {
-  position: sticky;
-  top: 6rem;
-  padding: 1.4rem;
-  border: 1px solid var(--line);
-  border-radius: 1rem;
-  background: var(--panel);
-}
-.cs-meta-title {
-  color: var(--faint);
-  margin: 0 0 1rem;
-}
-.cs-meta-stack-title {
-  margin-top: 1.6rem;
-  padding-top: 1.4rem;
-  border-top: 1px solid var(--line);
-}
-.cs-meta dl {
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 1.1rem;
-}
-.cs-meta dt {
-  color: var(--faint);
-  font-size: 0.6rem;
-  margin-bottom: 0.3rem;
-}
-.cs-meta dd {
-  margin: 0;
-  font-size: 0.9rem;
-}
-.cs-meta-private {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  color: var(--muted);
-}
-.cs-meta-stack {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.7rem;
-}
-.cs-meta-stack li {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  font-size: 0.86rem;
-}
-.cs-meta-stack img {
-  object-fit: contain;
 }
 
 /* ---- next ------------------------------------------------------------------ */
@@ -533,9 +426,6 @@
       "meta article";
     align-items: start;
   }
-  .cs-rail-right {
-    align-self: start;
-  }
 }
 
 @media (max-width: 760px) {
@@ -545,12 +435,6 @@
       "meta"
       "article";
     gap: 2rem;
-  }
-  .cs-rail-left {
-    display: none;
-  }
-  .cs-meta {
-    position: static;
   }
   .fieldnotes .image-grid.grid-2 {
     grid-template-columns: 1fr;

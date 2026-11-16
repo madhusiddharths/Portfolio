@@ -23,7 +23,6 @@ export function RunStatus() {
 
 /** Real numbers from this page's build: nodes, wall time, agents. */
 export function RunUsage() {
-  const engine = useSwarm();
   const enabled = useSwarmState((s) => s.enabled);
   const done = useSwarmState((s) => s.done);
   const total = useSwarmState((s) => s.total);

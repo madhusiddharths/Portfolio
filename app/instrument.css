@@ -12,14 +12,6 @@
   --ink-rgb: 236, 236, 231;
 }
 
-/* ---- scroll reveal (visible by default; animates only when reveal-on) ---- */
-.reveal-on .reveal {
-  opacity: 0;
-  transform: translateY(22px);
-  transition: opacity 0.7s var(--ease-out), transform 0.7s var(--ease-out);
-  will-change: opacity, transform;
-}
-
 /* ---- skip link ---- */
 .skip-link {
   position: fixed;
@@ -70,59 +62,10 @@
   transform: none;
 }
 
-/* ---- site header ----------------------------------------------------------- */
-.brand {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.7rem;
-}
-
 /* ---- generic section ------------------------------------------------------- */
 main {
   position: relative;
   z-index: 1;
-}
-.section {
-  padding-block: clamp(5rem, 11vw, 9rem);
-  border-top: 1px solid var(--line);
-}
-.section-heading {
-  margin-bottom: clamp(2.4rem, 5vw, 3.6rem);
-}
-.section-heading-top {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1.1rem;
-}
-.section-index {
-  font-family: var(--font-mono);
-  font-size: 0.74rem;
-  color: var(--accent);
-  letter-spacing: 0.1em;
-}
-.section-eyebrow {
-  color: var(--muted);
-}
-.section-heading-main {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 1.5rem;
-  flex-wrap: wrap;
-}
-.section-title {
-  font-size: clamp(2.1rem, 4.2vw, 3.3rem);
-  letter-spacing: -0.03em;
-}
-.section-description {
-  margin: 1.3rem 0 0;
-  max-width: 62ch;
-  color: var(--muted);
-  font-size: 1.06rem;
-}
-.section-heading-link {
-  flex: none;
 }
 
 /* ---- hero ------------------------------------------------------------------ */
@@ -326,43 +269,6 @@ main {
   white-space: nowrap;
 }
 
-/* ---- capability matrix ----------------------------------------------------- */
-.matrix {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(255px, 1fr));
-  gap: 1px;
-  background: var(--line);
-  border: 1px solid var(--line);
-  border-radius: 1rem;
-  overflow: hidden;
-}
-
-/* ---- certifications -------------------------------------------------------- */
-/* Fixed 4-up grid (collapsing to 2-up / 1-up) rather than auto-fit, so a lone
-   trailing card can never stretch to a different width than its siblings. */
-.certs {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1.1rem;
-}
-@media (max-width: 900px) {
-  .certs {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-@media (max-width: 480px) {
-  .certs {
-    grid-template-columns: 1fr;
-  }
-}
-/* A uniform, theme-aware plate for every badge. The source images are wildly
-   different (full-bleed coloured squares, white cards, and centred logos on
-   transparency); a soft tinted plate + flex centring + object-fit make them
-   read as one set in both light and dark themes — no glaring white slab. */
-/* Contain (never crop) and centre. Flex centring resolves the percentage caps
-   against the plate's fixed height reliably, so the badge is always fully
-   visible — unlike the previous grid track, which let it overflow and clip. */
-
 /* ---- contact --------------------------------------------------------------- */
 .contact-grid {
   position: relative;
@@ -383,15 +289,6 @@ main {
   gap: 1rem;
   flex-wrap: wrap;
   margin: 2.2rem 0 0;
-}
-
-/* ---- work page + coming soon + 404 ----------------------------------------- */
-.coming-soon {
-  min-height: 78vh;
-  display: grid;
-  place-items: center;
-  text-align: center;
-  padding-top: 6rem;
 }
 
 /* ---- responsive ------------------------------------------------------------ */

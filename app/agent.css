@@ -2725,35 +2725,6 @@ a.reg-row:hover {
   gap: 0.6rem;
   width: fit-content;
 }
-.contact-details {
-  --cover: var(--bg-0);
-  margin: 0;
-  border-top: 1px solid var(--line);
-}
-.contact-details > div {
-  display: grid;
-  grid-template-columns: 5.5rem 1fr;
-  gap: 1rem;
-  padding: 1rem 0;
-  border-bottom: 1px solid var(--line);
-}
-.contact-details dt {
-  font: 500 11px/1.6 var(--mono);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--faint);
-}
-.contact-details dd {
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  color: var(--ink);
-  word-break: break-word;
-}
-.contact-details a:hover {
-  color: var(--red-ink);
-}
 .req {
   --cover: #0d0d13;
   overflow: hidden;
@@ -2884,35 +2855,6 @@ a.j-s:hover {
   font-family: var(--mono);
   font-size: 0.7rem;
 }
-.work-filter {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1.6rem;
-  padding: 0.75rem 0.75rem 0.75rem 1rem;
-  border: 1px solid var(--line-2);
-  border-radius: 10px;
-  background: var(--panel);
-}
-.work-filter p {
-  margin: 0;
-  font-size: 12.5px;
-  color: var(--muted);
-}
-.work-filter-cmd {
-  color: #3dff8a;
-}
-.work-filter strong {
-  color: var(--red-ink);
-}
-.work-filter-count {
-  color: var(--faint);
-}
-.work-filter .btn {
-  height: 36px;
-}
 
 /* field report */
 .ag .reading-progress {
@@ -2979,28 +2921,6 @@ a.j-s:hover {
 .ag .cs-layout {
   max-width: 84rem;
 }
-.ag .cs-toc,
-.ag .cs-meta {
-  position: static;
-}
-.cs-sticky {
-  position: sticky;
-  top: calc(var(--chrome-h) + 1.5rem);
-}
-.ag .cs-meta {
-  --cover: var(--panel);
-  border-radius: 12px;
-  font-family: var(--sans);
-}
-.ag .cs-toc-title,
-.ag .cs-meta-title {
-  font-size: 10.5px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-}
-.ag .cs-meta-stack img[src*="-mono."] {
-  filter: invert(1);
-}
 .ag .fieldnotes h2 {
   color: #fff;
 }
@@ -3045,12 +2965,6 @@ a.j-s:hover {
 .ag .cs-next:hover .cs-next-name svg {
   transform: translateX(8px);
 }
-@media (max-width: 760px) {
-  .cs-sticky {
-    position: static;
-  }
-}
-
 /* ---------------------------------------------------------------------------
    RESPONSIVE
    --------------------------------------------------------------------------- */
