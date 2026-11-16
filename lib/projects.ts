@@ -192,7 +192,7 @@ export const PROJECTS: Project[] = [
   {
     slug: "mars-survival-map",
     index: "04",
-    name: "Interplanetary Survival Guide",
+    name: "Martian Map",
     domain: "NASA Space Apps hackathon · Martian map",
     summary:
       "A 3D map of Mars that plans the safest trip across the surface for a crew with a rover, built by a team of four at the NASA Space Apps Challenge 2026 on the topic \"Interplanetary Survival Guide: Martian Map\". Five hazard and resource layers from NASA data feed a route planner that names every hazard on the way.",
