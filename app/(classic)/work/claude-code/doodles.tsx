@@ -114,16 +114,6 @@ export function Ferry() {
   );
 }
 
-export function Critic() {
-  return (
-    <svg viewBox="0 0 140 140" {...S} aria-hidden="true">
-      <circle cx="58" cy="58" r="38" />
-      <path d="M86 86 l34 34" strokeWidth={6} />
-      <path d="M40 58 l12 12 l24 -26" className="cc-red" />
-    </svg>
-  );
-}
-
 export function Plug() {
   return (
     <svg viewBox="0 0 120 120" {...S} aria-hidden="true">

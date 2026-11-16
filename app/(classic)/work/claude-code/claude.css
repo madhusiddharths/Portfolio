@@ -273,28 +273,6 @@
   color: var(--red-ink);
 }
 
-/* house rules as sticky notes */
-.cc-rules {
-  clear: both;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  margin: 0 0 1.1rem;
-}
-.cc-rules p {
-  margin: 0;
-  padding: 12px 12px 14px;
-  border-radius: 3px;
-  background: #1d1a14;
-  border: 1px solid rgba(255, 220, 140, 0.12);
-  font: 700 1.3rem/1.15 var(--hand);
-  color: #f3dfa8;
-  transform: rotate(-1.2deg);
-}
-.cc-rules p:nth-child(even) {
-  transform: rotate(1.1deg);
-}
-
 /* margin doodles: only where the column leaves room right of the sheets */
 .cc-margin {
   display: none;
@@ -326,8 +304,5 @@
   }
   .cc-art {
     width: 6rem;
-  }
-  .cc-rules {
-    grid-template-columns: minmax(0, 1fr);
   }
 }

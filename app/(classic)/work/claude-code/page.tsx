@@ -6,7 +6,7 @@ import { techIcon } from "@/lib/projects";
 import { ReadingProgress } from "@/components/reading-progress";
 import { BuildSection } from "@/components/agent/swarm";
 import { B } from "@/components/agent/b";
-import { WobbleDefs, Mascot, Notebook, Memory, LaptopPhone, Resume, Ferry, Critic, Plug, Sparkle, Crew } from "./doodles";
+import { WobbleDefs, Mascot, Notebook, Memory, LaptopPhone, Resume, Ferry, Plug, Sparkle, Crew } from "./doodles";
 import "../[slug]/fieldnotes.css";
 import "@/app/console.css";
 import "./claude.css";
@@ -76,13 +76,6 @@ function Chat({ lines }: { lines: Line[] }) {
   );
 }
 
-const RULES = [
-  "think first. ask when unsure.",
-  "smallest change that works.",
-  "done means tested, not typed.",
-  "no secrets. ask before anything risky.",
-];
-
 export default function MyClaudePage() {
   const claudeIcon = techIcon("Claude");
   return (
@@ -136,18 +129,21 @@ export default function MyClaudePage() {
             note="works with a local model too. no internet needed.">
             <B as="p" kind="para" label="p" className="cc-p">
               Every new chat started from zero, and I was tired of explaining my own work. So I gave Claude a notebook:
-              one page per project with what it does, what matters, and what tends to break. It reads the page before it
-              touches any code, updates it after, and a little checker complains if a page falls behind.
+              an <strong>Obsidian</strong> vault with one page per project covering what it does, what matters, and what
+              tends to break. A small read-only <strong>knowledge-base MCP server</strong> lets Claude search it. Claude
+              reads the page before it touches any code, updates it after, and a little checker complains if a page
+              falls behind.
             </B>
             <Chat lines={[["me", "what's fragile in pulsetrade?"], ["claude", "the API key default. it's in your notes, under gotchas."]]} />
           </Sheet>
 
           <Sheet n="02" tag="chats die, decisions don't" title="I delete my chats. Nothing gets lost." art={<Memory />} side="r"
-            note="every save is versioned. nothing gets overwritten.">
+            note="every save is a git commit. nothing gets overwritten.">
             <B as="p" kind="para" label="p" className="cc-p">
-              When I say &ldquo;save&rdquo;, Claude writes down what I decided, the exact date, and why, in plain
-              sentences future me can read. It works out dates itself, so &ldquo;last Tuesday&rdquo; never turns into a
-              guess. The same idea runs a training coach that reads my watch before it gives advice.
+              I call it <strong>Claude Brain</strong>: a second Obsidian vault that Claude can write to, through its own
+              MCP server. When I say &ldquo;save&rdquo;, Claude writes down what I decided, the exact date, and why, in
+              plain sentences future me can read. The server works out dates itself, so &ldquo;last Tuesday&rdquo; never
+              turns into a guess. The same idea runs a training coach that reads my watch before it gives advice.
             </B>
             <Chat lines={[["me", "save that."], ["claude", "saved: ferry talks over my private network only. dated, done."]]} />
           </Sheet>
@@ -165,35 +161,30 @@ export default function MyClaudePage() {
           <Sheet n="04" tag="one page. always." title="Résumés that never spill onto page two." art={<Resume />} side="r"
             note="pasting a job post is the whole workflow.">
             <B as="ul" kind="list" label="ul.checks" className="cc-checks">
-              <li>reads my facts fresh, every single time</li>
-              <li>matches the job&apos;s own words</li>
-              <li>writes every bullet new. nothing invented, nothing recycled</li>
-              <li>a checker and a ruler reject anything that isn&apos;t exactly one page</li>
+              <li>reads my facts fresh from one résumé knowledge base, every time</li>
+              <li>pulls the job&apos;s exact words into a keyword sheet, and every skill I really have lands on the page</li>
+              <li>writes every bullet new. nothing invented, every number copied straight from my facts</li>
+              <li>
+                a <strong>recruiter critic</strong> skims it like that job&apos;s recruiter would, in about 7 seconds: the
+                top third, then the first words of each bullet. it reorders until the answer to &ldquo;can this person do
+                this job?&rdquo; is obvious
+              </li>
+              <li>a validator and a render check reject anything over one page, or any bullet that isn&apos;t exactly two lines</li>
             </B>
           </Sheet>
 
           <Sheet n="05" tag="tiny tools" title="Things I'd never have built alone." art={<Ferry />} side="l" wide
             note="idea → working app in a few days.">
             <B as="p" kind="para" label="p" className="cc-p">
-              Moving a link from my phone to my Mac shouldn&apos;t be hard, and no app did it the way I wanted. So Claude
-              and I built <strong>Ferry</strong>: share anything on the phone and it lands on the Mac, copy on the Mac and
-              it&apos;s on the phone. Private network only, and it ignores anything my password manager copies.
+              Moving a link from my Android phone to my Mac shouldn&apos;t be hard, and no app did it the way I wanted. So
+              Claude and I built <strong>Ferry</strong>: a menu-bar app on the Mac and a small Android app. Share a link,
+              text or photo on the phone and it lands on the Mac; copy on the Mac and it&apos;s on the phone. It only
+              talks over my private Tailscale network, and it ignores anything my password manager copies.
             </B>
           </Sheet>
 
-          <Sheet n="06" tag="house rules" title="Fast and wrong is worse than slow." art={<Critic />} side="r">
-            <B kind="block" label="div.rules" className="cc-rules">
-              {RULES.map((r) => (
-                <p key={r}>{r}</p>
-              ))}
-            </B>
-            <B as="p" kind="para" label="p" className="cc-p">
-              On top of that I installed a few helpers: a critic that tries to break each change, a design guide, and an
-              editor that keeps my writing sounding like me.
-            </B>
-          </Sheet>
 
-          <Sheet n="07" tag="borrowed brains" title="Open-source skills I lean on." art={<Crew />} side="l"
+          <Sheet n="06" tag="borrowed brains" title="Open-source skills I lean on." art={<Crew />} side="r"
             note="all free. all on GitHub.">
             <B as="ul" kind="list" label="ul.checks" className="cc-checks">
               <li><strong>karpathy-guidelines</strong>: think first, keep it simple, change only what was asked</li>
@@ -203,12 +194,6 @@ export default function MyClaudePage() {
             </B>
           </Sheet>
 
-          <Sheet n="08" tag="proof" title="This site goes through the same loop." art={<Mascot />} side="r" note="yes, really.">
-            <B as="p" kind="para" label="p" className="cc-p">
-              Every change lands on a branch, gets built, and gets clicked through in a real browser before it ships.
-              This page went through it too, including the version that loaded blank.
-            </B>
-          </Sheet>
         </div>
       </BuildSection>
 
