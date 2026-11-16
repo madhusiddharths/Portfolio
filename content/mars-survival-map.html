@@ -1,0 +1,235 @@
+<!-- ===================== INTERPLANETARY SURVIVAL GUIDE (NASA Space Apps hackathon) ===================== -->
+
+    <section class="content-section">
+      <h2>Overview</h2>
+      <p>
+        <strong>Interplanetary Survival Guide</strong> is a 3D map of Mars that plans the safest trip across the surface
+        for a crew with a rover. You turn the planet like Google Earth, over <strong>NASA CTX imagery at 5 m per
+        pixel</strong> draped on <strong>200 m terrain</strong>, and switch between five data layers that show what can
+        hurt or help a crew: elevation and slope, ground firmness, surface temperature, buried water ice and radiation
+        dose.
+      </p>
+      <p>
+        Pick a start and a destination up to <strong>500 km</strong> apart and the planner draws two trips, the
+        <strong>safest</strong> and the <strong>quickest</strong>. The crew drives as far as the rover can go and walks
+        the rest. Each trip lists its time, distance, climb, coldest ground, radiation dose and every hazard on the way,
+        and the planner says so when no route can avoid a hazard. An immersive view then puts you 5 m above the
+        ground at any spot you click.
+      </p>
+    </section>
+
+    <section class="content-section">
+      <h2>Background: the Hackathon &amp; the Team</h2>
+      <p>
+        We built this for the <strong>NASA Space Apps Challenge 2026</strong>, a weekend hackathon (14 to 15 November
+        2026). Our team of four chose the topic <strong>"Interplanetary Survival Guide: Martian Map"</strong>, which
+        asks for an interactive map that helps people survive and move on another world. Everything on the map comes from
+        open NASA, USGS and ESA data.
+      </p>
+      <p>
+        I set up the base map on the first morning so the others could each add a layer on a shared grid, then built the
+        contour and water-ice layers, did the performance work and wrote the immersive view. Who built what:
+      </p>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr><th>Teammate</th><th>Built</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Madhu Siddharth Suthagar</strong> (me)</td><td>Base map and terrain, contour lines, water-ice layer, tile performance, immersive view</td></tr>
+            <tr><td><a href="https://github.com/Somanyloopholes" target="_blank" rel="noopener noreferrer">Siddharth Geddam</a></td><td>Ground-firmness layer, the astronaut route planner, the design system and layout, Cloud Run hosting, the guided tour</td></tr>
+            <tr><td><a href="https://github.com/jayandhan99" target="_blank" rel="noopener noreferrer">Jayayandhan</a></td><td>Radiation layer and terrain shelter model, map picking, the one-layer-at-a-time stack</td></tr>
+            <tr><td><a href="https://github.com/YashAnandChouhan" target="_blank" rel="noopener noreferrer">Yash Anand Chouhan</a></td><td>Surface-temperature layer and its thermal model</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="content-section">
+      <h2>Problem &amp; Goal</h2>
+      <p>
+        The data a Mars crew would need already exists, but it sits in separate archives, in different formats and at
+        different resolutions: a 15 GB elevation file at USGS, thermal maps in the Planetary Data System, ice maps from
+        the SWIM project, one radiation measurement in a <em>Science</em> paper. None of it answers the question a crew
+        would ask: <strong>can I get from here to there, and what will the ground do to me on the way?</strong>
+      </p>
+      <p>
+        The goal was one map that puts those datasets on the same grid, shows each as a layer a person can read, and
+        turns them into a route with the hazards named. We also wanted every number to be traceable, so each layer states
+        where its data comes from and where it stops being reliable.
+      </p>
+    </section>
+
+    <section class="content-section">
+      <h2>The Base Map</h2>
+      <p>
+        The viewer is a single page on the <strong>ArcGIS Maps SDK for JavaScript</strong>, modelled on Caltech's Murray
+        Lab CTX viewer. The imagery is the global CTX mosaic from the Mars Reconnaissance Orbiter. The full mosaic is
+        <strong>5.6 TB</strong>, so the viewer streams it. The terrain is the NASA/USGS blend of MOLA and HRSC elevation
+        at 200 m, which the server also holds as a local file so that contours, slopes and routes read the same heights
+        the viewer draws.
+      </p>
+      <p>
+        Every layer uses plain longitude and latitude on the Mars 2000 sphere and exposes the same Python call,
+        <code>read_...(west, south, east, north, shape)</code>. That one convention is what let four people build layers
+        in parallel and combine them for routing on the first try. Contour lines are drawn from the elevation file at
+        intervals from 2000 m zoomed out to 50 m zoomed in.
+      </p>
+    </section>
+
+    <section class="content-section">
+      <h2>Hazard &amp; Resource Layers</h2>
+      <p>
+        One data layer shows at a time, each with a legend, so their colours never mix. The contour lines change colour
+        to stay readable over whichever layer is under them.
+      </p>
+      <ul>
+        <li><strong>Ground firmness:</strong> thermal inertia from Mars Global Surveyor at 3 km per pixel, in six classes
+          from loose dust that may not bear weight to bedrock.</li>
+        <li><strong>Water ice:</strong> depth to the shallowest ice. Polar surface ice comes from the USGS geologic map,
+          and buried ice within 1 m, 1 to 5 m and deeper than 5 m comes from the SWIM consistency maps.</li>
+        <li><strong>Surface temperature:</strong> a thermal model of the ground driven by THEMIS thermal inertia and TES
+          albedo, precomputed as a lookup table over 24 seasons, 24 hours, 37 latitudes, 12 thermal inertias and 5
+          albedos. Sliders set the season and local time, and a click draws the 24-hour curve for that spot.</li>
+        <li><strong>Radiation:</strong> a modelled dose rate for Gale crater, anchored to the Curiosity RAD measurement
+          of 0.64 mSv per day. The model thins the dose with the air column above each point and scans the horizon in 16
+          directions to find how much sky the terrain blocks.</li>
+        <li><strong>Topography:</strong> coloured elevation with relief shading.</li>
+      </ul>
+      <div class="image-grid grid-2">
+        <figure>
+          <img src="/img/mars/ice_global.png" alt="Globe of Mars with the water-ice layer on: white polar cap and blue bands of buried ice across the northern mid-latitudes" />
+          <figcaption>Figure 1a: Water ice by depth. White is polar surface ice; the blues are buried ice within 1 m, 1 to 5 m and deeper.</figcaption>
+        </figure>
+        <figure>
+          <img src="/img/mars/firmness_global.png" alt="Globe of Mars coloured by ground firmness, with a large red region of loose dust" />
+          <figcaption>Figure 1b: Ground firmness in six classes. The red region is loose dust that may not bear weight.</figcaption>
+        </figure>
+      </div>
+      <div class="image-grid grid-2">
+        <figure>
+          <img src="/img/mars/temperature.png" alt="Surface temperature panel with season and local-time sliders beside a globe coloured by temperature" />
+          <figcaption>Figure 2a: Surface temperature for a chosen season and local solar time.</figcaption>
+        </figure>
+        <figure>
+          <img src="/img/mars/radiation_gale.png" alt="Gale crater coloured by modelled radiation dose rate, with shelter markers and the Curiosity RAD measurement" />
+          <figcaption>Figure 2b: Modelled dose rate in Gale crater, the best natural shelters, and the Curiosity RAD measurement.</figcaption>
+        </figure>
+      </div>
+      <p>
+        The temperature model was checked against Curiosity's ground-temperature sensor in Gale crater. Nightly lows
+        agree within about <strong>3 K</strong>; afternoon highs come out about 11 K too cold.
+      </p>
+    </section>
+
+    <section class="content-section">
+      <h2>The Route Planner</h2>
+      <p>
+        The planner cuts the ground between A and B into <strong>200 m cells</strong> and grades each one Clear, Caution,
+        Danger or Extreme from slope, firmness and temperature, once for a person on foot and once for the rover. The
+        trip is hybrid: walk to the rover, drive, park on level firm ground, walk to B. Two routes come back from the
+        same grid:
+      </p>
+      <ul>
+        <li><strong>Safest:</strong> the planner first finds the lowest hazard level that still connects A and B. If
+          that level is above Clear, every possible route crosses ground that bad, and the planner reports it as
+          <strong>unavoidable</strong>. The route then stays at or below that level and treats each metre of hazardous
+          ground as many extra metres of flat travel.</li>
+        <li><strong>Quickest:</strong> least time. Caution ground costs nothing extra; Danger and Extreme are off
+          limits unless they are unavoidable.</li>
+      </ul>
+      <figure>
+        <img src="/img/mars/route_gale.png" alt="Route planner in Gale crater: a safest and a quickest route drawn up Mount Sharp, with the route panel listing time, distance, climb and hazards" />
+        <figcaption>Figure 3: A 73 km trip up Mount Sharp in Gale crater. The planner drives 68.5 km, walks 4.8 km, marks the steep stretches, and reports that no route avoids a 20 to 30° slope near the summit.</figcaption>
+      </figure>
+      <p>
+        Walking speed follows Tobler's hiking function. The rover slows and spends more of its range on climbs and soft
+        ground, and cannot drive slopes over 25°. If the trip needs more than the rover's range or the walking limit, the
+        planner shows the closest trip it found, marked not viable, with the reasons. The rover and walking numbers come
+        from NASA's Space Exploration Vehicle concept, the Apollo rover and the EVA Walkback Test. They are planning
+        numbers the team chose, and the range and walking limit are fields in the panel.
+      </p>
+    </section>
+
+    <section class="content-section">
+      <h2>Immersive View</h2>
+      <p>
+        The immersive mode hides every layer except the imagery, zooms out to the whole planet and waits for a click.
+        The camera then drops to <strong>5 m above the ground</strong> at that spot, under a dusty Mars sky. You drag to
+        look around and move with six on-screen buttons: 150 m/s over the ground when you are close to it, faster the
+        higher you climb. The imagery is 5 m per pixel on 200 m terrain, so the ground at your feet is soft; horizons,
+        crater walls and mountains are what it shows well.
+      </p>
+      <figure>
+        <img src="/img/mars/immersive.webp" alt="Immersive view: standing on the Martian surface, with hills on the horizon under a butterscotch sky and the six movement buttons in the corner" />
+        <figcaption>Figure 4: The immersive view, standing on the surface. The six buttons in the corner move the camera; the Places panel stays open to jump to another site.</figcaption>
+      </figure>
+    </section>
+
+    <section class="content-section">
+      <h2>Keeping the Map Fast</h2>
+      <p>
+        The server draws every map tile in Python on request, so the work was in never drawing a tile twice and never
+        reading more of the elevation file than a tile needs. I measured each tile endpoint before and after every
+        change with a small timing script.
+      </p>
+      <ul>
+        <li><strong>Caching at both ends:</strong> browsers keep tiles for a day, with a version number on each tile
+          address, and the server keeps the last 200 tiles it drew per layer.</li>
+        <li><strong>Contours coloured in the browser:</strong> the server sends one colourless mask per tile, so
+          switching the data layer does not redraw the contours.</li>
+        <li><strong>Smaller terrain tiles:</strong> 16-bit integers with gzip, about 100 KB each instead of 264 KB.</li>
+        <li><strong>A cloud-optimised elevation file:</strong> a tiled, compressed copy of the same heights, 3.8 GB
+          instead of 15.2 GB. Read over a network, one contour tile went from 129 requests and 28 s to 4 requests and
+          0.1 s.</li>
+        <li><strong>Tiles drawn ahead of time</strong> for the layers that never change: firmness, water ice and
+          radiation.</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h2>Limitations</h2>
+      <ul>
+        <li>Slopes are averages over 200 m, so the map does not see short cliffs or boulders.</li>
+        <li>Terrain shelter from radiation is modelled inside Gale crater only, and the model leaves out solar storms.</li>
+        <li>Buried ice is a SWIM consistency score, not a measured amount, and is mapped between 60°S and 60°N only.</li>
+        <li>The temperature model ignores slopes, shadows and dust storms.</li>
+        <li>Speeds, ranges and hazard thresholds are planning numbers chosen by the team. None is a NASA limit.</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h2>Tech Stack</h2>
+      <div class="tech-stack-container">
+        <div class="tech-category"><strong>Backend</strong>Python and FastAPI: tile, legend, point-value and routing endpoints, with static hosting of the viewer.</div>
+        <div class="tech-category"><strong>Geospatial</strong>Rasterio and NumPy for windowed reads of the rasters; SciPy for the route search (Dijkstra on a sparse graph); Pillow for tile drawing.</div>
+        <div class="tech-category"><strong>Frontend</strong>Plain HTML, CSS and JavaScript on the ArcGIS Maps SDK for JavaScript 4.26, with no build step.</div>
+        <div class="tech-category"><strong>Data</strong>MRO CTX mosaic, MOLA + HRSC elevation, TES and THEMIS thermal inertia, TES albedo, SWIM ice maps, Curiosity RAD and REMS.</div>
+        <div class="tech-category"><strong>Deployment</strong>One Docker container on Google Cloud Run, with the elevation file read from Cloud Storage.</div>
+      </div>
+    </section>
+
+    <section class="content-section">
+      <h2>Outcomes &amp; Impact</h2>
+      <ul>
+        <li>Shipped a working 3D Mars map with <strong>five data layers</strong>, a route planner and an immersive
+          view in one hackathon weekend, as a team of four.</li>
+        <li>Put global <strong>5 m imagery</strong>, <strong>200 m terrain</strong> and 3 km thermal and ice maps on
+          one shared grid, so any layer can feed the route planner.</li>
+        <li>Planned hybrid rover-and-foot trips of up to <strong>500 km</strong>. On the first Cloud Run deployment
+          a <strong>470 km route answered in 4 s</strong>.</li>
+        <li>Checked the temperature model against Curiosity: nightly lows within about <strong>3 K</strong>.</li>
+        <li>Cut the elevation file from 15.2 GB to <strong>3.8 GB</strong> and a networked contour tile from 28 s to
+          0.1 s.</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h2>Conclusion</h2>
+      <p>
+        Interplanetary Survival Guide puts the public Mars datasets a crew would need on one map and turns them into a
+        route with the hazards named. The hard parts were agreeing on one grid early enough for four people to build in
+        parallel, proving when a hazard cannot be avoided, and keeping a map that is drawn in Python fast enough to
+        feel like a globe.
+      </p>
+    </section>
