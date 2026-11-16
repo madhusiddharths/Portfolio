@@ -300,6 +300,94 @@ html:has(.ag) {
 .rail-close {
   display: none;
 }
+/* desktop: the rail tucks away to the right, leaving an edge tab that brings it back */
+.rail-peek {
+  display: none;
+  position: fixed;
+  z-index: 45;
+  top: calc(var(--chrome-h) + 14px);
+  right: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 34px;
+  padding: 12px 0 14px;
+  border: 1px solid var(--line-2);
+  border-right: 0;
+  border-radius: 10px 0 0 10px;
+  background: var(--bg-1);
+  box-shadow: -10px 0 30px -12px rgba(0, 0, 0, 0.8);
+  color: var(--faint);
+  font: 500 10.5px/1 var(--mono);
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s, width 0.25s var(--ease);
+}
+.rail-peek:hover,
+.rail-peek:focus-visible {
+  width: 40px;
+  color: var(--ink);
+  border-color: color-mix(in srgb, var(--red) 55%, var(--line-2));
+}
+.rail-peek-label,
+.rail-peek-count {
+  writing-mode: vertical-rl;
+}
+.rail-peek-label {
+  color: var(--ink);
+}
+.rail-peek svg {
+  color: var(--red);
+}
+.rail-peek-count {
+  font-variant-numeric: tabular-nums;
+}
+@keyframes rail-peek-in {
+  from {
+    transform: translateX(100%);
+  }
+}
+
+.win-collapse {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  margin-left: 2px;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  background: none;
+  color: var(--faint);
+  cursor: pointer;
+  transition: color 0.2s, background 0.2s;
+}
+.win-collapse:hover {
+  color: var(--ink);
+  background: var(--panel-2);
+}
+@media (min-width: 1280px) {
+  .ag-main {
+    transition: margin-right 0.5s var(--ease);
+  }
+  .rail {
+    transition: transform 0.5s var(--ease);
+  }
+  html[data-swarm-rail="hidden"] .ag:not(.ag-ide) .ag-main {
+    margin-right: 0;
+  }
+  html[data-swarm-rail="hidden"] .ag:not(.ag-ide) .rail {
+    transform: translateX(calc(100% + 10px));
+    visibility: hidden;
+    transition:
+      transform 0.5s var(--ease),
+      visibility 0s 0.5s;
+  }
+  html[data-swarm-rail="hidden"] .ag:not(.ag-ide) .rail-peek {
+    display: flex;
+    animation: rail-peek-in 0.5s 0.25s var(--ease) both;
+  }
+}
 .win {
   position: relative;
   display: flex;
@@ -905,6 +993,9 @@ html:has(.ag) {
 @media (max-width: 1279px) {
   .chrome-rail-toggle {
     display: inline-flex;
+  }
+  .win-collapse {
+    display: none;
   }
   .rail {
     top: auto;
