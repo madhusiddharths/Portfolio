@@ -1,0 +1,366 @@
+/* /work/claude-code: a field-notes sketchbook inside the agent shell. */
+.cc-page {
+  --hand: var(--font-hand), "Comic Sans MS", cursive;
+  --paper: var(--panel);
+  color: var(--muted);
+}
+
+/* ---- doodles ---------------------------------------------------------------- */
+.cc-page svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  color: var(--muted);
+  overflow: visible;
+}
+.cc-page .cc-red {
+  color: var(--red);
+  stroke: var(--red);
+}
+.cc-page .cc-fill {
+  fill: currentColor;
+}
+.cc-page .cc-red.cc-fill {
+  fill: var(--red);
+}
+.cc-stamp {
+  font: 700 13px/1 var(--mono);
+  fill: var(--red);
+}
+.cc-node-t {
+  font: 600 16px/1 var(--mono);
+  fill: var(--ink);
+}
+.cc-flow {
+  stroke-dasharray: 5 7;
+  animation: cc-dash 1.8s linear infinite;
+}
+@keyframes cc-dash {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+.cc-eyes {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: cc-blink 5s infinite;
+}
+@keyframes cc-blink {
+  0%, 92%, 100% {
+    transform: scaleY(1);
+  }
+  95% {
+    transform: scaleY(0.1);
+  }
+}
+.cc-wave {
+  transform-box: fill-box;
+  transform-origin: 0% 100%;
+}
+.cc-hero-art:hover .cc-wave {
+  animation: cc-wave 0.9s ease-in-out 2;
+}
+@keyframes cc-wave {
+  50% {
+    transform: rotate(-14deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cc-flow,
+  .cc-eyes,
+  .cc-hero-art:hover .cc-wave {
+    animation: none;
+  }
+}
+
+/* ---- hero ------------------------------------------------------------------- */
+.cc-hero {
+  padding-top: clamp(2rem, 4vw, 3rem);
+  padding-bottom: clamp(1.5rem, 3vw, 2.5rem);
+}
+.cc-hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) clamp(9rem, 18vw, 13rem);
+  gap: clamp(1.5rem, 4vw, 3rem);
+  align-items: center;
+}
+.cc-page .cs-back-wrap {
+  margin-bottom: 1.6rem;
+}
+.cc-page .cs-back {
+  font: 400 12px/1.4 var(--mono);
+}
+.cc-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 1rem;
+  font: 400 11.5px/1.4 var(--mono);
+  color: var(--muted);
+}
+.cc-eyebrow img {
+  width: 14px;
+  height: 14px;
+}
+.cc-title {
+  margin: 0;
+  max-width: 18ch;
+  font: 600 clamp(2.3rem, 5vw, 3.6rem) / 1.04 var(--sans);
+  letter-spacing: -0.04em;
+  color: var(--ink-hi);
+}
+.cc-lede {
+  max-width: 52ch;
+  margin: 1.1rem 0 0;
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+.cc-note {
+  margin: 0.8rem 0 0;
+  font: 700 1.45rem/1.2 var(--hand);
+  color: var(--red-ink);
+  transform: rotate(-1.5deg);
+  transform-origin: left center;
+}
+.cc-note-hero {
+  margin-top: 1.4rem;
+}
+
+/* ---- the book: sheets hung on one dashed graph line ------------------------- */
+.cc-book {
+  padding-bottom: clamp(2rem, 4vw, 3rem);
+}
+.cc-pages {
+  position: relative;
+  container-type: inline-size;
+  display: grid;
+  gap: clamp(2.2rem, 5vw, 3.5rem);
+  padding-top: clamp(2rem, 4vw, 3rem);
+  padding-bottom: 1rem;
+}
+/* the graph line every sheet hangs on */
+.cc-pages::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0.5rem;
+  border-left: 1px dashed var(--line-2);
+}
+.cc-sheet {
+  --tilt: -0.5deg;
+  --ml: 2.2rem;
+  position: relative;
+  justify-self: start;
+  width: min(calc(100% - var(--ml)), 40rem);
+  margin-left: var(--ml);
+  padding: clamp(1.3rem, 3vw, 2rem);
+  border: 1px solid var(--line-2);
+  border-radius: 10px;
+  background:
+    repeating-linear-gradient(0deg, transparent 0 31px, rgba(255, 255, 255, 0.025) 31px 32px),
+    var(--paper);
+  transform: rotate(var(--tilt));
+}
+.cc-sheet[data-side="r"] {
+  --tilt: 0.5deg;
+}
+@container (min-width: 48rem) {
+  .cc-sheet[data-side="r"] {
+    --ml: 6rem;
+  }
+}
+/* a strip of tape at the top, and a node where the sheet meets the line */
+.cc-sheet::before {
+  content: "";
+  position: absolute;
+  top: -11px;
+  left: 50%;
+  width: 84px;
+  height: 22px;
+  margin-left: -42px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transform: rotate(-3deg);
+}
+.cc-sheet::after {
+  content: "";
+  position: absolute;
+  top: 2.2rem;
+  left: calc(0.5rem - var(--ml) - 5px);
+  width: calc(var(--ml) - 0.5rem);
+  height: 10px;
+  background:
+    radial-gradient(circle 5px at 5px 5px, var(--red) 4.5px, transparent 5px),
+    linear-gradient(var(--line-2), var(--line-2)) 10px 50% / 100% 1px no-repeat;
+}
+.cc-tag {
+  margin: 0 0 0.5rem;
+  font: 400 11.5px/1.4 var(--mono);
+  color: var(--red-ink);
+}
+.cc-h {
+  margin: 0 0 1rem;
+  font: 600 clamp(1.35rem, 2.6vw, 1.7rem) / 1.2 var(--sans);
+  letter-spacing: -0.025em;
+  color: var(--ink-hi);
+}
+.cc-art {
+  float: right;
+  width: clamp(7rem, 22%, 9.5rem);
+  margin: 0 0 0.8rem 1.2rem;
+}
+.cc-art-wide {
+  float: none;
+  width: min(100%, 17rem);
+  margin: 0 0 1rem;
+}
+.cc-p {
+  margin: 0 0 1rem;
+  font-size: 1.02rem;
+  line-height: 1.7;
+}
+.cc-p strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* chat: the hero's user / assistant lines, as a mini transcript */
+.cc-chat {
+  clear: both;
+  display: grid;
+  gap: 6px;
+  padding: 10px 12px;
+  border: 1px dashed var(--line-2);
+  border-radius: 8px;
+  background: var(--bg-1);
+  font: 400 12.5px/1.5 var(--mono);
+}
+.cc-chat p {
+  display: grid;
+  grid-template-columns: 4.2rem minmax(0, 1fr);
+  margin: 0;
+  color: var(--ink);
+}
+.cc-chat span {
+  color: var(--faint);
+}
+.cc-chat p[data-who="claude"] {
+  color: var(--muted);
+}
+.cc-chat p[data-who="claude"] span {
+  color: var(--red-ink);
+}
+
+.cc-checks {
+  list-style: none;
+  margin: 0 0 0.6rem;
+  padding: 0;
+  display: grid;
+  gap: 0.55rem;
+}
+.cc-checks li {
+  position: relative;
+  padding-left: 1.7rem;
+  line-height: 1.5;
+}
+.cc-checks li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  top: -0.15rem;
+  font: 700 1.35rem/1 var(--hand);
+  color: var(--red-ink);
+}
+
+/* house rules as sticky notes */
+.cc-rules {
+  clear: both;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0 0 1.1rem;
+}
+.cc-rules p {
+  margin: 0;
+  padding: 12px 12px 14px;
+  border-radius: 3px;
+  background: #1d1a14;
+  border: 1px solid rgba(255, 220, 140, 0.12);
+  font: 700 1.3rem/1.15 var(--hand);
+  color: #f3dfa8;
+  transform: rotate(-1.2deg);
+}
+.cc-rules p:nth-child(even) {
+  transform: rotate(1.1deg);
+}
+
+/* margin doodles: only where the column leaves room right of the sheets */
+.cc-margin {
+  display: none;
+}
+@container (min-width: 64rem) {
+  .cc-margin {
+    display: block;
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  .cc-m {
+    position: absolute;
+    opacity: 0.75;
+  }
+  .cc-m-crew { right: 8%; top: 3%; width: 7rem; }
+  .cc-m-sp1 { right: 26%; top: 16%; width: 2.2rem; }
+  .cc-m-bot { right: 10%; top: 30%; width: 9rem; transform: rotate(6deg); }
+  .cc-m-plug { right: 22%; top: 50%; width: 7rem; transform: rotate(-12deg); }
+  .cc-m-sp2 { right: 8%; top: 64%; width: 1.8rem; }
+  .cc-m-critic { right: 30%; top: 84%; width: 2rem; }
+}
+
+/* ---- stats: the "this run" table, but silly -------------------------------- */
+.cc-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 0;
+  border: 1px solid var(--line-2);
+  background: var(--panel);
+}
+.cc-stats div {
+  padding: 14px 16px;
+}
+.cc-stats div + div {
+  border-left: 1px solid var(--line);
+}
+.cc-stats dt {
+  font: 400 11px/1.3 var(--mono);
+  color: var(--faint);
+}
+.cc-stats dd {
+  margin: 6px 0 0;
+  font: 700 1.6rem/1.1 var(--hand);
+  color: var(--ink-hi);
+}
+
+/* ---- small screens ---------------------------------------------------------- */
+@media (max-width: 760px) {
+  .cc-hero-grid {
+    grid-template-columns: minmax(0, 1fr) 6.5rem;
+    align-items: start;
+  }
+  .cc-art {
+    width: 6rem;
+  }
+  .cc-rules {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .cc-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .cc-stats div:nth-child(3) {
+    border-left: 0;
+  }
+  .cc-stats div:nth-child(n + 3) {
+    border-top: 1px solid var(--line);
+  }
+}

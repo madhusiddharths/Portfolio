@@ -25,7 +25,7 @@ const BIO = SENTENCES.slice(0, -1);
 const TOOLS: { name: string; skill: string }[] = [
   { name: "LangGraph", skill: "LangGraph" },
   { name: "MCP", skill: "MCP" },
-  { name: "Claude", skill: "LLM APIs" },
+  { name: "LLM APIs", skill: "LLM APIs" },
   { name: "vLLM", skill: "vLLM" },
   { name: "PyTorch", skill: "PyTorch" },
   { name: "Hugging Face", skill: "Hugging Face" },
@@ -263,7 +263,23 @@ export default function Home() {
                       })}
                     </ul>
                   </B>
-                  <B kind="block" label="cfg.usage" className="pg-field">
+                  <B kind="list" label="cfg.claude" className="pg-field pg-claude">
+                    <span className="pg-k pg-claude-k">
+                      {techIcon("Claude") && <img src={techIcon("Claude")!} alt="" width={14} height={14} />}
+                      my_claude
+                    </span>
+                    <span className="pg-v">daily driver</span>
+                    <span className="pg-k">mcp</span>
+                    <span className="pg-v">3 built · remote</span>
+                    <span className="pg-k">skills</span>
+                    <span className="pg-v">ats-resume +</span>
+                    <span className="pg-k">memory</span>
+                    <span className="pg-v">notes vault</span>
+                    <Link href="/work/claude-code/" className="pg-claude-link">
+                      how I work with Claude <ArrowUpRight width={11} height={11} />
+                    </Link>
+                  </B>
+                  <B kind="block" label="cfg.usage" className="pg-field pg-usage-box">
                     <span className="pg-k">this run</span>
                     <RunUsage />
                   </B>
