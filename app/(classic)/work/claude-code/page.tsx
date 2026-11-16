@@ -76,13 +76,6 @@ function Chat({ lines }: { lines: Line[] }) {
   );
 }
 
-const STATS: [string, string][] = [
-  ["chats deleted", "all of them"],
-  ["decisions lost", "0"],
-  ["résumé pages", "1, every time"],
-  ["tools on my phone", "all of them"],
-];
-
 const RULES = [
   "think first. ask when unsure.",
   "smallest change that works.",
@@ -117,7 +110,7 @@ export default function MyClaudePage() {
               drawn out.
             </B>
             <B as="p" kind="type" label="p.note" className="cc-note cc-note-hero">
-              (meet my little agent →)
+              (flip through the pages ↓)
             </B>
           </div>
           <B kind="media" label="svg.mascot" className="cc-hero-art">
@@ -200,25 +193,22 @@ export default function MyClaudePage() {
             </B>
           </Sheet>
 
-          <Sheet n="07" tag="proof" title="This site goes through the same loop." art={<Mascot />} side="l" note="yes, really.">
+          <Sheet n="07" tag="borrowed brains" title="Open-source skills I lean on." art={<Crew />} side="l"
+            note="all free. all on GitHub.">
+            <B as="ul" kind="list" label="ul.checks" className="cc-checks">
+              <li><strong>karpathy-guidelines</strong>: think first, keep it simple, change only what was asked</li>
+              <li><strong>gstack</strong> by Garry Tan: plan reviews, QA, code review and a real browser to test in</li>
+              <li><strong>humanizer</strong> + <strong>stop-slop</strong>: strip the AI tells out of my writing</li>
+              <li><strong>ui-ux-pro-max</strong>: design rules, palettes and font pairings for anything with a screen</li>
+            </B>
+          </Sheet>
+
+          <Sheet n="08" tag="proof" title="This site goes through the same loop." art={<Mascot />} side="r" note="yes, really.">
             <B as="p" kind="para" label="p" className="cc-p">
               Every change lands on a branch, gets built, and gets clicked through in a real browser before it ships.
               This page went through it too, including the version that loaded blank.
             </B>
           </Sheet>
-        </div>
-      </BuildSection>
-
-      <BuildSection id="stats" sec="SEC_STATS" className="cc-stats-sec">
-        <div className="wrap">
-          <B as="dl" kind="block" label="dl.stats" className="cc-stats" data-seg="stats">
-            {STATS.map(([k, v]) => (
-              <div key={k}>
-                <dt>{k}</dt>
-                <dd>{v}</dd>
-              </div>
-            ))}
-          </B>
         </div>
       </BuildSection>
 

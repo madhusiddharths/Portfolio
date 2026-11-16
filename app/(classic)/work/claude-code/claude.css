@@ -318,30 +318,6 @@
   .cc-m-critic { right: 30%; top: 84%; width: 2rem; }
 }
 
-/* ---- stats: the "this run" table, but silly -------------------------------- */
-.cc-stats {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  margin: 0;
-  border: 1px solid var(--line-2);
-  background: var(--panel);
-}
-.cc-stats div {
-  padding: 14px 16px;
-}
-.cc-stats div + div {
-  border-left: 1px solid var(--line);
-}
-.cc-stats dt {
-  font: 400 11px/1.3 var(--mono);
-  color: var(--faint);
-}
-.cc-stats dd {
-  margin: 6px 0 0;
-  font: 700 1.6rem/1.1 var(--hand);
-  color: var(--ink-hi);
-}
-
 /* ---- small screens ---------------------------------------------------------- */
 @media (max-width: 760px) {
   .cc-hero-grid {
@@ -353,14 +329,5 @@
   }
   .cc-rules {
     grid-template-columns: minmax(0, 1fr);
-  }
-  .cc-stats {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .cc-stats div:nth-child(3) {
-    border-left: 0;
-  }
-  .cc-stats div:nth-child(n + 3) {
-    border-top: 1px solid var(--line);
   }
 }
