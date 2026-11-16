@@ -84,6 +84,13 @@ export const TECH: Record<string, string> = {
   "Power BI": `${ICON}/power-bi-embedded.png`,
   Kaggle: `${ICON}/Kaggle.png`,
   LaTeX: `${ICON}/LaTeX.png`,
+  MLflow: `${ICON}/MLflow.svg`,
+  OpenRouter: `${ICON}/OpenRouter-mono.svg`,
+  "Agentic AI": `${ICON}/AgenticAI-mono.svg`,
+  "LLM APIs": `${ICON}/LLM-API-mono.svg`,
+  "LLM Fine-tuning": `${ICON}/FineTuning-mono.svg`,
+  NLP: `${ICON}/NLP-mono.svg`,
+  "Time Series Analysis": `${ICON}/TimeSeries-mono.svg`,
 };
 
 /* Umbrella skills: a project counts toward one if it lists any member tool. */

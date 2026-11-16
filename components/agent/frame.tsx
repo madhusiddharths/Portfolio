@@ -33,6 +33,10 @@ export function AgentFrame({ children }: { children: ReactNode }) {
     current = "coming-soon";
     task = "stage an upcoming field report";
     tabs.push({ id: "coming-soon", label: "coming-soon", href: pathname });
+  } else if (slug === "claude-code") {
+    current = "claude-code";
+    task = "draw the field notes: my Claude";
+    tabs.push({ id: "claude-code", label: "claude-code", href: pathname });
   } else if (isWork) {
     current = "work";
     task = "index every project";

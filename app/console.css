@@ -501,6 +501,42 @@ html:has(.ag-skin) body {
   text-transform: lowercase;
 }
 
+/* my_claude card: sits under tools; "this run" is pushed to the bottom of the column */
+.ag-skin .pg-claude-k {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--ink);
+}
+.ag-skin .pg-claude-k img {
+  width: 14px;
+  height: 14px;
+}
+.ag-skin .pg-claude .pg-v {
+  color: var(--muted);
+}
+.pg-claude-link {
+  grid-column: 1 / -1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 2px;
+  padding: 7px 9px;
+  border: 1px solid var(--line-2);
+  color: var(--ink);
+  transition:
+    border-color 0.2s,
+    background 0.2s;
+}
+.pg-claude-link:hover {
+  border-color: var(--red);
+  background: rgba(255, 65, 51, 0.08);
+}
+.ag-skin .pg-usage-box {
+  margin-top: auto;
+  border-top: 1px solid var(--line);
+}
+
 /* metrics: one eval table — joined cells, numbers in mono, no poster type */
 .ag-skin .hero-metrics {
   gap: 1px;
