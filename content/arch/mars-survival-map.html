@@ -1,0 +1,22 @@
+<p class="subsection-title">Backend: one FastAPI service</p>
+      <p>
+        <code>server.py</code> serves the viewer and every layer's map tiles, legends and point values. Each layer is one
+        Python module (<code>elevation.py</code>, <code>contours.py</code>, <code>firmness.py</code>, <code>ice.py</code>,
+        <code>temperature.py</code>, <code>radiation.py</code>) with the same two functions: a
+        <code>read_...(west, south, east, north, shape)</code> that returns a NumPy array on the shared lon/lat grid, and a
+        <code>tile_png(level, row, col)</code> that draws one map tile. <code>routing.py</code> reads those arrays for the
+        ground between A and B, grades each 200 m cell, and runs the search with SciPy.
+      </p>
+      <p class="subsection-title">Frontend: no build step</p>
+      <p>
+        The viewer is plain HTML, CSS and JavaScript on the <strong>ArcGIS Maps SDK for JavaScript</strong>: a rail of
+        modes, one docked panel, the map and a status strip. The CTX imagery and the 3D terrain stream from Esri's Mars
+        services; every other layer comes from our server as tiles. The route planner, the temperature panel and the
+        immersive view are one script each.
+      </p>
+      <p class="subsection-title">Deployment</p>
+      <p>
+        The app runs as a <strong>single Docker container on Google Cloud Run</strong> that scales to zero. The small
+        grids ship inside the image. The 3.8 GB cloud-optimised elevation file sits in a Cloud Storage bucket, and GDAL
+        fetches only the blocks a tile or a route needs.
+      </p>

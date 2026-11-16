@@ -134,6 +134,39 @@ export const PIPELINES: Record<string, Pipeline> = {
   },
 
   /* ------------------------------------------------------------------ */
+  "mars-survival-map": {
+    summary:
+      "Open NASA, USGS and ESA rasters are read on one lon/lat grid (Mars 2000 sphere) by one Python module per layer: elevation and contours, ground firmness, water ice, surface temperature and radiation. A FastAPI service draws each layer as map tiles and caches them; the route planner reads the same arrays, grades 200 m cells and searches for the safest and the quickest trip. An ArcGIS SceneView streams 5 m CTX imagery and terrain from Esri and overlays our tiles and routes. One container on Cloud Run, with the elevation file in Cloud Storage.",
+    stages: ["sources", "layers", "plan", "serve", "view"],
+    nodes: [
+      { id: "ctx", label: "CTX imagery + terrain", tech: "Esri Mars services · 5 m", kind: "source", col: 0, row: 0, at: "the-base-map" },
+      { id: "dem", label: "MOLA + HRSC elevation", tech: "200 m · 3.8 GB COG", kind: "store", col: 0, row: 1.2, at: "the-base-map" },
+      { id: "maps", label: "Thermal + ice maps", tech: "TES · THEMIS · SWIM", kind: "source", col: 0, row: 2.4, at: "hazard-resource-layers" },
+      { id: "layers", label: "Layer modules", tech: "rasterio · NumPy · one grid", kind: "transform", col: 1, row: 1.2, at: "hazard-resource-layers" },
+      { id: "models", label: "Thermal + dose models", tech: "lookup table · RAD anchor", kind: "model", col: 1, row: 2.4, at: "hazard-resource-layers" },
+      { id: "route", label: "Route planner", tech: "200 m cells · Dijkstra", kind: "model", col: 2, row: 2, at: "the-route-planner" },
+      { id: "api", label: "FastAPI", tech: "tiles · routes · Cloud Run", kind: "serve", col: 3, row: 1.2, at: "keeping-the-map-fast" },
+      { id: "cache", label: "Tile caches", tech: "browser 1 day · server 200", kind: "ops", col: 3, row: 0, at: "keeping-the-map-fast" },
+      { id: "view", label: "3D viewer", tech: "ArcGIS SceneView", kind: "ui", col: 4, row: 0.6, at: "the-base-map" },
+      { id: "walk", label: "Immersive view", tech: "5 m above the ground", kind: "ui", col: 4, row: 2, at: "immersive-view" },
+    ],
+    edges: [
+      { from: "dem", to: "layers", data: "windowed reads" },
+      { from: "maps", to: "layers", data: "thermal inertia · ice scores" },
+      { from: "maps", to: "models", data: "thermal inertia · albedo" },
+      { from: "models", to: "layers", data: "temperature · dose rate" },
+      { from: "layers", to: "route", data: "slope · firmness · temperature" },
+      { from: "layers", to: "api", data: "PNG tiles · legends" },
+      { from: "route", to: "api", data: "safest + quickest lines" },
+      { from: "api", to: "cache", data: "versioned tiles" },
+      { from: "cache", to: "view", data: "layer tiles" },
+      { from: "ctx", to: "view", data: "imagery · elevation" },
+      { from: "api", to: "view", data: "routes · point values" },
+      { from: "view", to: "walk", data: "clicked ground point" },
+    ],
+  },
+
+  /* ------------------------------------------------------------------ */
   "growth-retention": {
     summary:
       "About 20M Kaggle cosmetics clickstream events are chunked, given deterministic MD5 A/B buckets (with an injected +5% treatment uplift), and loaded through GCS into a BigQuery bronze layer. dbt builds sessionised silver and gold tables with tests. On top: a chi-square A/B test, an XGBoost cart-abandonment model explained with SHAP, a FastAPI /predict service, a three-tab Streamlit app on Cloud Run, and an Evidently drift report.",

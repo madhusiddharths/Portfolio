@@ -118,6 +118,7 @@ export type Project = {
   paper?: string;
   live?: string; // live/demo URL — renders a launch(...) call on the case study; a site path means "deploying"
   liveKind?: "app" | "model" | "demo" | "dashboard"; // what the live link opens (default "app")
+  video?: string; // walkthrough video — renders a watch_demo(...) call on the case study
   results?: { value: string; label: string }[]; // 3–4 headline numbers shown under the report title
   privateRepo?: boolean;
   hasCaseStudy: boolean; // false → routes to /work/coming-soon
@@ -189,8 +190,51 @@ export const PROJECTS: Project[] = [
     featured: true,
   },
   {
-    slug: "alzheimers",
+    slug: "mars-survival-map",
     index: "04",
+    name: "Interplanetary Survival Guide",
+    domain: "NASA Space Apps hackathon · Martian map",
+    summary:
+      "A 3D map of Mars that plans the safest trip across the surface for a crew with a rover, built by a team of four at the NASA Space Apps Challenge 2026 on the topic \"Interplanetary Survival Guide: Martian Map\". Five hazard and resource layers from NASA data feed a route planner that names every hazard on the way.",
+    tech: ["Python", "FastAPI", "ArcGIS Maps SDK", "NumPy", "GCP", "Docker", "JavaScript", "SciPy", "Rasterio"],
+    thumb: `${IMG}/mars_map.png`,
+    repo: "https://github.com/madhusiddharths/nasa_space_apps",
+    live: "https://mars-map-830850411483.us-central1.run.app",
+    liveKind: "app",
+    video: "https://www.youtube.com/watch?v=Z1ssRxFmIw4",
+    results: [
+      { value: "5 m / px", label: "CTX imagery of the whole planet, over 200 m terrain" },
+      { value: "5", label: "hazard and resource layers on one shared grid" },
+      { value: "500 km", label: "longest trip planned, by rover and on foot" },
+      { value: "4 s", label: "to plan a 470 km route on Cloud Run" },
+    ],
+    hasCaseStudy: true,
+    featured: true,
+  },
+  {
+    slug: "federated-iot",
+    index: "05",
+    name: "Federated IoT Security",
+    domain: "Federated learning · Privacy",
+    summary:
+      "First-author IEEE paper: four organisations train one IoT intrusion detector without sharing traffic. A Transformer + XGBoost hybrid shares only its LoRA adapters, reaching 97.98% accuracy with 89.5% less data per round.",
+    tech: ["PyTorch", "Pandas", "LaTeX", "Python"],
+    thumb: `${IMG}/fed_iot.png`,
+    repo: null,
+    privateRepo: true,
+    paper: "https://ieeexplore.ieee.org/document/11395795",
+    results: [
+      { value: "97.98%", label: "accuracy on 2.4M test flows" },
+      { value: "89.5%", label: "less data sent per round than FedAvg" },
+      { value: "4", label: "simulated organisations, no raw traffic shared" },
+      { value: "IEEE", label: "ICAIC 2026, first author" },
+    ],
+    hasCaseStudy: true,
+    featured: true,
+  },
+  {
+    slug: "alzheimers",
+    index: "06",
     name: "Alzheimer's Progression",
     domain: "Medical imaging · GANs",
     summary:
@@ -211,7 +255,7 @@ export const PROJECTS: Project[] = [
   },
   {
     slug: "galaxy",
-    index: "05",
+    index: "07",
     name: "Galaxy Explorer",
     domain: "3D visualization · 557M+ stars",
     summary:
@@ -231,87 +275,8 @@ export const PROJECTS: Project[] = [
     featured: true,
   },
   {
-    slug: "growth-retention",
-    index: "06",
-    name: "Growth & Retention",
-    domain: "Experimentation · 20M+ events",
-    summary:
-      "An end-to-end data pipeline and machine learning system that processes 20M+ e-commerce events to validate A/B tests and predict cart abandonment in real-time.",
-    tech: ["Python", "dbt", "FastAPI", "Streamlit", "Docker", "SQL"],
-    thumb: `${IMG}/growth_retention.png`,
-    repo: "https://github.com/madhusiddharths/growth_retention",
-    live: "https://gr-frontend-ds4v3uzpta-uc.a.run.app",
-    liveKind: "demo",
-    results: [
-      { value: "6.73% → 10.83%", label: "conversion in the simulated A/B test (p < 0.001)" },
-      { value: "0.80", label: "ROC-AUC, cart-abandonment model" },
-      { value: "20M+", label: "raw events (4.6 GB) through the pipeline" },
-    ],
-    hasCaseStudy: true,
-    featured: true,
-  },
-  {
-    slug: "crypto-tweet-impact",
-    index: "07",
-    name: "Crypto Tweet Impact",
-    domain: "Event study · NLP",
-    summary:
-      "A statistically rigorous data-science pipeline and event study that evaluates the market impact of ~20,000 LLM-classified tweets on Bitcoin and Dogecoin prices using multiple-testing corrections and an interactive Shiny dashboard.",
-    tech: ["R", "OpenAI API"],
-    thumb: `${IMG}/crypto.png`,
-    repo: "https://github.com/madhusiddharths/crypto_tweet_impact",
-    results: [
-      { value: "~20K", label: "Musk tweets classified by an LLM" },
-      { value: "30+", label: "category tests corrected (Bonferroni, FDR)" },
-      { value: "+4.27%", label: "7-day DOGE return after negative tweets (p = 0.0097)" },
-      { value: "almost none", label: "raw-significant effects survive correction" },
-    ],
-    hasCaseStudy: true,
-    featured: true,
-  },
-  {
-    slug: "federated-iot",
-    index: "08",
-    name: "Federated IoT Security",
-    domain: "Federated learning · Privacy",
-    summary:
-      "First-author IEEE paper: four organisations train one IoT intrusion detector without sharing traffic. A Transformer + XGBoost hybrid shares only its LoRA adapters, reaching 97.98% accuracy with 89.5% less data per round.",
-    tech: ["PyTorch", "Pandas", "LaTeX", "Python"],
-    thumb: `${IMG}/fed_iot.png`,
-    repo: null,
-    privateRepo: true,
-    paper: "https://ieeexplore.ieee.org/document/11395795",
-    results: [
-      { value: "97.98%", label: "accuracy on 2.4M test flows" },
-      { value: "89.5%", label: "less data sent per round than FedAvg" },
-      { value: "4", label: "simulated organisations, no raw traffic shared" },
-      { value: "IEEE", label: "ICAIC 2026, first author" },
-    ],
-    hasCaseStudy: true,
-  },
-  {
-    slug: "online-retail",
-    index: "09",
-    name: "Online Retail",
-    domain: "Analytics engineering · Cloud DW",
-    summary:
-      "A dual-mode analytics pipeline that models ~540k retail transactions into a star schema with Polars, then answers real business questions — revenue trends, RFM segmentation, and cohort retention — surfaced on a live Looker Studio dashboard.",
-    tech: ["Python", "Polars", "Snowflake", "GCP", "SQL"],
-    thumb: `${IMG}/online_retail.png`,
-    repo: "https://github.com/madhusiddharths/Online_retail",
-    live: "https://datastudio.google.com/reporting/ec4c8755-2932-417a-be4d-14d03c93b6a6",
-    liveKind: "dashboard",
-    results: [
-      { value: "£10.23M", label: "gross revenue across ~540k transactions" },
-      { value: "4.6%", label: "return rate, reported alongside net" },
-      { value: "~£1.5M", label: "revenue kept by bucketing guest orders" },
-      { value: "4,334", label: "customers segmented with RFM" },
-    ],
-    hasCaseStudy: true,
-  },
-  {
     slug: "image-retrieval",
-    index: "10",
+    index: "08",
     name: "Image Retrieval",
     domain: "Vector search · Computer vision",
     summary:
@@ -330,8 +295,64 @@ export const PROJECTS: Project[] = [
     hasCaseStudy: true,
   },
   {
-    slug: "traffic-prediction",
+    slug: "crypto-tweet-impact",
+    index: "09",
+    name: "Crypto Tweet Impact",
+    domain: "Event study · NLP",
+    summary:
+      "A statistically rigorous data-science pipeline and event study that evaluates the market impact of ~20,000 LLM-classified tweets on Bitcoin and Dogecoin prices using multiple-testing corrections and an interactive Shiny dashboard.",
+    tech: ["R", "OpenAI API"],
+    thumb: `${IMG}/crypto.png`,
+    repo: "https://github.com/madhusiddharths/crypto_tweet_impact",
+    results: [
+      { value: "~20K", label: "Musk tweets classified by an LLM" },
+      { value: "30+", label: "category tests corrected (Bonferroni, FDR)" },
+      { value: "+4.27%", label: "7-day DOGE return after negative tweets (p = 0.0097)" },
+      { value: "almost none", label: "raw-significant effects survive correction" },
+    ],
+    hasCaseStudy: true,
+    featured: true,
+  },
+  {
+    slug: "growth-retention",
+    index: "10",
+    name: "Growth & Retention",
+    domain: "Experimentation · 20M+ events",
+    summary:
+      "An end-to-end data pipeline and machine learning system that processes 20M+ e-commerce events to validate A/B tests and predict cart abandonment in real-time.",
+    tech: ["Python", "dbt", "FastAPI", "Streamlit", "Docker", "SQL"],
+    thumb: `${IMG}/growth_retention.png`,
+    repo: "https://github.com/madhusiddharths/growth_retention",
+    live: "https://gr-frontend-ds4v3uzpta-uc.a.run.app",
+    liveKind: "demo",
+    results: [
+      { value: "6.73% → 10.83%", label: "conversion in the simulated A/B test (p < 0.001)" },
+      { value: "0.80", label: "ROC-AUC, cart-abandonment model" },
+      { value: "20M+", label: "raw events (4.6 GB) through the pipeline" },
+    ],
+    hasCaseStudy: true,
+    featured: true,
+  },
+  {
+    slug: "saturdae",
     index: "11",
+    name: "SATURDAE",
+    domain: "Spatial design · Patented",
+    summary:
+      "A patented floor-plan designer: place rooms and furniture with short commands, and a half-foot occupancy grid rejects overlaps, suggests free room positions and draws the hallways.",
+    tech: ["Python", "NumPy", "PyCharm"],
+    thumb: `${IMG}/floor.jpg`,
+    repo: "https://github.com/madhusiddharths/SATURDAE",
+    results: [
+      { value: "Patent", label: "Indian application 202341038832 A" },
+      { value: "0.5 ft", label: "occupancy-grid resolution for collision checks" },
+      { value: "30×30", label: "planning grid, drawn live" },
+    ],
+    hasCaseStudy: true,
+  },
+  {
+    slug: "traffic-prediction",
+    index: "12",
     name: "Traffic Prediction",
     domain: "Fleet routing · 50-stop VRP",
     summary:
@@ -344,23 +365,6 @@ export const PROJECTS: Project[] = [
       { value: "50 / 8", label: "stops and vehicles routed with OR-Tools" },
       { value: "315,359", label: "CalTrans sensor rows modeled" },
       { value: "10 s", label: "solve budget for a balanced fleet" },
-    ],
-    hasCaseStudy: true,
-  },
-  {
-    slug: "saturdae",
-    index: "12",
-    name: "SATURDAE",
-    domain: "Spatial design · Patented",
-    summary:
-      "A patented floor-plan designer: place rooms and furniture with short commands, and a half-foot occupancy grid rejects overlaps, suggests free room positions and draws the hallways.",
-    tech: ["Python", "NumPy", "PyCharm"],
-    thumb: `${IMG}/floor.jpg`,
-    repo: "https://github.com/madhusiddharths/SATURDAE",
-    results: [
-      { value: "Patent", label: "Indian application 202341038832 A" },
-      { value: "0.5 ft", label: "occupancy-grid resolution for collision checks" },
-      { value: "30×30", label: "planning grid, drawn live" },
     ],
     hasCaseStudy: true,
   },
@@ -381,6 +385,26 @@ export const PROJECTS: Project[] = [
       { value: "131,896", label: "lab-tested cases, 2024 season" },
       { value: "5", label: "public datasets fused" },
       { value: "on-device", label: "personal exposure estimate" },
+    ],
+    hasCaseStudy: true,
+  },
+  {
+    slug: "online-retail",
+    index: "14",
+    name: "Online Retail",
+    domain: "Analytics engineering · Cloud DW",
+    summary:
+      "A dual-mode analytics pipeline that models ~540k retail transactions into a star schema with Polars, then answers real business questions — revenue trends, RFM segmentation, and cohort retention — surfaced on a live Looker Studio dashboard.",
+    tech: ["Python", "Polars", "Snowflake", "GCP", "SQL"],
+    thumb: `${IMG}/online_retail.png`,
+    repo: "https://github.com/madhusiddharths/Online_retail",
+    live: "https://datastudio.google.com/reporting/ec4c8755-2932-417a-be4d-14d03c93b6a6",
+    liveKind: "dashboard",
+    results: [
+      { value: "£10.23M", label: "gross revenue across ~540k transactions" },
+      { value: "4.6%", label: "return rate, reported alongside net" },
+      { value: "~£1.5M", label: "revenue kept by bucketing guest orders" },
+      { value: "4,334", label: "customers segmented with RFM" },
     ],
     hasCaseStudy: true,
   },

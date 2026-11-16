@@ -138,15 +138,22 @@ export default async function CaseStudyPage({
                   <ArrowUpRight width={12} height={12} />
                 </a>
               ))}
+            {project.video && (
+              <a href={project.video} target="_blank" rel="noopener noreferrer" className={`pg-call ${project.live ? "" : "pg-call-go"}`}>
+                <code>watch_demo</code>
+                <span>(youtube)</span>
+                <ArrowUpRight width={12} height={12} />
+              </a>
+            )}
             {project.repo && (
-              <a href={project.repo} target="_blank" rel="noopener noreferrer" className={`pg-call ${project.live ? "" : "pg-call-go"}`}>
+              <a href={project.repo} target="_blank" rel="noopener noreferrer" className={`pg-call ${project.live || project.video ? "" : "pg-call-go"}`}>
                 <code>view_source</code>
                 <span>(github)</span>
                 <ArrowUpRight width={12} height={12} />
               </a>
             )}
             {project.paper && (
-              <a href={project.paper} target="_blank" rel="noopener noreferrer" className={`pg-call ${project.live || project.repo ? "" : "pg-call-go"}`}>
+              <a href={project.paper} target="_blank" rel="noopener noreferrer" className={`pg-call ${project.live || project.video || project.repo ? "" : "pg-call-go"}`}>
                 <code>read_paper</code>
                 <span>({project.paper.includes("ieee") ? "ieee" : "pdf"})</span>
                 <ArrowUpRight width={12} height={12} />
